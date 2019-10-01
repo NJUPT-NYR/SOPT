@@ -11,6 +11,7 @@ logs/
 *.lock
 *.js
 !.autod.conf.js
+!webpack.config.js
 
 app/**/*.js
 test/**/*.js
