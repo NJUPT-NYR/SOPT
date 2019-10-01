@@ -1,7 +1,8 @@
-import { EggAppConfig, EggAppInfo, PowerPartial } from 'egg';
+import { EggAppConfig } from 'egg';
+import * as path from 'path';
 
-export default (appInfo: EggAppInfo) => {
-  const config = {} as PowerPartial<EggAppConfig>;
+export default (appInfo: EggAppConfig) => {
+  const config : any = {} ;
 
   // override config from framework / plugin
   // use for cookie sign key, should change to your own and keep security
@@ -11,13 +12,26 @@ export default (appInfo: EggAppInfo) => {
   config.middleware = [];
 
   // add your special config in here
-  const bizConfig = {
-    sourceUrl: `https://github.com/eggjs/examples/tree/master/${appInfo.name}`,
+  // const bizConfig = {
+  //   sourceUrl: `https://github.com/NJUPT-NYR/SOPT/`,
+  // };
+
+  config.view = {
+    cache: false
+  };
+
+  config.vuessr = {
+    layout: path.resolve(appInfo.baseDir, 'app/web/view/layout.html'),
+    renderOptions: {
+      basedir: path.join(appInfo.baseDir, 'app/view'),
+    },
+  };
+
+  config.static = {
+    prefix: '/public/',
+    dir: path.join(appInfo.baseDir, 'public')
   };
 
   // the return config will combines to EggAppConfig
-  return {
-    ...config,
-    ...bizConfig,
-  };
+  return config;
 };
