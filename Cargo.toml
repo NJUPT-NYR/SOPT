@@ -1,0 +1,16 @@
+[package]
+name = "sopt"
+version = "0.1.0"
+authors = ["Brethland Yang <brethland@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+actix-web = "4.0.0-beta.3"
+deadpool-postgres = "0.7.0"
+serde = { version = "^1.0", features = ["derive"] }
+dotenv = "0.15.0"
+config = "0.10.1"
+derive_more = "0.99.2"
+tokio-pg-mapper = "0.2.0"
+tokio-pg-mapper-derive = "0.2.0"
+tokio-postgres = "0.7.0"
