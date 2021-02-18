@@ -1,0 +1,44 @@
+address = { SOI ~ local ~ "@" ~ domain ~ EOI }
+
+local = @{ dot_atom | quoted_string }
+domain = @{ dot_atom | domain_literal }
+
+printable_us_ascii = { '\u{21}'..'\u{7e}' }
+
+WSP = { " " | "\t" }
+CR = { "\u{0d}" }
+LF = { "\u{0a}" }
+CRLF = { CR~LF }
+FWS = _{ ((WSP* ~ CRLF)? ~ WSP+) }
+DQUOTE = { "\"" }
+quoted_pair = { ("\\" ~ (printable_us_ascii | WSP)) }
+ctext = { !("(" | ")" | "\\") ~ (printable_us_ascii | UTF8_non_ascii) }
+ccontent = { ctext | quoted_pair | comment }
+comment = { "(" ~ (FWS? ~ ccontent)* ~ FWS? ~ ")" }
+CFWS = _{ ((FWS? ~ comment)+ ~ FWS?) | FWS }
+
+atext = { ASCII_ALPHANUMERIC
+  | "!" | "#" |"$" | "%" | "&" | "'" |"*" | "+" |"-" | "/" |"=" | "?" |"^" | "_" |"`" | "{" |"|" | "}" |"~"
+  | UTF8_non_ascii
+}
+
+UTF8_2 = { '\u{80}'..'\u{7FF}' }
+UTF8_3 = { '\u{800}'..'\u{FFFF}' }
+UTF8_4 = { '\u{10000}'..'\u{10FFFF}' }
+UTF8_non_ascii = { UTF8_2 | UTF8_3 | UTF8_4 }
+
+atext_wo_dash = { !("-") ~ atext }
+dot_atom_text = {
+  atext_wo_dash+ ~ (
+    ("." ~ CFWS* ~ dot_atom_text+) |
+    (("-"{2,} ~ dot_atom_text+) | ("-" ~ dot_atom_text+))
+  )*
+}
+dot_atom = { WSP? ~ dot_atom_text ~ WSP? }
+
+dtext = { !("[" | "]" | "\\") ~ (printable_us_ascii | UTF8_non_ascii ) }
+domain_literal = { CFWS? ~ "[" ~ (FWS? ~ dtext)* ~ FWS? ~ "]" ~ CFWS? }
+
+qtext = { !(DQUOTE | "\\" ) ~ (printable_us_ascii | UTF8_non_ascii ) }
+qcontent = { qtext | quoted_pair }
+quoted_string = { CFWS? ~ DQUOTE ~ (FWS? ~ qcontent)* ~ FWS? ~ DQUOTE ~ CFWS? }

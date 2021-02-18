@@ -2,6 +2,7 @@ mod config;
 mod data;
 mod error;
 mod controller;
+mod util;
 
 use crate::config::Config;
 use actix_web::{HttpServer, App, middleware};
