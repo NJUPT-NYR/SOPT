@@ -6,7 +6,7 @@ use crate::error::Error;
 
 type UserRet = Result<User, Error>;
 
-#[derive(Deserialize, Serialize, PostgresMapper)]
+#[derive(Deserialize, Serialize, PostgresMapper, Debug)]
 #[pg_mapper(table = "users")]
 pub struct User {
     pub email: String,
@@ -34,4 +34,3 @@ pub async fn add_user(client: &Client, user: User) -> UserRet {
         .pop()
         .ok_or(Error::NotFound)
 }
-

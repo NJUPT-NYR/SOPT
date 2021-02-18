@@ -28,9 +28,7 @@ impl ResponseError for Error {
             Error::PoolError(ref err) => {
                 HttpResponse::InternalServerError().body(err.to_string())
             },
-            _ => HttpResponse::InternalServerError().finish(),
+            _ => HttpResponse::InternalServerError().body("unexpected error"),
         }
     }
 }
-
-
