@@ -5,9 +5,7 @@ A light-weighted yet powerful PT framework.
 
 1. Rename `.env.example` to `.env` and set your postgres name and password.
 
-2. (Optional)Change all `sopt` in `sql/schema.sql` with what you like.
-
-3. Run following commands in terminal:
+2. Run following commands in terminal:
 
 ```bash
 createdb sopt

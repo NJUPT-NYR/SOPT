@@ -4,8 +4,8 @@ use actix_web::*;
 use deadpool_postgres::{Client, Pool};
 use serde::Deserialize;
 use crate::controller::HttpResult;
-use crate::util::parse_email;
-use actix_web::web::Data;
+use crate::util::{parse_email, generate_passkey};
+use crate::data::user::User;
 
 #[cfg(email_restriction = "on")]
 static ALLOWED_DOMAIN: [&str; 3] = [
@@ -19,11 +19,20 @@ struct Validation {
     pub password: String,
 }
 
+#[derive(Deserialize, Debug)]
+pub struct Registry {
+    pub email: String,
+    pub username: String,
+    pub password: String,
+    #[cfg(invitation = "on")]
+    pub invite_code: Option<String>,
+}
+
 // TODO: more elegance on validating
 // TODO: like split into different pages
 #[post("/add_user")]
 async fn add_user(
-    data: web::Json<user_model::User>,
+    data: web::Json<Registry>,
     db_pool: web::Data<Pool>,
 ) -> HttpResult {
     let user = data.into_inner();
@@ -41,11 +50,6 @@ async fn add_user(
         None => return Ok(HttpResponse::Ok().body("invalid email address"))
     };
 
-    // Is it necessary? No panic now though
-    if user.password.is_none() {
-        return Ok(HttpResponse::Ok().body("must have a password"))
-    }
-
     if !user_model::find_user_by_username(&client, &user.username)
         .await?
         .is_empty() {
@@ -56,7 +60,14 @@ async fn add_user(
         return Ok(HttpResponse::Ok().body("email already registered"))
     }
 
-    let new_user = user_model::add_user(&client, user).await?;
+    let passkey = generate_passkey(&user.username);
+    let new_user = user_model::add_user(&client,
+                                        User::new(
+                                            user.email,
+                                            user.username,
+                                            user.password,
+                                            passkey,
+                                        )).await?;
     Ok(HttpResponse::Ok().json(&new_user))
 }
 
@@ -69,6 +80,7 @@ async fn check_identity(
 ) -> HttpResult {
     let password = data.into_inner();
     let client: Client = db_pool.get().await.map_err(Error::PoolError)?;
+
     todo!()
 }
 
