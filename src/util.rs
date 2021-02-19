@@ -2,7 +2,7 @@ use pest::Parser;
 use pest_derive::*;
 use sha2::{Sha256, Digest};
 use std::time::{SystemTime, UNIX_EPOCH};
-use rand::RngCore;
+use rand::{RngCore, Rng};
 use std::convert::TryInto;
 
 pub fn get_timestamp() -> u64 {
@@ -45,4 +45,15 @@ pub fn generate_passkey(username: &str) -> String {
 
     let res: [u8; 32] = hasher.finalize().as_slice().try_into().expect("Damn!");
     String::from_utf8_lossy(res.as_slice()).into_owned()
+}
+
+pub fn hash_password(password: &str) -> String {
+    let salt: [u8; 20] = rand::thread_rng().gen();
+    let config = argon2::Config::default();
+
+    argon2::hash_encoded(password.as_ref(), &salt, &config).expect("Damn!")
+}
+
+pub fn verify_password(password: &str, hash: &str) -> bool {
+    argon2::verify_encoded(hash, password.as_ref()).expect("Damn!")
 }

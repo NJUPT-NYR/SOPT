@@ -1,4 +1,5 @@
 pub mod user;
+// pub mod torrent;
 
 use crate::error::Error;
 use tokio_postgres::Row;

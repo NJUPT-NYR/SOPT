@@ -17,7 +17,7 @@ cargo run
 
 - [ ] User
     - [x] Register
-    - [ ] Login
+    - [x] Login
     - [ ] Information update
     - [ ] Invite
     - [ ] Rank
@@ -38,3 +38,8 @@ cargo run
     - [ ] IP limitation
     - [ ] Client Ban
     - [ ] Monitor
+  
+## Known issues
+
+1. Now it still contains many ad-hoc http responses,
+especially in error-handling case.

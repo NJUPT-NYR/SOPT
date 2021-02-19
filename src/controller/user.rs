@@ -4,8 +4,9 @@ use actix_web::*;
 use deadpool_postgres::{Client, Pool};
 use serde::Deserialize;
 use crate::controller::HttpResult;
-use crate::util::{parse_email, generate_passkey};
+use crate::util::*;
 use crate::data::user::User;
+use actix_identity::Identity;
 
 #[cfg(email_restriction = "on")]
 static ALLOWED_DOMAIN: [&str; 3] = [
@@ -20,12 +21,18 @@ struct Validation {
 }
 
 #[derive(Deserialize, Debug)]
-pub struct Registry {
+struct Registry {
     pub email: String,
     pub username: String,
     pub password: String,
     #[cfg(invitation = "on")]
     pub invite_code: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
+struct Login {
+    pub username: String,
+    pub password: String,
 }
 
 // TODO: more elegance on validating
@@ -65,44 +72,102 @@ async fn add_user(
                                         User::new(
                                             user.email,
                                             user.username,
-                                            user.password,
+                                            hash_password(&user.password),
                                             passkey,
                                         )).await?;
     Ok(HttpResponse::Ok().json(&new_user))
 }
 
+#[post("/login")]
+async fn login(
+    data: web::Json<Login>,
+    id: actix_identity::Identity,
+    db_pool: web::Data<Pool>,
+) -> HttpResult {
+    let user = data.into_inner();
+    let client: Client = db_pool.get().await.map_err(Error::PoolError)?;
+
+    let validation = user_model::find_user_by_username_full(&client, &user.username)
+        .await?.pop();
+    match validation {
+        Some(val) => {
+            if !verify_password(&user.password, &val.password.unwrap()) {
+                return Ok(HttpResponse::Ok().body("wrong password"))
+            }
+            id.remember(user.username);
+            Ok(HttpResponse::Ok().finish())
+        },
+        None => Ok(HttpResponse::Ok().body("user not registered")),
+    }
+}
+
+#[get("/logout")]
+async fn logout(id: Identity) -> HttpResult {
+    id.forget();
+    Ok(HttpResponse::Ok().finish())
+}
+
 /// Here comes danger action, so a validation must be performed.
 /// By store the identity in redis, we are able to allow user
 /// to perform other operations like a charm.
+#[post("/check_identity")]
 async fn check_identity(
     data: web::Json<Validation>,
+    id: Identity,
     db_pool: web::Data<Pool>,
 ) -> HttpResult {
-    let password = data.into_inner();
+    let password = data.into_inner().password;
     let client: Client = db_pool.get().await.map_err(Error::PoolError)?;
 
-    todo!()
+    let validation =
+        user_model::find_user_by_username_full(&client, &id.identity().ok_or(Error::CookieError)?)
+        .await?.pop().unwrap();
+
+    if verify_password(&password, &validation.password.unwrap()) {
+        Ok(HttpResponse::Ok().finish())
+    } else {
+        Ok(HttpResponse::Ok().body("wrong password"))
+    }
 }
 
+#[post("/reset_password")]
 async fn reset_password(
     data: web::Json<Validation>,
+    id: Identity,
     db_pool: web::Data<Pool>,
 ) -> HttpResult {
-    let password = data.into_inner();
-    let client: Client = db_pool.get().await.map_err(Error::PoolError)?;
+    // TODO: check via redis
 
-    todo!()
+    let new_pass = hash_password(&data.into_inner().password);
+    let client: Client = db_pool.get().await.map_err(Error::PoolError)?;
+    let username = id.identity().ok_or(Error::CookieError)?;
+
+    let ret_user =
+        user_model::update_password_by_username(&client, &username, &new_pass)
+            .await?;
+    // id.forget();
+    Ok(HttpResponse::Ok().json(&ret_user))
 }
 
+#[get("/reset_passkey")]
 async fn reset_passkey(
+    id: Identity,
     db_pool: web::Data<Pool>,
 ) -> HttpResult {
     let client: Client = db_pool.get().await.map_err(Error::PoolError)?;
+    let username = id.identity().ok_or(Error::CookieError)?;
 
-    todo!()
+    let ret_user =
+        user_model::update_passkey_by_username(&client, &username, &generate_passkey(&username))
+            .await?;
+    Ok(HttpResponse::Ok().json(&ret_user))
 }
 
 pub fn user_service() -> Scope {
     web::scope("/user")
         .service(add_user)
+        .service(login)
+        .service(logout)
+        .service(web::scope("/auth")
+            .service(check_identity))
 }

@@ -8,6 +8,7 @@ use derive_more::From;
 #[derive(From, Debug)]
 pub enum Error {
     NotFound,
+    CookieError,
     PGMError(PGMError),
     PGError(PGError),
     PoolError(PoolError),
@@ -28,6 +29,7 @@ impl ResponseError for Error {
             Error::PoolError(ref err) => {
                 HttpResponse::InternalServerError().body(err.to_string())
             },
+            Error::CookieError => HttpResponse::Ok().body("not login yet"),
             _ => HttpResponse::InternalServerError().body("unexpected error"),
         }
     }

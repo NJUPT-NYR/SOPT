@@ -40,6 +40,16 @@ fn get_general_ret_user(row: &Row) -> User {
     }
 }
 
+fn get_full_ret_user(row: &Row) -> User {
+    User {
+        id: row.get(0),
+        email: row.get(1),
+        username: row.get(2),
+        password: Some(row.get(3)),
+        passkey: Some(row.get(4)),
+    }
+}
+
 pub async fn add_user(client: &Client, user: User) -> UserRet {
     exec_cmd_and_map(
         &client,
@@ -69,6 +79,18 @@ pub async fn find_user_by_username(client: &Client, username: &str) -> UserVecRe
         .await?)
 }
 
+pub async fn find_user_by_username_full(client: &Client, username: &str) -> UserVecRet {
+    Ok(exec_cmd_and_map(
+        &client,
+        &"SELECT * FROM users \
+        WHERE username = $1;",
+        &[
+            &username,
+        ],
+        get_full_ret_user)
+        .await?)
+}
+
 pub async fn find_user_by_email(client: &Client, email: &str) -> UserVecRet {
     Ok(exec_cmd_and_map(
         &client,
@@ -79,4 +101,34 @@ pub async fn find_user_by_email(client: &Client, email: &str) -> UserVecRet {
         ],
         get_general_ret_user)
         .await?)
+}
+
+pub async fn update_password_by_username(client: &Client, username: &str, new_pass: &str) -> UserRet {
+    exec_cmd_and_map(
+        &client,
+        &"UPDATE users SET password = $1 \
+         WHERE username = $2 RETURNING *;",
+        &[
+            &new_pass,
+            &username,
+        ],
+        get_full_ret_user)
+        .await?
+        .pop()
+        .ok_or(Error::NotFound)
+}
+
+pub async fn update_passkey_by_username(client: &Client, username: &str, new_key: &str) -> UserRet {
+    exec_cmd_and_map(
+        &client,
+        &"UPDATE users SET passkey = $1 \
+         WHERE username = $2 RETURNING *;",
+        &[
+            &new_key,
+            &username,
+        ],
+        get_full_ret_user)
+        .await?
+        .pop()
+        .ok_or(Error::NotFound)
 }
