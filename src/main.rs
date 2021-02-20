@@ -1,5 +1,3 @@
-#![feature(array_methods)]
-
 mod config;
 mod data;
 mod error;

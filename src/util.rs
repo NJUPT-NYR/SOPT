@@ -43,8 +43,8 @@ pub fn generate_passkey(username: &str) -> String {
         format!("{}{}{}", username, get_timestamp(), rng.next_u64())
     );
 
-    let res: [u8; 32] = hasher.finalize().as_slice().try_into().expect("Damn!");
-    String::from_utf8_lossy(res.as_slice()).into_owned()
+    let res: Vec<u8> = hasher.finalize().as_slice().try_into().expect("Damn!");
+    String::from_utf8_lossy(&*res).into_owned()
 }
 
 pub fn hash_password(password: &str) -> String {
