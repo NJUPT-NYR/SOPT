@@ -1,17 +1,16 @@
 use actix_web::{HttpResponse, ResponseError};
 use deadpool_postgres::PoolError;
-use tokio_pg_mapper::Error as PGMError;
 use tokio_postgres::error::Error as PGError;
 use std::fmt::{Display, Formatter};
 use derive_more::From;
 
 #[derive(From, Debug)]
 pub enum Error {
-    NotFound,
     CookieError,
-    PGMError(PGMError),
+    OtherError,
     PGError(PGError),
     PoolError(PoolError),
+    RedisError(deadpool_redis::PoolError),
 }
 
 impl Display for Error {
@@ -25,8 +24,11 @@ impl std::error::Error for Error {}
 impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse {
         match *self {
-            Error::NotFound => HttpResponse::NotFound().finish(),
             Error::PoolError(ref err) => {
+                // TODO: add check for time error
+                HttpResponse::InternalServerError().body(err.to_string())
+            },
+            Error::RedisError(ref err) => {
                 HttpResponse::InternalServerError().body(err.to_string())
             },
             Error::CookieError => HttpResponse::Ok().body("not login yet"),

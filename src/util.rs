@@ -1,11 +1,10 @@
 use pest::Parser;
 use pest_derive::*;
-use sha2::{Sha256, Digest};
-use std::time::{SystemTime, UNIX_EPOCH};
 use rand::{RngCore, Rng};
-use std::convert::TryInto;
 
 pub fn get_timestamp() -> u64 {
+    use std::time::{SystemTime, UNIX_EPOCH};
+
     let start = SystemTime::now();
     let since_the_epoch = start
         .duration_since(UNIX_EPOCH)
@@ -37,6 +36,9 @@ pub fn parse_email(input: &str) -> Option<EmailAddress> {
 }
 
 pub fn generate_passkey(username: &str) -> String {
+    use sha2::{Sha256, Digest};
+    use std::convert::TryInto;
+
     let mut hasher = Sha256::new();
     let mut rng = rand::thread_rng();
     hasher.update(

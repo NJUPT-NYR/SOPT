@@ -1,15 +1,13 @@
 use serde::{Deserialize, Serialize};
-use tokio_pg_mapper_derive::PostgresMapper;
 use deadpool_postgres::Client;
 use tokio_postgres::Row;
 use crate::error::Error;
-use crate::data::exec_cmd_and_map;
+use super::exec_cmd_and_map;
 
 type UserRet = Result<User, Error>;
 type UserVecRet = Result<Vec<User>, Error>;
 
-#[derive(Deserialize, Serialize, PostgresMapper, Debug)]
-#[pg_mapper(table = "users")]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct User {
     pub id: i64,
     pub email: String,
@@ -64,7 +62,7 @@ pub async fn add_user(client: &Client, user: User) -> UserRet {
         get_general_ret_user)
         .await?
         .pop()
-        .ok_or(Error::NotFound)
+        .ok_or(Error::OtherError)
 }
 
 pub async fn find_user_by_username(client: &Client, username: &str) -> UserVecRet {
@@ -115,7 +113,7 @@ pub async fn update_password_by_username(client: &Client, username: &str, new_pa
         get_full_ret_user)
         .await?
         .pop()
-        .ok_or(Error::NotFound)
+        .ok_or(Error::OtherError)
 }
 
 pub async fn update_passkey_by_username(client: &Client, username: &str, new_key: &str) -> UserRet {
@@ -130,5 +128,5 @@ pub async fn update_passkey_by_username(client: &Client, username: &str, new_key
         get_full_ret_user)
         .await?
         .pop()
-        .ok_or(Error::NotFound)
+        .ok_or(Error::OtherError)
 }

@@ -5,23 +5,30 @@ authors = ["Brethland Yang <brethland@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-# due to tokio issues
+# actix stuff
 #actix-web = "4.0.0-beta.3"
 actix-web = "3.3.2"
 actix-identity = "*"
+
+# low version of tokio
 deadpool-postgres = "0.5.0"
+deadpool-redis = "0.5.0"
+tokio-postgres = "0.5.0"
+
+#serde related
 serde = { version = "^1.0", features = ["derive"] }
+serde_bencode = "*"
+serde_bytes = "*"
+
+# utils
 dotenv = "0.15.0"
 config = "0.10.1"
 derive_more = "0.99.11"
-tokio-pg-mapper = "0.1.0"
-tokio-pg-mapper-derive = "0.1.0"
-tokio-postgres = "0.5.0"
 env_logger = "*"
 pest = "^2.1.3"
 pest_derive = "^2.1.0"
+
+# crypto related
 sha2 = "^0.9"
 rand = "0.8.3"
-serde_bencode = "*"
-serde_bytes = "*"
 rust-argon2 = "0.8"

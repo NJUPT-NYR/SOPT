@@ -5,6 +5,7 @@ use serde::Deserialize;
 pub struct Config {
     pub server_addr: String,
     pub pg: deadpool_postgres::Config,
+    pub redis: deadpool_redis::Config,
 }
 
 impl Config {

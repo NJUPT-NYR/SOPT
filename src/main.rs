@@ -13,13 +13,14 @@ use rand::Rng;
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=debug");
-    dotenv().ok();
     env_logger::init();
+    dotenv().ok();
     println!("==========SOPT is running==========");
 
     let cfg = Config::from_env().unwrap();
     // TODO: gate for tls
     let pool = cfg.pg.create_pool(tokio_postgres::NoTls).unwrap();
+    let redis_pool = cfg.redis.create_pool().unwrap();
     let cookie_key: [u8; 32] = rand::thread_rng().gen();
 
     HttpServer::new(move ||
@@ -32,6 +33,7 @@ async fn main() -> std::io::Result<()> {
                     .secure(false)
             ))
             .data(pool.clone())
+            .data(redis_pool.clone())
             .service(controller::api_service())
     ).workers(4)
         .bind(cfg.server_addr)?
