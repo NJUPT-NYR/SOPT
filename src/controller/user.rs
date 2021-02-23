@@ -6,6 +6,7 @@ use serde::Deserialize;
 use super::*;
 use crate::util::*;
 use crate::data::user as user_model;
+use crate::data::invitation as invitation_model;
 use crate::error::Error;
 
 #[cfg(email_restriction = "on")]
@@ -25,7 +26,6 @@ struct Registry {
     pub email: String,
     pub username: String,
     pub password: String,
-    #[cfg(invitation = "on")]
     pub invite_code: Option<String>,
 }
 
@@ -35,27 +35,40 @@ struct Login {
     pub password: String,
 }
 
-// TODO: more elegance on validating
-// TODO: like split into different pages
 #[post("/add_user")]
 async fn add_user(
     data: web::Json<Registry>,
     db_pool: web::Data<deadpool_postgres::Pool>,
 ) -> HttpResult {
-    let user = data.into_inner();
+    let user: Registry = data.into_inner();
     let client: Client = db_pool.get().await.map_err(Error::PoolError)?;
-
-    // TODO: add user via invite code
+    // not so elegant
+    let mut allowed = false;
+    let mut code: Option<String> = None;
 
     match parse_email(user.email.as_str()) {
         Some(_email) => {
-            #[cfg(email_restriction = "on")]
-            if ALLOWED_DOMAIN.iter().find(|x| x == &&_email.domain.as_str()).is_none() {
-                return Ok(HttpResponse::Ok().body("email address not allowed"))
+            if let None = user.invite_code {
+                #[cfg(email_restriction = "on")]
+                if ALLOWED_DOMAIN.iter().find(|x| x == &&_email.domain.as_str()).is_some() {
+                    allowed = true;
+                }
             }
         },
         None => return Ok(HttpResponse::Ok().body("invalid email address"))
     };
+
+    if let Some(str) = user.invite_code {
+        let mut ret = invitation_model::find_invitation_by_code(&client, &str).await?;
+        if !ret.is_empty() {
+            code = Some(ret.pop().unwrap().code);
+            allowed = true;
+        }
+    }
+
+    if !allowed {
+        return Ok(HttpResponse::Ok().body("not allowed to register"))
+    }
 
     if !user_model::find_user_by_username(&client, &user.username)
         .await?
@@ -68,13 +81,18 @@ async fn add_user(
     }
 
     let passkey = generate_passkey(&user.username);
-    let new_user = user_model::add_user(&client,
-                                        user_model::User::new(
-                                            user.email,
-                                            user.username,
-                                            hash_password(&user.password),
-                                            passkey,
-                                        )).await?;
+    let new_user = user_model::add_user(
+        &client,
+        user_model::User::new(
+            user.email,
+            user.username,
+            hash_password(&user.password),
+            passkey,
+        )).await?;
+    if code.is_some() {
+        invitation_model::update_invitation_usage(&client, &code.unwrap()).await?;
+    }
+
     Ok(HttpResponse::Ok().json(&new_user))
 }
 
@@ -84,7 +102,7 @@ async fn login(
     id: Identity,
     db_pool: web::Data<deadpool_postgres::Pool>,
 ) -> HttpResult {
-    let user = data.into_inner();
+    let user: Login = data.into_inner();
     let client: Client = db_pool.get().await.map_err(Error::PoolError)?;
 
     let validation = user_model::find_user_by_username_full(&client, &user.username)
@@ -118,7 +136,7 @@ async fn check_identity(
     db_pool: web::Data<deadpool_postgres::Pool>,
     redis_pool: web::Data<deadpool_redis::Pool>,
 ) -> HttpResult {
-    let password = data.into_inner().password;
+    let password: String = data.into_inner().password;
     let client: Client = db_pool.get().await.map_err(Error::PoolError)?;
     let username = id.identity().ok_or(Error::CookieError)?;
     let mut conn = redis_pool.get().await.map_err(Error::RedisError)?;

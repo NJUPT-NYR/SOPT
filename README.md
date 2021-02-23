@@ -19,7 +19,7 @@ cargo run
     - [x] Register
     - [x] Login
     - [ ] Information update
-    - [ ] Invite
+    - [x] Invite
     - [ ] Rank
     
 - [ ] Torrent
@@ -43,3 +43,7 @@ cargo run
 
 1. Now it still contains many ad-hoc http responses,
 especially in error-handling case.
+   
+2. Support for TLS is needed.
+
+3. Diesel for migrations management.

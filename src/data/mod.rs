@@ -1,4 +1,5 @@
 pub mod user;
+pub mod invitation;
 // pub mod torrent;
 
 use crate::error::Error;

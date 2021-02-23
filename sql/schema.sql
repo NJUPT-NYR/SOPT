@@ -7,6 +7,16 @@ CREATE TABLE users (
     UNIQUE (username, email, passkey)
 );
 
+CREATE TABLE invitations (
+    id BIGSERIAL PRIMARY KEY,
+    sender VARCHAR(50) REFERENCES users(username),
+    code VARCHAR(200) UNIQUE NOT NULL,
+    -- email address
+    send_to VARCHAR(200) NOT NULL,
+    is_used boolean NOT NULL,
+    UNIQUE (code)
+);
+
 -- CREATE TABLE torrents_info (
 --     id BIGSERIAL PRIMARY KEY,
 --     title VARCHAR(255) NOT NULL,
