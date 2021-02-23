@@ -1,5 +1,4 @@
 use actix_web::{HttpResponse, ResponseError};
-use deadpool_postgres::PoolError;
 use tokio_postgres::error::Error as PGError;
 use std::fmt::{Display, Formatter};
 use derive_more::From;
@@ -7,10 +6,10 @@ use derive_more::From;
 #[derive(From, Debug)]
 pub enum Error {
     CookieError,
-    OtherError,
+    OtherError(String),
     PGError(PGError),
-    PoolError(PoolError),
-    RedisError(deadpool_redis::PoolError),
+    PoolError(deadpool_postgres::PoolError),
+    RedisPoolError(deadpool_redis::PoolError),
 }
 
 impl Display for Error {
@@ -25,14 +24,24 @@ impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse {
         match *self {
             Error::PoolError(ref err) => {
-                // TODO: add check for time error
                 HttpResponse::InternalServerError().body(err.to_string())
             },
-            Error::RedisError(ref err) => {
+            Error::RedisPoolError(ref err) => {
                 HttpResponse::InternalServerError().body(err.to_string())
+            },
+            Error::PGError(ref err) => {
+                HttpResponse::InternalServerError().body(err.to_string())
+            },
+            Error::OtherError(ref err) => {
+                HttpResponse::InternalServerError().body(err)
             },
             Error::CookieError => HttpResponse::Ok().body("not login yet"),
-            _ => HttpResponse::InternalServerError().body("unexpected error"),
         }
     }
+}
+
+pub fn error_string<T>(err: T) -> Error where
+    T: std::error::Error,
+{
+    Error::OtherError(err.to_string())
 }

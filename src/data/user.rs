@@ -62,7 +62,7 @@ pub async fn add_user(client: &Client, user: User) -> UserRet {
         get_general_ret_user)
         .await?
         .pop()
-        .ok_or(Error::OtherError)
+        .ok_or(Error::OtherError("Database inconsistent".to_string()))
 }
 
 pub async fn find_user_by_username(client: &Client, username: &str) -> UserVecRet {
@@ -113,7 +113,7 @@ pub async fn update_password_by_username(client: &Client, username: &str, new_pa
         get_full_ret_user)
         .await?
         .pop()
-        .ok_or(Error::OtherError)
+        .ok_or(Error::OtherError("Database inconsistent".to_string()))
 }
 
 pub async fn update_passkey_by_username(client: &Client, username: &str, new_key: &str) -> UserRet {
@@ -128,5 +128,5 @@ pub async fn update_passkey_by_username(client: &Client, username: &str, new_key
         get_full_ret_user)
         .await?
         .pop()
-        .ok_or(Error::OtherError)
+        .ok_or(Error::OtherError("Database inconsistent".to_string()))
 }

@@ -15,7 +15,7 @@ pub async fn exec_cmd_and_map<B, F>(
 ) -> Result<Vec<B>, Error> where
     F: FnMut(&Row) -> B,
 {
-    let statement = client.prepare(query).await.unwrap();
+    let statement = client.prepare(query).await?;
     Ok(client.query(
         &statement,
         params

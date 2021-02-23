@@ -1,7 +1,7 @@
 use pest::Parser;
 use pest_derive::*;
 use rand::{RngCore, Rng, thread_rng};
-use crate::error::Error;
+use crate::error::{Error, error_string};
 
 pub fn get_timestamp() -> u64 {
     use std::time::{SystemTime, UNIX_EPOCH};
@@ -36,7 +36,7 @@ pub fn parse_email(input: &str) -> Option<EmailAddress> {
     }
 }
 
-pub fn generate_passkey(username: &str) -> String {
+pub fn generate_passkey(username: &str) -> Result<String, Error> {
     use sha2::{Sha256, Digest};
     use std::convert::TryInto;
 
@@ -46,19 +46,19 @@ pub fn generate_passkey(username: &str) -> String {
         format!("{}{}{}", username, get_timestamp(), rng.next_u64())
     );
 
-    let res: Vec<u8> = hasher.finalize().as_slice().try_into().expect("Damn!");
-    String::from_utf8_lossy(&*res).into_owned()
+    let res: Vec<u8> = hasher.finalize().as_slice().try_into().map_err(error_string)?;
+    Ok(String::from_utf8_lossy(&*res).into_owned())
 }
 
-pub fn hash_password(password: &str) -> String {
+pub fn hash_password(password: &str) -> Result<String, Error> {
     let salt: [u8; 20] = rand::thread_rng().gen();
     let config = argon2::Config::default();
 
-    argon2::hash_encoded(password.as_ref(), &salt, &config).expect("Damn!")
+    argon2::hash_encoded(password.as_ref(), &salt, &config).map_err(error_string)
 }
 
-pub fn verify_password(password: &str, hash: &str) -> bool {
-    argon2::verify_encoded(hash, password.as_ref()).expect("Damn!")
+pub fn verify_password(password: &str, hash: &str) -> Result<bool, Error> {
+    argon2::verify_encoded(hash, password.as_ref()).map_err(error_string)
 }
 
 pub fn send_mail(receiver: &str, address: &str, from: &str, body: String) -> Result<(), Error> {
@@ -71,10 +71,10 @@ pub fn send_mail(receiver: &str, address: &str, from: &str, body: String) -> Res
         .to(format!("{} <{}>", receiver, address).parse().unwrap())
         .subject("Invitation Code")
         .body(body)
-        .unwrap();
+        .map_err(error_string)?;
 
     let client = SmtpTransport::relay("smtp.gmail.com")
-        .unwrap()
+        .map_err(error_string)?
         .credentials(Credentials::new(
             "brethland@gmail.com".to_string(),
             "fake_pass".to_string(),
@@ -83,11 +83,11 @@ pub fn send_mail(receiver: &str, address: &str, from: &str, body: String) -> Res
 
     let mut retry_count = 5;
 
-    while let Err(_) = client.send(&mail) {
+    while let Err(err) = client.send(&mail) {
         retry_count = retry_count - 1;
         sleep(std::time::Duration::from_secs(1));
         if retry_count == 0 {
-            return Err(Error::OtherError);
+            return Err(Error::OtherError(err.to_string()));
         }
     }
 

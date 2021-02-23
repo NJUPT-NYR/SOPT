@@ -40,10 +40,7 @@ cargo run
     - [ ] Monitor
   
 ## Known issues
-
-1. Now it still contains many ad-hoc http responses,
-especially in error-handling case.
    
-2. Support for TLS is needed.
+1. Support for TLS is needed.
 
-3. Diesel for migrations management.
+2. Diesel for migrations management.

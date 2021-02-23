@@ -1,7 +1,8 @@
 mod user;
 mod invitation;
 
-use actix_web::{HttpResponse, Error, Scope, web};
+use actix_web::{HttpResponse, Scope, web};
+use crate::error::Error;
 
 pub type HttpResult = Result<HttpResponse, Error>;
 

@@ -7,7 +7,7 @@ use super::*;
 use crate::util::*;
 use crate::data::user as user_model;
 use crate::data::invitation as invitation_model;
-use crate::error::Error;
+use crate::error::{Error, error_string};
 
 #[cfg(email_restriction = "on")]
 static ALLOWED_DOMAIN: [&str; 3] = [
@@ -80,13 +80,13 @@ async fn add_user(
         return Ok(HttpResponse::Ok().body("email already registered"))
     }
 
-    let passkey = generate_passkey(&user.username);
+    let passkey = generate_passkey(&user.username)?;
     let new_user = user_model::add_user(
         &client,
         user_model::User::new(
             user.email,
             user.username,
-            hash_password(&user.password),
+            hash_password(&user.password)?,
             passkey,
         )).await?;
     if code.is_some() {
@@ -109,7 +109,7 @@ async fn login(
         .await?.pop();
     match validation {
         Some(val) => {
-            if !verify_password(&user.password, &val.password.unwrap()) {
+            if !verify_password(&user.password, &val.password.unwrap())? {
                 return Ok(HttpResponse::Ok().body("wrong password"))
             }
             id.remember(user.username);
@@ -139,16 +139,16 @@ async fn check_identity(
     let password: String = data.into_inner().password;
     let client: Client = db_pool.get().await.map_err(Error::PoolError)?;
     let username = id.identity().ok_or(Error::CookieError)?;
-    let mut conn = redis_pool.get().await.map_err(Error::RedisError)?;
+    let mut conn = redis_pool.get().await.map_err(Error::RedisPoolError)?;
 
-    let validation =
-        user_model::find_user_by_username_full(&client, &username)
-        .await?.pop().unwrap();
+    let validation = user_model::find_user_by_username_full(&client, &username)
+        .await?.pop().expect("Someone hacked our cookie!");
 
-    if verify_password(&password, &validation.password.unwrap()) {
+    if verify_password(&password, &validation.password.unwrap())? {
         let mut pipe = Pipeline::new();
         pipe.set_ex(&username, "authed", 300);
-        pipe.execute_async(&mut conn).await.unwrap();
+        pipe.execute_async(&mut conn)
+            .await.map_err(error_string)?;
         Ok(HttpResponse::Ok().finish())
     } else {
         Ok(HttpResponse::Ok().body("wrong password"))
@@ -162,20 +162,20 @@ async fn reset_password(
     db_pool: web::Data<deadpool_postgres::Pool>,
     redis_pool: web::Data<deadpool_redis::Pool>,
 ) -> HttpResult {
-    let new_pass = hash_password(&data.into_inner().password);
+    let new_pass = hash_password(&data.into_inner().password)?;
     let client: Client = db_pool.get().await.map_err(Error::PoolError)?;
     let username = id.identity().ok_or(Error::CookieError)?;
-    let mut conn = redis_pool.get().await.map_err(Error::RedisError)?;
+    let mut conn = redis_pool.get().await.map_err(Error::RedisPoolError)?;
 
     let mut pipe = Pipeline::new();
     pipe.get(&username);
-    let resp: String = pipe.query_async(&mut conn).await.unwrap();
+    let resp: String = pipe.query_async(&mut conn)
+        .await.map_err(error_string)?;
     if resp == "nil" {
         return Ok(HttpResponse::Ok().body("not authed yet"));
     }
 
-    let ret_user =
-        user_model::update_password_by_username(&client, &username, &new_pass)
+    let ret_user = user_model::update_password_by_username(&client, &username, &new_pass)
             .await?;
     Ok(HttpResponse::Ok().json(&ret_user))
 }
@@ -188,17 +188,17 @@ async fn reset_passkey(
 ) -> HttpResult {
     let client: Client = db_pool.get().await.map_err(Error::PoolError)?;
     let username = id.identity().ok_or(Error::CookieError)?;
-    let mut conn = redis_pool.get().await.map_err(Error::RedisError)?;
+    let mut conn = redis_pool.get().await.map_err(Error::RedisPoolError)?;
 
     let mut pipe = Pipeline::new();
     pipe.get(&username);
-    let resp: String = pipe.query_async(&mut conn).await.unwrap();
+    let resp: String = pipe.query_async(&mut conn)
+        .await.map_err(error_string)?;
     if resp == "nil" {
         return Ok(HttpResponse::Ok().body("not authed yet"));
     }
 
-    let ret_user =
-        user_model::update_passkey_by_username(&client, &username, &generate_passkey(&username))
+    let ret_user = user_model::update_passkey_by_username(&client, &username, &generate_passkey(&username)?)
             .await?;
     Ok(HttpResponse::Ok().json(&ret_user))
 }

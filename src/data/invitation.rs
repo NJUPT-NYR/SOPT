@@ -52,7 +52,7 @@ pub async fn add_invitation_code(client: &Client, code: InvitationCode) -> Invit
         get_general_ret_invitation)
         .await?
         .pop()
-        .ok_or(Error::OtherError)
+        .ok_or(Error::OtherError("Database inconsistent".to_string()))
 }
 
 pub async fn find_invitation_by_user(client: &Client, username: &str) -> InviteVecRet {
@@ -90,5 +90,5 @@ pub async fn update_invitation_usage(client: &Client, code: &str) -> InviteRet {
         get_general_ret_invitation)
         .await?
         .pop()
-        .ok_or(Error::OtherError)
+        .ok_or(Error::OtherError("Database inconsistent".to_string()))
 }
