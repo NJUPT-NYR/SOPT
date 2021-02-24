@@ -9,7 +9,8 @@ A light-weighted yet powerful PT framework.
 
 ```bash
 createdb sopt
-psql -f sql/schema.sql sopt
+cargo install sqlx-cli
+sqlx migrate run
 cargo run
 ```
 
@@ -42,5 +43,3 @@ cargo run
 ## Known issues
    
 1. Support for TLS is needed.
-
-2. Diesel for migrations management.

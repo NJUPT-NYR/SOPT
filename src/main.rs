@@ -7,7 +7,6 @@ mod util;
 use crate::config::Config;
 use actix_web::{HttpServer, App, middleware};
 use actix_identity::{IdentityService, CookieIdentityPolicy};
-use sqlx::postgres::PgPoolOptions;
 use dotenv::dotenv;
 use rand::Rng;
 
@@ -16,16 +15,13 @@ async fn main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=debug");
     env_logger::init();
     dotenv().ok();
-    println!("==========SOPT is running==========");
 
     let cfg = Config::from_env().unwrap();
-    let pool = PgPoolOptions::new()
-        .max_connections(cfg.pg.max_connections)
-        .connect(&cfg.pg.to_address())
-        .await
-        .expect("unable to connect to database, aborting...");
+    let pool = sqlx::PgPool::connect(&cfg.database_url)
+        .await.expect("unable to connect to database");
     let redis_pool = cfg.redis.create_pool().unwrap();
     let cookie_key: [u8; 32] = rand::thread_rng().gen();
+    println!("==========SOPT is running==========");
 
     HttpServer::new(move ||
         App::new()

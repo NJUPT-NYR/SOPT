@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use super::*;
 use crate::error::Error;
 
 type UserRet = Result<User, Error>;
@@ -27,7 +26,7 @@ impl User {
 }
 
 pub async fn add_user(client: &sqlx::PgPool, user: User) -> UserRet {
-    sqlx::query_as!(
+    Ok(sqlx::query_as!(
         User,
         "INSERT INTO users(email, username, password, passkey) \
         VALUES ($1, $2, $3, $4) RETURNING *;",
@@ -36,10 +35,8 @@ pub async fn add_user(client: &sqlx::PgPool, user: User) -> UserRet {
         user.password,
         user.passkey
         )
-        .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::OtherError("Database inconsistent".to_string()))
+        .fetch_one(client)
+        .await?)
 }
 
 pub async fn find_user_by_username(client: &sqlx::PgPool, username: &str) -> UserVecRet {
@@ -76,29 +73,25 @@ pub async fn find_user_by_email(client: &sqlx::PgPool, email: &str) -> UserVecRe
 }
 
 pub async fn update_password_by_username(client: &sqlx::PgPool, username: &str, new_pass: &str) -> UserRet {
-    sqlx::query_as!(
+    Ok(sqlx::query_as!(
         User,
         "UPDATE users SET password = $1 \
          WHERE username = $2 RETURNING *;",
         new_pass,
         username
         )
-        .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::OtherError("Database inconsistent".to_string()))
+        .fetch_one(client)
+        .await?)
 }
 
 pub async fn update_passkey_by_username(client: &sqlx::PgPool, username: &str, new_key: &str) -> UserRet {
-    sqlx::query_as!(
+    Ok(sqlx::query_as!(
         User,
         "UPDATE users SET passkey = $1 \
          WHERE username = $2 RETURNING *;",
         new_key,
         username
         )
-        .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::OtherError("Database inconsistent".to_string()))
+        .fetch_one(client)
+        .await?)
 }
