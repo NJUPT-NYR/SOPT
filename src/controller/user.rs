@@ -37,7 +37,7 @@ struct Login {
 #[post("/add_user")]
 async fn add_user(
     data: web::Json<Registry>,
-    client: web::Data<PgPool>,
+    client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let user: Registry = data.into_inner();
     // not so elegant
@@ -98,7 +98,7 @@ async fn add_user(
 async fn login(
     data: web::Json<Login>,
     id: Identity,
-    client: web::Data<PgPool>,
+    client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let user: Login = data.into_inner();
 
@@ -130,7 +130,7 @@ async fn logout(id: Identity) -> HttpResult {
 async fn check_identity(
     data: web::Json<Validation>,
     id: Identity,
-    client: web::Data<PgPool>,
+    client: web::Data<sqlx::PgPool>,
     redis_pool: web::Data<deadpool_redis::Pool>,
 ) -> HttpResult {
     let password: String = data.into_inner().password;
@@ -155,7 +155,7 @@ async fn check_identity(
 async fn reset_password(
     data: web::Json<Validation>,
     id: Identity,
-    client: web::Data<PgPool>,
+    client: web::Data<sqlx::PgPool>,
     redis_pool: web::Data<deadpool_redis::Pool>,
 ) -> HttpResult {
     let new_pass = hash_password(&data.into_inner().password)?;
@@ -178,7 +178,7 @@ async fn reset_password(
 #[get("/reset_passkey")]
 async fn reset_passkey(
     id: Identity,
-    client: web::Data<PgPool>,
+    client: web::Data<sqlx::PgPool>,
     redis_pool: web::Data<deadpool_redis::Pool>,
 ) -> HttpResult {
     let username = id.identity().ok_or(Error::CookieError)?;

@@ -17,7 +17,7 @@ struct Message {
 async fn send_invitation(
     data: web::Json<Message>,
     id: Identity,
-    client: web::Data<PgPool>,
+    client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let message: Message = data.into_inner();
     let username = id.identity().ok_or(Error::CookieError)?;
@@ -46,7 +46,7 @@ async fn send_invitation(
 #[get("/list_invitations")]
 async fn list_invitations(
     id: Identity,
-    client: web::Data<PgPool>,
+    client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let username = id.identity().ok_or(Error::CookieError)?;
 

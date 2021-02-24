@@ -26,7 +26,7 @@ impl User {
     }
 }
 
-pub async fn add_user(client: &PgPool, user: User) -> UserRet {
+pub async fn add_user(client: &sqlx::PgPool, user: User) -> UserRet {
     sqlx::query_as!(
         User,
         "INSERT INTO users(email, username, password, passkey) \
@@ -42,7 +42,7 @@ pub async fn add_user(client: &PgPool, user: User) -> UserRet {
         .ok_or(Error::OtherError("Database inconsistent".to_string()))
 }
 
-pub async fn find_user_by_username(client: &PgPool, username: &str) -> UserVecRet {
+pub async fn find_user_by_username(client: &sqlx::PgPool, username: &str) -> UserVecRet {
     Ok(sqlx::query_as!(
         User,
         "SELECT * FROM users \
@@ -53,7 +53,7 @@ pub async fn find_user_by_username(client: &PgPool, username: &str) -> UserVecRe
         .await?)
 }
 
-pub async fn find_user_by_username_full(client: &PgPool, username: &str) -> UserVecRet {
+pub async fn find_user_by_username_full(client: &sqlx::PgPool, username: &str) -> UserVecRet {
     Ok(sqlx::query_as!(
         User,
         "SELECT * FROM users \
@@ -64,7 +64,7 @@ pub async fn find_user_by_username_full(client: &PgPool, username: &str) -> User
         .await?)
 }
 
-pub async fn find_user_by_email(client: &PgPool, email: &str) -> UserVecRet {
+pub async fn find_user_by_email(client: &sqlx::PgPool, email: &str) -> UserVecRet {
     Ok(sqlx::query_as!(
         User,
         "SELECT * FROM users \
@@ -75,7 +75,7 @@ pub async fn find_user_by_email(client: &PgPool, email: &str) -> UserVecRet {
         .await?)
 }
 
-pub async fn update_password_by_username(client: &PgPool, username: &str, new_pass: &str) -> UserRet {
+pub async fn update_password_by_username(client: &sqlx::PgPool, username: &str, new_pass: &str) -> UserRet {
     sqlx::query_as!(
         User,
         "UPDATE users SET password = $1 \
@@ -89,7 +89,7 @@ pub async fn update_password_by_username(client: &PgPool, username: &str, new_pa
         .ok_or(Error::OtherError("Database inconsistent".to_string()))
 }
 
-pub async fn update_passkey_by_username(client: &PgPool, username: &str, new_key: &str) -> UserRet {
+pub async fn update_passkey_by_username(client: &sqlx::PgPool, username: &str, new_key: &str) -> UserRet {
     sqlx::query_as!(
         User,
         "UPDATE users SET passkey = $1 \
