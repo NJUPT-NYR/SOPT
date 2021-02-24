@@ -1,5 +1,6 @@
 use actix_web::{HttpResponse, ResponseError};
-use tokio_postgres::error::Error as PGError;
+use sqlx::Error as DBError;
+use deadpool_redis::PoolError;
 use std::fmt::{Display, Formatter};
 use derive_more::From;
 
@@ -7,9 +8,8 @@ use derive_more::From;
 pub enum Error {
     CookieError,
     OtherError(String),
-    PGError(PGError),
-    PoolError(deadpool_postgres::PoolError),
-    RedisPoolError(deadpool_redis::PoolError),
+    RedisError(PoolError),
+    DBError(DBError),
 }
 
 impl Display for Error {
@@ -23,18 +23,9 @@ impl std::error::Error for Error {}
 impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse {
         match *self {
-            Error::PoolError(ref err) => {
-                HttpResponse::InternalServerError().body(err.to_string())
-            },
-            Error::RedisPoolError(ref err) => {
-                HttpResponse::InternalServerError().body(err.to_string())
-            },
-            Error::PGError(ref err) => {
-                HttpResponse::InternalServerError().body(err.to_string())
-            },
-            Error::OtherError(ref err) => {
-                HttpResponse::InternalServerError().body(err)
-            },
+            Error::RedisError(ref err) => HttpResponse::InternalServerError().body(err.to_string()),
+            Error::OtherError(ref err) => HttpResponse::InternalServerError().body(err),
+            Error::DBError(ref err) => HttpResponse::InternalServerError().body(err.to_string()),
             Error::CookieError => HttpResponse::Ok().body("not login yet"),
         }
     }

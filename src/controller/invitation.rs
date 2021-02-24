@@ -1,6 +1,5 @@
 use actix_web::*;
 use actix_identity::Identity;
-use deadpool_postgres::Client;
 use serde::Deserialize;
 use super::*;
 use crate::util::*;
@@ -18,10 +17,9 @@ struct Message {
 async fn send_invitation(
     data: web::Json<Message>,
     id: Identity,
-    db_pool: web::Data<deadpool_postgres::Pool>,
+    client: web::Data<PgPool>,
 ) -> HttpResult {
     let message: Message = data.into_inner();
-    let client: Client = db_pool.get().await.map_err(Error::PoolError)?;
     let username = id.identity().ok_or(Error::CookieError)?;
 
     let code = generate_invitation_code();
@@ -48,13 +46,11 @@ async fn send_invitation(
 #[get("/list_invitations")]
 async fn list_invitations(
     id: Identity,
-    db_pool: web::Data<deadpool_postgres::Pool>,
+    client: web::Data<PgPool>,
 ) -> HttpResult {
-    let client: Client = db_pool.get().await.map_err(Error::PoolError)?;
     let username = id.identity().ok_or(Error::CookieError)?;
 
-    let ret =
-        invitation_model::find_invitation_by_user(&client, &username)
+    let ret = invitation_model::find_invitation_by_user(&client, &username)
             .await?;
     Ok(HttpResponse::Ok().json(&ret))
 }

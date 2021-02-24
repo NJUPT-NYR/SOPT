@@ -1,6 +1,5 @@
 use actix_web::*;
 use actix_identity::Identity;
-use deadpool_postgres::Client;
 use deadpool_redis::Pipeline;
 use serde::Deserialize;
 use super::*;
@@ -38,10 +37,9 @@ struct Login {
 #[post("/add_user")]
 async fn add_user(
     data: web::Json<Registry>,
-    db_pool: web::Data<deadpool_postgres::Pool>,
+    client: web::Data<PgPool>,
 ) -> HttpResult {
     let user: Registry = data.into_inner();
-    let client: Client = db_pool.get().await.map_err(Error::PoolError)?;
     // not so elegant
     let mut allowed = false;
     let mut code: Option<String> = None;
@@ -100,16 +98,15 @@ async fn add_user(
 async fn login(
     data: web::Json<Login>,
     id: Identity,
-    db_pool: web::Data<deadpool_postgres::Pool>,
+    client: web::Data<PgPool>,
 ) -> HttpResult {
     let user: Login = data.into_inner();
-    let client: Client = db_pool.get().await.map_err(Error::PoolError)?;
 
     let validation = user_model::find_user_by_username_full(&client, &user.username)
         .await?.pop();
     match validation {
         Some(val) => {
-            if !verify_password(&user.password, &val.password.unwrap())? {
+            if !verify_password(&user.password, &val.password)? {
                 return Ok(HttpResponse::Ok().body("wrong password"))
             }
             id.remember(user.username);
@@ -133,18 +130,17 @@ async fn logout(id: Identity) -> HttpResult {
 async fn check_identity(
     data: web::Json<Validation>,
     id: Identity,
-    db_pool: web::Data<deadpool_postgres::Pool>,
+    client: web::Data<PgPool>,
     redis_pool: web::Data<deadpool_redis::Pool>,
 ) -> HttpResult {
     let password: String = data.into_inner().password;
-    let client: Client = db_pool.get().await.map_err(Error::PoolError)?;
     let username = id.identity().ok_or(Error::CookieError)?;
-    let mut conn = redis_pool.get().await.map_err(Error::RedisPoolError)?;
+    let mut conn = redis_pool.get().await.map_err(Error::RedisError)?;
 
     let validation = user_model::find_user_by_username_full(&client, &username)
         .await?.pop().expect("Someone hacked our cookie!");
 
-    if verify_password(&password, &validation.password.unwrap())? {
+    if verify_password(&password, &validation.password)? {
         let mut pipe = Pipeline::new();
         pipe.set_ex(&username, "authed", 300);
         pipe.execute_async(&mut conn)
@@ -159,13 +155,12 @@ async fn check_identity(
 async fn reset_password(
     data: web::Json<Validation>,
     id: Identity,
-    db_pool: web::Data<deadpool_postgres::Pool>,
+    client: web::Data<PgPool>,
     redis_pool: web::Data<deadpool_redis::Pool>,
 ) -> HttpResult {
     let new_pass = hash_password(&data.into_inner().password)?;
-    let client: Client = db_pool.get().await.map_err(Error::PoolError)?;
     let username = id.identity().ok_or(Error::CookieError)?;
-    let mut conn = redis_pool.get().await.map_err(Error::RedisPoolError)?;
+    let mut conn = redis_pool.get().await.map_err(Error::RedisError)?;
 
     let mut pipe = Pipeline::new();
     pipe.get(&username);
@@ -183,12 +178,11 @@ async fn reset_password(
 #[get("/reset_passkey")]
 async fn reset_passkey(
     id: Identity,
-    db_pool: web::Data<deadpool_postgres::Pool>,
+    client: web::Data<PgPool>,
     redis_pool: web::Data<deadpool_redis::Pool>,
 ) -> HttpResult {
-    let client: Client = db_pool.get().await.map_err(Error::PoolError)?;
     let username = id.identity().ok_or(Error::CookieError)?;
-    let mut conn = redis_pool.get().await.map_err(Error::RedisPoolError)?;
+    let mut conn = redis_pool.get().await.map_err(Error::RedisError)?;
 
     let mut pipe = Pipeline::new();
     pipe.get(&username);

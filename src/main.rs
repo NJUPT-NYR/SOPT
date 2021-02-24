@@ -7,6 +7,7 @@ mod util;
 use crate::config::Config;
 use actix_web::{HttpServer, App, middleware};
 use actix_identity::{IdentityService, CookieIdentityPolicy};
+use sqlx::postgres::PgPoolOptions;
 use dotenv::dotenv;
 use rand::Rng;
 
@@ -18,8 +19,11 @@ async fn main() -> std::io::Result<()> {
     println!("==========SOPT is running==========");
 
     let cfg = Config::from_env().unwrap();
-    // TODO: gate for tls
-    let pool = cfg.pg.create_pool(tokio_postgres::NoTls).unwrap();
+    let pool = PgPoolOptions::new()
+        .max_connections(cfg.pg.max_connections)
+        .connect(&cfg.pg.to_address())
+        .await
+        .expect("unable to connect to database, aborting...");
     let redis_pool = cfg.redis.create_pool().unwrap();
     let cookie_key: [u8; 32] = rand::thread_rng().gen();
 
