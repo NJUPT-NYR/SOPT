@@ -1,4 +1,4 @@
-use actix_web::*;
+use actix_web::{HttpResponse, web, rt::Arbiter, *};
 use actix_identity::Identity;
 use serde::Deserialize;
 use super::*;
@@ -23,14 +23,19 @@ async fn send_invitation(
     let username = id.identity().ok_or(Error::CookieError)?;
 
     let code = generate_invitation_code();
-    // TODO: move mail to event loop
     let body = format!("{}\n\nYour Invitation Code is: {}\n", &message.body, &code);
-    send_mail(
-        &message.to,
-        &message.address,
-        &username,
-        body,
-    )?;
+    // fuck u borrow checker
+    let from = username.clone();
+    let address = message.address.clone();
+    let receiver = message.to.clone();
+    Arbiter::spawn(async {
+        send_mail(
+            receiver,
+            address,
+            from,
+            body,
+        ).expect("failed to send mail");
+    });
 
     // TODO: some consumption of money
     let ret = invitation_model::add_invitation_code(

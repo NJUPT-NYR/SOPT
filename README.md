@@ -24,7 +24,7 @@ cargo run
     - [ ] Rank
     
 - [ ] Torrent
-    - [ ] Add
+    - [x] Add
     - [ ] Generate with passkey
     - [ ] Sync with tracker
     - [ ] Search and filter

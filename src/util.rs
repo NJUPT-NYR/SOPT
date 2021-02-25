@@ -61,7 +61,7 @@ pub fn verify_password(password: &str, hash: &str) -> Result<bool, Error> {
     argon2::verify_encoded(hash, password.as_ref()).map_err(error_string)
 }
 
-pub fn send_mail(receiver: &str, address: &str, from: &str, body: String) -> Result<(), Error> {
+pub fn send_mail(receiver: String, address: String, from: String, body: String) -> Result<(), Error> {
     use lettre::{SmtpTransport, Message, Transport};
     use lettre::transport::smtp::authentication::Credentials;
     use std::thread::sleep;

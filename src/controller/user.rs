@@ -1,4 +1,4 @@
-use actix_web::*;
+use actix_web::{HttpResponse, *};
 use actix_identity::Identity;
 use deadpool_redis::Pipeline;
 use serde::Deserialize;
@@ -53,7 +53,7 @@ async fn add_user(
                 }
             }
         },
-        None => return Ok(HttpResponse::Ok().body("invalid email address"))
+        None => return Ok(HttpResponse::BadRequest().body("invalid email address"))
     };
 
     if let Some(str) = user.invite_code {
@@ -167,7 +167,7 @@ async fn reset_password(
     let resp: String = pipe.query_async(&mut conn)
         .await.map_err(error_string)?;
     if resp == "nil" {
-        return Ok(HttpResponse::Ok().body("not authed yet"));
+        return Ok(HttpResponse::Forbidden().body("not authed yet"));
     }
 
     let ret_user = user_model::update_password_by_username(&client, &username, &new_pass)
@@ -189,7 +189,7 @@ async fn reset_passkey(
     let resp: String = pipe.query_async(&mut conn)
         .await.map_err(error_string)?;
     if resp == "nil" {
-        return Ok(HttpResponse::Ok().body("not authed yet"));
+        return Ok(HttpResponse::Forbidden().body("not authed yet"));
     }
 
     let ret_user = user_model::update_passkey_by_username(&client, &username, &generate_passkey(&username)?)
