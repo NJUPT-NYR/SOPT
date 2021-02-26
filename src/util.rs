@@ -136,5 +136,28 @@ mod tests {
             })
         );
         assert_eq!(parse_email("just_an_invalid_string"), None);
+        assert_eq!(parse_email(""), None);
+    }
+    #[test]
+    fn hash_and_verify_passwords_works() {
+        let hash_and_verify_password_works = |password: &str| {
+            let hash = hash_password(password).unwrap();
+            if !verify_password(password, hash.as_str()).unwrap() {
+                panic!("Invalid Verify");
+            }
+        };
+        let passwords = [
+            "`1234567890-=~!@#$%^&*()_+",
+            "qwertyuiop[]\\QWERTYUIOP{}|",
+            "asdfghjkl;'ASDFGHJKL:\"",
+            "zxcvbnm,./ZXCVBNM<>?",
+            "🌿🌿🌿",
+            "🤺🤺",
+            "👨‍👩‍👧‍👦👨‍👩‍👧‍👦",
+            "",
+        ];
+        for &password in passwords.iter() {
+            hash_and_verify_password_works(password);
+        }
     }
 }
