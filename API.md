@@ -1,5 +1,7 @@
 # SOPT API Docs
 
+[TOC]
+
 ## General Data
 
 ### User
@@ -10,14 +12,12 @@
     - password: String
     - passkey: String
 
-### Invitation
+### SlimInvitation
 
-    - id: Int
-    - sender: String
     - code: String
     # this is email address
-    - send_to: String
-    - is_used: Boolean
+    - sendTo: String
+    - isUsed: Boolean
 
 ### TorrentInfo
 
@@ -164,14 +164,14 @@ for 5 minutes, then user can perform actions like a charm.
 
 **Response**
 1. Error: Human Readable String
-2. Success: a single `Invitation`
+2. Success: a single `SlimInvitation`
 
 ### /invitation/list_invitations
 **Type** GET
 
 **Response**
 1. Error: Human Readable String
-2. Success: a list of `Invitation`s
+2. Success: a list of `SlimInvitation`s
 
 **Comment**
 
