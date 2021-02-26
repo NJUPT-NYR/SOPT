@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use crate::error::Error;
+use chrono::{DateTime, Utc};
 
 type TorrentInfoRet = Result<TorrentInfo, Error>;
 type TorrentInfoVecRet = Result<Vec<TorrentInfo>, Error>;
@@ -14,6 +15,9 @@ pub struct TorrentInfo {
     pub downloaded: i64,
     pub visible: bool,
     pub tag: Option<Vec<String>>,
+    pub create_time: DateTime<Utc>,
+    pub last_edit: DateTime<Utc>,
+    pub last_activity: DateTime<Utc>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -23,6 +27,7 @@ pub struct SlimTorrent {
     pub poster: String,
     pub downloaded: i64,
     pub tag: Option<Vec<String>>,
+    pub last_activity: DateTime<Utc>,
 }
 
 impl TorrentInfo {
@@ -35,6 +40,10 @@ impl TorrentInfo {
             downloaded: 0,
             visible: true,
             tag: None,
+            // never used
+            create_time: Utc::now(),
+            last_edit: Utc::now(),
+            last_activity: Utc::now(),
         }
     }
 }
@@ -44,8 +53,8 @@ pub async fn add_torrent_info(client: &sqlx::PgPool, info: TorrentInfo) -> Torre
 
     Ok(sqlx::query_as!(
         TorrentInfo,
-        "INSERT INTO torrent_info(title, poster, description) \
-        VALUES ($1, $2, $3) RETURNING *;",
+        "INSERT INTO torrent_info(title, poster, description, create_time, last_edit, last_activity) \
+        VALUES ($1, $2, $3, NOW(), NOW(), NOW()) RETURNING *;",
         info.title,
         info.poster,
         desc
@@ -59,7 +68,7 @@ pub async fn update_torrent_info(client: &sqlx::PgPool, id: i64, info: TorrentIn
 
     Ok(sqlx::query_as!(
         TorrentInfo,
-        "UPDATE torrent_info SET title = $1, description = $2 \
+        "UPDATE torrent_info SET title = $1, description = $2, last_edit = NOW() \
         WHERE id = $3 RETURNING *;",
         info.title,
         desc,
@@ -72,7 +81,7 @@ pub async fn update_torrent_info(client: &sqlx::PgPool, id: i64, info: TorrentIn
 pub async fn add_tag_for_torrent(client: &sqlx::PgPool, id: i64, tags: &Vec<String>) -> TorrentInfoRet {
     Ok(sqlx::query_as!(
         TorrentInfo,
-        "UPDATE torrent_info SET tag = tag || $1 \
+        "UPDATE torrent_info SET tag = tag || $1, last_edit = NOW() \
         WHERE id = $2 RETURNING *;",
         tags,
         id
@@ -106,7 +115,7 @@ pub async fn find_torrent_by_poster(client: &sqlx::PgPool, poster: String) -> To
 pub async fn find_visible_torrent(client: &sqlx::PgPool) -> SlimTorrentVecRet {
     Ok(sqlx::query_as!(
         SlimTorrent,
-        "SELECT id, title, poster, downloaded, tag FROM torrent_info \
+        "SELECT id, title, poster, downloaded, tag, last_activity FROM torrent_info \
         WHERE visible = TRUE;"
         )
         .fetch_all(client)
@@ -116,7 +125,7 @@ pub async fn find_visible_torrent(client: &sqlx::PgPool) -> SlimTorrentVecRet {
 pub async fn find_visible_torrent_by_tag(client: &sqlx::PgPool, tag: &str) -> SlimTorrentVecRet {
     Ok(sqlx::query_as!(
         SlimTorrent,
-        "SELECT id, title, poster, downloaded, tag FROM torrent_info \
+        "SELECT id, title, poster, downloaded, tag, last_activity FROM torrent_info \
         WHERE visible = TRUE AND $1 = ANY(tag);",
         tag
         )
