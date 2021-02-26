@@ -1,4 +1,4 @@
-use actix_web::{HttpResponse, web, rt::Arbiter, *};
+use actix_web::{HttpResponse, web, *};
 use actix_identity::Identity;
 use serde::Deserialize;
 use super::*;
@@ -28,13 +28,14 @@ async fn send_invitation(
     let from = username.clone();
     let address = message.address.clone();
     let receiver = message.to.clone();
-    Arbiter::spawn(async {
-        send_mail(
+    // we don't really care about the result of send mail
+    std::thread::spawn(move || {
+       send_mail(
             receiver,
             address,
             from,
             body,
-        ).expect("failed to send mail");
+       ).expect("unable to send mail");
     });
 
     // TODO: some consumption of money
