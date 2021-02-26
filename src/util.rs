@@ -47,7 +47,8 @@ pub fn generate_passkey(username: &str) -> Result<String, Error> {
     );
 
     let res: Vec<u8> = hasher.finalize().as_slice().try_into().map_err(error_string)?;
-    Ok(String::from_utf8_lossy(&*res).into_owned())
+    let string = hex::encode(res);
+    Ok(String::from(&string[..32]))
 }
 
 pub fn hash_password(password: &str) -> Result<String, Error> {
