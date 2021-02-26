@@ -14,6 +14,9 @@ sqlx migrate run
 cargo run
 ```
 
+## API
+[API Docs](https://github.com/NJUPT-NYR/SOPT/blob/master/API.md)
+
 ## Roadmap
 
 - [ ] User
