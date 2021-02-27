@@ -17,6 +17,7 @@ pub struct UserInfo {
     pub upload: i64,
     pub download: i64,
     pub money: f64,
+    // use rank is for configurable name
     pub rank: i32,
     // b64encode
     pub avatar: Option<String>,
@@ -41,7 +42,6 @@ impl UserInfo {
 }
 
 pub async fn add_user_info(client: &sqlx::PgPool, id: i64, username: &str) -> UserInfoRet {
-    // the design of sqlx macro limits type casting
     Ok(sqlx::query_as!(
         UserInfo,
         "INSERT INTO user_info(id, username, register_time, last_activity) \
@@ -76,3 +76,42 @@ pub async fn add_invitor_by_name(client: &sqlx::PgPool, username: &str, invitor:
         .await?)
 }
 
+pub async fn find_slim_info_by_name(client: &sqlx::PgPool, username: &str) -> SlimUserInfoRet {
+    Ok(sqlx::query_as!(
+        SlimUserInfo,
+        "SELECT id, username, last_activity, upload, download, money FROM user_info \
+        WHERE username = $1;",
+        username
+        )
+        .fetch_one(client)
+        .await?)
+}
+
+pub async fn transfer_money_by_name(client: &sqlx::PgPool, from: &str, to: &str, amount: f64) -> Result<(), Error> {
+    sqlx::query!(
+        "UPDATE user_info SET money = CASE \
+            WHEN username = $1 THEN money - $3\
+            WHEN username = $2 THEN money + $3\
+        END \
+        WHERE username in ($1, $2)",
+        from,
+        to,
+        amount
+        )
+        .execute(client)
+        .await?;
+
+    Ok(())
+}
+
+pub async fn update_other_by_name(client: &sqlx::PgPool, username: &str, info: serde_json::Value) -> UserInfoRet {
+    Ok(sqlx::query_as!(
+        UserInfo,
+        "UPDATE user_info SET other = $1 \
+        WHERE username = $2 RETURNING *;",
+        info,
+        username
+        )
+        .fetch_one(client)
+        .await?)
+}

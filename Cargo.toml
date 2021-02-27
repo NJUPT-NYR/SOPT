@@ -8,6 +8,11 @@ edition = "2018"
 name = "sopt"
 proc-macro = true
 
+[features]
+
+default = ["email-restriction"]
+email-restriction = []
+
 [dependencies]
 # actix stuff
 #actix-web = "4.0.0-beta.3"

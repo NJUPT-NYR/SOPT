@@ -3,7 +3,7 @@ use actix_identity::Identity;
 use serde::Deserialize;
 use super::*;
 use crate::util::*;
-use crate::data::{ToResponse, invitation as invitation_model, GeneralResponse};
+use crate::data::{ToResponse, invitation as invitation_model};
 use crate::error::Error;
 
 #[derive(Deserialize, Debug)]
@@ -38,7 +38,7 @@ async fn send_invitation(
        ).expect("unable to send mail");
     });
 
-    // TODO: some consumption of money
+    // TODO: some consumption of money(site_general settings)
     let ret = invitation_model::add_invitation_code(
             &client,
             invitation_model::InvitationCode::new(

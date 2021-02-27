@@ -16,6 +16,20 @@
     - password: String
     - passkey: String
 
+## UserInfo(draft)
+
+    - id: Int
+    - username: String
+    - register_time: String
+    - last_activity: String
+    - invitor: Option<String>
+    - upload: Int
+    - download: Int
+    - money: Float
+    - rank: Int
+    - avatar: Option<Vec<u8>>
+    - other: Option<Json>
+
 ### SlimInvitation
 
     - code: String
@@ -144,6 +158,54 @@ for 5 minutes, then user can perform actions like a charm.
 **Response**
 1. Error: `GeneralResponse` with `errMsg`
 2. Success: Http 200
+
+### /user/auth/transfer_money
+**Type**: POST
+
+**Request**
+
+    - to: String
+    - amount: Float
+
+**Example**
+
+```json
+{
+  "to": "Tadokoro Koniji",
+  "amount": 114514.1919
+}
+```
+
+**Response**
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: Http 200
+
+### /user/personal_info_update
+**Type**: POST
+
+**Request**
+
+    - info: Json
+
+**Example**
+
+```json
+{
+  "info": {
+    "学校": "下北泽大学",
+    "个人网站": "114514.com",
+    "介绍": "24岁，是学生。"
+  }
+}
+```
+
+**Response**
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: `GeneralResponse` with a single `UserInfo`
+
+**Comment**
+
+Any key will be accepted and stored in Database without any change.
 
 ## Invitation API
 

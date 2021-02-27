@@ -23,6 +23,8 @@ sqlx migrate run
 cargo run
 ```
 
+## Principle
+
 ## API
 
 [API Docs](https://github.com/NJUPT-NYR/SOPT/blob/master/API.md)
@@ -32,7 +34,7 @@ cargo run
 - [ ] User
   - [x] Register
   - [x] Login
-  - [ ] Information update
+  - [x] Information update
   - [x] Invite
   - [ ] Rank
 - [ ] Torrent
@@ -53,3 +55,11 @@ cargo run
 ## Known issues
 
 1. Support for TLS is needed.
+
+2. Configurable Site for all
+
+## License
+
+SOPT is dual-licensed under MIT and APACHE 2.0.
+
+Choose either as you like.

@@ -10,7 +10,7 @@ use crate::data::{ToResponse, user as user_model, GeneralResponse,
 use crate::error::{Error, error_string};
 use crate::data::invitation::InvitationCode;
 
-#[cfg(email_restriction = "on")]
+#[cfg(feature = "email-restriction")]
 static ALLOWED_DOMAIN: [&str; 3] = [
     "gmail.com",
     "njupt.edu.cn",
@@ -36,6 +36,17 @@ struct Login {
     pub password: String,
 }
 
+#[derive(Deserialize, Debug)]
+struct Transfer {
+    pub to: String,
+    pub amount: f64,
+}
+
+#[derive(Deserialize, Debug)]
+struct InfoWrapper {
+    pub info: serde_json::Value,
+}
+
 #[post("/add_user")]
 async fn add_user(
     data: web::Json<Registry>,
@@ -49,7 +60,7 @@ async fn add_user(
     match parse_email(user.email.as_str()) {
         Some(_email) => {
             if let None = user.invite_code {
-                #[cfg(email_restriction = "on")]
+                #[cfg(feature = "email-restriction")]
                 if ALLOWED_DOMAIN.iter().find(|x| x == &&_email.domain.as_str()).is_some() {
                     allowed = true;
                 }
@@ -128,10 +139,29 @@ async fn logout(id: Identity) -> HttpResult {
     Ok(HttpResponse::Ok().finish())
 }
 
+#[post("/personal_info_update")]
+async fn personal_info_update(
+    data: web::Json<InfoWrapper>,
+    id: Identity,
+    client: web::Data<sqlx::PgPool>,
+) -> HttpResult {
+    let data: InfoWrapper = data.into_inner();
+    let username = id.identity().ok_or(Error::CookieError)?;
+
+    let ret = user_info_model::update_other_by_name(&client, &username, data.info).await?;
+    Ok(HttpResponse::Ok().json(ret.to_json()))
+}
+
+async fn upload_avatar(
+
+) -> HttpResult {
+    todo!()
+}
+
 /// Here comes danger action, so a validation must be performed.
 /// By store the identity in redis, we are able to allow user
 /// to perform other operations like a charm.
-/// TODO: VERY AD-HOC FOR NOW
+/// TODO: Use jwt instead?
 #[post("/check_identity")]
 async fn check_identity(
     data: web::Json<Validation>,
@@ -202,13 +232,43 @@ async fn reset_passkey(
     Ok(HttpResponse::Ok().finish())
 }
 
+#[post("/transfer_money")]
+async fn transfer_money(
+    data: web::Json<Transfer>,
+    id: Identity,
+    client: web::Data<sqlx::PgPool>,
+    redis_pool: web::Data<deadpool_redis::Pool>
+) -> HttpResult {
+    let data: Transfer = data.into_inner();
+    let username = id.identity().ok_or(Error::CookieError)?;
+    let mut conn = redis_pool.get().await.map_err(Error::RedisError)?;
+
+    let mut pipe = Pipeline::new();
+    pipe.get(&username);
+    let resp: String = pipe.query_async(&mut conn)
+        .await.map_err(error_string)?;
+    if resp == "nil" {
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("not authed yet")))
+    }
+
+    let now_amount = user_info_model::find_slim_info_by_name(&client, &username).await?;
+    if now_amount.money - data.amount < 0.0 {
+        Ok(HttpResponse::Ok().json(GeneralResponse::from_err("no enough money to pay")))
+    } else {
+        user_info_model::transfer_money_by_name(&client, &username, &data.to, data.amount).await?;
+        Ok(HttpResponse::Ok().finish())
+    }
+}
+
 pub fn user_service() -> Scope {
     web::scope("/user")
         .service(add_user)
         .service(login)
         .service(logout)
+        .service(personal_info_update)
         .service(web::scope("/auth")
             .service(check_identity)
             .service(reset_password)
-            .service(reset_passkey))
+            .service(reset_passkey)
+            .service(transfer_money))
 }
