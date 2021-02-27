@@ -2,7 +2,13 @@
 
 [![CI](https://github.com/NJUPT-NYR/SOPT/actions/workflows/CI.yml/badge.svg)](https://github.com/NJUPT-NYR/SOPT/actions/workflows/CI.yml)
 
-A light-weighted yet powerful PT framework.
+Next generation private tracker framework.
+
+**世界を**
+
+**大いに盛り上げるための**
+
+**PT**
 
 ## How to run
 

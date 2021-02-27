@@ -3,7 +3,7 @@ use actix_identity::Identity;
 use serde::Deserialize;
 use super::*;
 use crate::util::*;
-use crate::data::invitation as invitation_model;
+use crate::data::{ToResponse, invitation as invitation_model, GeneralResponse};
 use crate::error::Error;
 
 #[derive(Deserialize, Debug)]
@@ -46,7 +46,7 @@ async fn send_invitation(
                 code,
                 message.address,
             )).await?;
-    Ok(HttpResponse::Ok().json(&ret))
+    Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
 #[get("/list_invitations")]
@@ -58,7 +58,7 @@ async fn list_invitations(
 
     let ret = invitation_model::find_invitation_by_user(&client, &username)
             .await?;
-    Ok(HttpResponse::Ok().json(&ret))
+    Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
 pub fn invitation_service() -> Scope {

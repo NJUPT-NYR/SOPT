@@ -1,10 +1,12 @@
 use serde::{Deserialize, Serialize};
 use crate::error::Error;
+use super::*;
+use sopt::*;
 
 type UserRet = Result<User, Error>;
 type UserVecRet = Result<Vec<User>, Error>;
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, ToResponse)]
 pub struct User {
     pub id: i64,
     pub email: String,

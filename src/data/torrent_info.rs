@@ -1,12 +1,14 @@
 use serde::{Deserialize, Serialize};
 use crate::error::Error;
 use chrono::{DateTime, Utc};
+use super::*;
+use sopt::*;
 
 type TorrentInfoRet = Result<TorrentInfo, Error>;
 type TorrentInfoVecRet = Result<Vec<TorrentInfo>, Error>;
 type SlimTorrentVecRet = Result<Vec<SlimTorrent>, Error>;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, ToResponse)]
 pub struct TorrentInfo {
     pub id: i64,
     pub title: String,
@@ -20,7 +22,7 @@ pub struct TorrentInfo {
     pub last_activity: DateTime<Utc>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, ToResponse)]
 pub struct SlimTorrent {
     pub id: i64,
     pub title: String,

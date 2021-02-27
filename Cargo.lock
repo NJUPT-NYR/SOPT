@@ -2316,6 +2316,7 @@ version = "1.0.62"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ea1c6153794552ea7cf7cf63b1231a25de00ec90db326ba6264440fa08e31486"
 dependencies = [
+ "indexmap",
  "itoa",
  "ryu",
  "serde 1.0.123",
@@ -2424,6 +2425,7 @@ version = "0.1.0"
 dependencies = [
  "actix-identity",
  "actix-web",
+ "base64 0.13.0",
  "chrono",
  "config",
  "deadpool-redis",
@@ -2439,8 +2441,10 @@ dependencies = [
  "serde 1.0.123",
  "serde_bencode",
  "serde_bytes",
+ "serde_json",
  "sha2",
  "sqlx",
+ "syn",
 ]
 
 [[package]]
@@ -2499,6 +2503,8 @@ dependencies = [
  "parking_lot",
  "percent-encoding",
  "rand 0.7.3",
+ "serde 1.0.123",
+ "serde_json",
  "sha-1 0.9.3",
  "sha2",
  "smallvec",
@@ -2524,6 +2530,7 @@ dependencies = [
  "lazy_static",
  "proc-macro2",
  "quote",
+ "serde_json",
  "sha2",
  "sqlx-core",
  "sqlx-rt",

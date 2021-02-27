@@ -4,9 +4,11 @@ use deadpool_redis::Pipeline;
 use serde::Deserialize;
 use super::*;
 use crate::util::*;
-use crate::data::user as user_model;
-use crate::data::invitation as invitation_model;
+use crate::data::{ToResponse, user as user_model, GeneralResponse,
+                  invitation as invitation_model,
+                 user_info as user_info_model};
 use crate::error::{Error, error_string};
+use crate::data::invitation::InvitationCode;
 
 #[cfg(email_restriction = "on")]
 static ALLOWED_DOMAIN: [&str; 3] = [
@@ -42,7 +44,7 @@ async fn add_user(
     let user: Registry = data.into_inner();
     // not so elegant
     let mut allowed = false;
-    let mut code: Option<String> = None;
+    let mut code: Option<InvitationCode> = None;
 
     match parse_email(user.email.as_str()) {
         Some(_email) => {
@@ -53,29 +55,30 @@ async fn add_user(
                 }
             }
         },
-        None => return Ok(HttpResponse::BadRequest().body("invalid email address"))
+        None => return Ok(HttpResponse::BadRequest()
+                              .json(GeneralResponse::from_err("invalid email address"))),
     };
 
     if let Some(str) = user.invite_code {
         let mut ret = invitation_model::find_invitation_by_code(&client, &str).await?;
         if !ret.is_empty() {
-            code = Some(ret.pop().unwrap().code);
+            code = Some(ret.pop().unwrap());
             allowed = true;
         }
     }
 
     if !allowed {
-        return Ok(HttpResponse::Ok().body("not allowed to register"))
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("not allowed to register")))
     }
 
     if !user_model::find_user_by_username(&client, &user.username)
         .await?
         .is_empty() {
-        return Ok(HttpResponse::Ok().body("username already taken"))
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("username already taken")))
     } else if !user_model::find_user_by_email(&client, &user.email)
         .await?
         .is_empty() {
-        return Ok(HttpResponse::Ok().body("email already registered"))
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("email already registered")))
     }
 
     let passkey = generate_passkey(&user.username)?;
@@ -87,11 +90,13 @@ async fn add_user(
             hash_password(&user.password)?,
             passkey,
         )).await?;
+    user_info_model::add_user_info(&client, new_user.id, &new_user.username).await?;
     if code.is_some() {
-        invitation_model::update_invitation_usage(&client, &code.unwrap()).await?;
+        let true_code = code.unwrap();
+        user_info_model::add_invitor_by_name(&client, &new_user.username, true_code.sender).await?;
+        invitation_model::update_invitation_usage(&client, &true_code.code).await?;
     }
-
-    Ok(HttpResponse::Ok().json(&new_user))
+    Ok(HttpResponse::Ok().json(new_user.to_json()))
 }
 
 #[post("/login")]
@@ -107,12 +112,13 @@ async fn login(
     match validation {
         Some(val) => {
             if !verify_password(&user.password, &val.password)? {
-                return Ok(HttpResponse::Ok().body("wrong password"))
+                return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("wrong password")))
             }
+            user_info_model::update_activity_by_name(&client, &user.username).await?;
             id.remember(user.username);
             Ok(HttpResponse::Ok().finish())
         },
-        None => Ok(HttpResponse::Ok().body("user not registered")),
+        None => Ok(HttpResponse::Ok().json(GeneralResponse::from_err("user not registered"))),
     }
 }
 
@@ -147,7 +153,7 @@ async fn check_identity(
             .await.map_err(error_string)?;
         Ok(HttpResponse::Ok().finish())
     } else {
-        Ok(HttpResponse::Ok().body("wrong password"))
+        Ok(HttpResponse::Ok().json(GeneralResponse::from_err("wrong password")))
     }
 }
 
@@ -167,12 +173,12 @@ async fn reset_password(
     let resp: String = pipe.query_async(&mut conn)
         .await.map_err(error_string)?;
     if resp == "nil" {
-        return Ok(HttpResponse::Forbidden().body("not authed yet"));
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("not authed yet")))
     }
 
     let ret_user = user_model::update_password_by_username(&client, &username, &new_pass)
             .await?;
-    Ok(HttpResponse::Ok().json(&ret_user))
+    Ok(HttpResponse::Ok().json(ret_user.to_json()))
 }
 
 #[get("/reset_passkey")]
@@ -189,12 +195,11 @@ async fn reset_passkey(
     let resp: String = pipe.query_async(&mut conn)
         .await.map_err(error_string)?;
     if resp == "nil" {
-        return Ok(HttpResponse::Forbidden().body("not authed yet"));
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("not authed yet")))
     }
 
-    let ret_user = user_model::update_passkey_by_username(&client, &username, &generate_passkey(&username)?)
-            .await?;
-    Ok(HttpResponse::Ok().json(&ret_user))
+    user_model::update_passkey_by_username(&client, &username, &generate_passkey(&username)?).await?;
+    Ok(HttpResponse::Ok().finish())
 }
 
 pub fn user_service() -> Scope {

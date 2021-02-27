@@ -1,8 +1,12 @@
 # SOPT API Docs
 
-[TOC]
-
 ## General Data
+
+### GeneralResponse
+
+    - data: Json
+    - success: Boolean
+    - errMsg: String
 
 ### User
 
@@ -60,8 +64,8 @@
 ```
 
 **Response**
-1. Error: Human Readable String
-2. Success: a single `User`
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: `GeneralResponse` with a single `User`
 
 ### /user/login
 **Type**: POST
@@ -81,7 +85,7 @@
 ```
 
 **Response**
-1. Error: Human Readable String
+1. Error: `GeneralResponse` with `errMsg`
 2. Success: Http 200
 
 ### /user/logout
@@ -106,7 +110,7 @@
 ```
 
 **Response**
-1. Error: Human Readable String
+1. Error: `GeneralResponse` with `errMsg`
 2. Success: Http 200
 
 **Comment**
@@ -131,15 +135,15 @@ for 5 minutes, then user can perform actions like a charm.
 ```
 
 **Response**
-1. Error: Human Readable String
-2. Success: A single `User`
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: `GeneralResponse` with a single `User`
 
 ### /user/auth/reset_passkey
 **Type**: GET
 
 **Response**
-1. Error: Human Readable String
-2. Success: A single `User`
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: Http 200
 
 ## Invitation API
 
@@ -163,15 +167,15 @@ for 5 minutes, then user can perform actions like a charm.
 ```
 
 **Response**
-1. Error: Human Readable String
-2. Success: a single `SlimInvitation`
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: `GeneralResponse` with a single `SlimInvitation`
 
 ### /invitation/list_invitations
 **Type** GET
 
 **Response**
-1. Error: Human Readable String
-2. Success: a list of `SlimInvitation`s
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: `GeneralResponse` with a list of `SlimInvitation`s
 
 **Comment**
 
@@ -199,8 +203,8 @@ List all invitations current user sent before.
 ```
 
 **Response**
-1. Error: Human Readable String
-2. Success: a single `TorrentInfo`
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: `GeneralResponse` with a single `TorrentInfo`
 
 **Comment**
 
@@ -230,8 +234,8 @@ By default, post will be hide until checked by administer.
 ```
 
 **Response**
-1. Error: Human Readable String
-2. Success: a single `TorrentInfo`
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: `GeneralResponse` with a single `TorrentInfo`
 
 ### /torrent/list_torrents
 **Type**: GET
@@ -247,15 +251,15 @@ By default, post will be hide until checked by administer.
 ```
 
 **Response**
-1. Error: Human Readable String
-2. Success: a list of `SlimTorrent`
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: `GeneralResponse` with a list of `SlimTorrent`
 
 ### /torrent/list_posted_torrent
 **Type**: GET
 
 **Response**
-1. Error: Human Readable String
-2. Success: a list of `TorrentInfo`
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: `GeneralResponse` with a list of `TorrentInfo`
 
 **Comment**
 
@@ -275,5 +279,5 @@ List all torrents posted by current user.
 ```
 
 **Response**
-1. Error: Human Readable String
-2. Success: a single `TorrentInfo`
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: `GeneralResponse` with a single `TorrentInfo`

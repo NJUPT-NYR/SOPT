@@ -2,7 +2,7 @@ use actix_web::{HttpResponse, *};
 use actix_identity::Identity;
 use serde::Deserialize;
 use super::*;
-use crate::data::torrent_info as torrent_info_model;
+use crate::data::{ToResponse, torrent_info as torrent_info_model, GeneralResponse};
 use crate::error::Error;
 
 #[derive(Deserialize, Debug)]
@@ -42,15 +42,15 @@ async fn add_torrent(
     if post.tags.is_some() {
         let tags = post.tags.unwrap();
         if tags.len() > 5 {
-            return Ok(HttpResponse::Ok().body("tags max amount is 5"));
+            return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("tags max amount is 5")))
         }
         // TODO: eliminate duplications
         let new_ret =
             torrent_info_model::add_tag_for_torrent(&client, ret.id, &tags)
                 .await?;
-        Ok(HttpResponse::Ok().json(&new_ret))
+        Ok(HttpResponse::Ok().json(new_ret.to_json()))
     } else {
-        Ok(HttpResponse::Ok().json(&ret))
+        Ok(HttpResponse::Ok().json(ret.to_json()))
     }
 }
 
@@ -63,12 +63,12 @@ async fn update_torrent(
     let post: TorrentPost = data.into_inner();
     let username = id.identity().ok_or(Error::CookieError)?;
     if post.id.is_none() {
-        return Ok(HttpResponse::BadRequest().body("missing torrent id"));
+        return Ok(HttpResponse::BadRequest().json(GeneralResponse::from_err("missing torrent id")))
     }
 
     let poster = torrent_info_model::find_torrent_by_id(&client, post.id.unwrap()).await?.poster;
     if !username.eq(&poster) {
-        return Ok(HttpResponse::Forbidden().body("not the owner of post"));
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("not the owner of post")))
     }
 
     let ret = torrent_info_model::update_torrent_info(&client,
@@ -81,14 +81,14 @@ async fn update_torrent(
     if post.tags.is_some() {
         let tags = post.tags.unwrap();
         if tags.len() > 5 {
-            return Ok(HttpResponse::Ok().body("tags max amount is 5"));
+            return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("tags max amount is 5")))
         }
         let new_ret =
             torrent_info_model::add_tag_for_torrent(&client, ret.id, &tags)
                 .await?;
-        Ok(HttpResponse::Ok().json(&new_ret))
+        Ok(HttpResponse::Ok().json(new_ret.to_json()))
     } else {
-        Ok(HttpResponse::Ok().json(&ret))
+        Ok(HttpResponse::Ok().json(ret.to_json()))
     }
 }
 
@@ -102,13 +102,13 @@ async fn list_torrents(
 
     if tags.is_none() {
         let ret = torrent_info_model::find_visible_torrent(&client).await?;
-        Ok(HttpResponse::Ok().json(&ret))
+        Ok(HttpResponse::Ok().json(ret.to_json()))
     } else {
         let tags = tags.unwrap();
         let len = tags.len();
         if len == 0 {
             let ret = torrent_info_model::find_visible_torrent(&client).await?;
-            return Ok(HttpResponse::Ok().json(&ret))
+            return Ok(HttpResponse::Ok().json(ret.to_json()))
         }
 
         let mut stream =
@@ -119,7 +119,7 @@ async fn list_torrents(
                 row.tag.as_ref().unwrap().contains(&tags[i])
             ).collect();
         }
-        Ok(HttpResponse::Ok().json(&stream))
+        Ok(HttpResponse::Ok().json(stream.to_json()))
     }
 }
 
@@ -131,7 +131,7 @@ async fn list_posted_torrent(
     let poster = id.identity().ok_or(Error::CookieError)?;
     let ret = torrent_info_model::find_torrent_by_poster(&client, poster).await?;
 
-    Ok(HttpResponse::Ok().json(&ret))
+    Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
 #[post("/upload_torrent")]
@@ -149,7 +149,7 @@ async fn show_torrent(
     let id: i64 = data.into_inner().id;
     let ret = torrent_info_model::find_torrent_by_id(&client, id).await?;
 
-    Ok(HttpResponse::Ok().json(&ret))
+    Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
 pub fn torrent_service() -> Scope {
