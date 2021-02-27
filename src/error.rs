@@ -1,9 +1,9 @@
-use actix_web::{HttpResponse, ResponseError};
-use sqlx::Error as DBError;
-use deadpool_redis::PoolError;
-use std::fmt::{Display, Formatter};
-use derive_more::From;
 use crate::data::GeneralResponse;
+use actix_web::{HttpResponse, ResponseError};
+use deadpool_redis::PoolError;
+use derive_more::From;
+use sqlx::Error as DBError;
+use std::fmt::{Display, Formatter};
 
 #[derive(From, Debug)]
 pub enum Error {
@@ -27,12 +27,15 @@ impl ResponseError for Error {
             Error::RedisError(ref err) => HttpResponse::InternalServerError().body(err.to_string()),
             Error::OtherError(ref err) => HttpResponse::InternalServerError().body(err),
             Error::DBError(ref err) => HttpResponse::InternalServerError().body(err.to_string()),
-            Error::CookieError => HttpResponse::Ok().json(GeneralResponse::from_err("not login yet")),
+            Error::CookieError => {
+                HttpResponse::Unauthorized().json(GeneralResponse::from_err("not login yet"))
+            }
         }
     }
 }
 
-pub fn error_string<T>(err: T) -> Error where
+pub fn error_string<T>(err: T) -> Error
+where
     T: std::error::Error,
 {
     Error::OtherError(err.to_string())
