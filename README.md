@@ -1,4 +1,7 @@
 # SOPT
+
+[![CI](https://github.com/NJUPT-NYR/SOPT/actions/workflows/CI.yml/badge.svg)](https://github.com/NJUPT-NYR/SOPT/actions/workflows/CI.yml)
+
 A light-weighted yet powerful PT framework.
 
 ## How to run
@@ -15,34 +18,32 @@ cargo run
 ```
 
 ## API
+
 [API Docs](https://github.com/NJUPT-NYR/SOPT/blob/master/API.md)
 
 ## Roadmap
 
 - [ ] User
-    - [x] Register
-    - [x] Login
-    - [ ] Information update
-    - [x] Invite
-    - [ ] Rank
-    
+  - [x] Register
+  - [x] Login
+  - [ ] Information update
+  - [x] Invite
+  - [ ] Rank
 - [ ] Torrent
-    - [x] Add
-    - [ ] Generate with passkey
-    - [ ] Sync with tracker
-    - [ ] Search and filter
-    
+  - [x] Add
+  - [ ] Generate with passkey
+  - [ ] Sync with tracker
+  - [ ] Search and filter
 - [ ] Admin
-    - [ ] Ban user
-    - [ ] Site general setting
-    - [ ] Torrent info update
-    - [ ] Open feature
-    
+  - [ ] Ban user
+  - [ ] Site general setting
+  - [ ] Torrent info update
+  - [ ] Open feature
 - [ ] Anti-Cheating
-    - [ ] IP limitation
-    - [ ] Client Ban
-    - [ ] Monitor
-  
+  - [ ] IP limitation
+  - [ ] Client Ban
+  - [ ] Monitor
+
 ## Known issues
-   
+
 1. Support for TLS is needed.
