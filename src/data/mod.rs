@@ -1,23 +1,23 @@
-pub mod user;
 pub mod invitation;
 pub mod torrent_info;
+pub mod user;
 pub mod user_info;
 // pub mod torrent;
 
-use serde::{Serialize};
+use serde::Serialize;
 
 #[derive(Serialize, Debug)]
 pub struct GeneralResponse {
     data: serde_json::Value,
     success: bool,
-    #[serde(rename="errMsg")]
+    #[serde(rename = "errMsg")]
     err_msg: String,
 }
 
 impl GeneralResponse {
     pub fn from_err(err_msg: &str) -> Self {
         GeneralResponse {
-            data: serde_json::from_str("{}").unwrap(),
+            data: serde_json::from_str("null").unwrap(),
             success: false,
             err_msg: String::from(err_msg),
         }
