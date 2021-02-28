@@ -3,6 +3,9 @@ use pest::Parser;
 use pest_derive::*;
 use rand::{thread_rng, Rng, RngCore};
 
+/// Get timestamp of current time with unix standard.
+///
+/// it will return a `u64`.
 pub fn get_timestamp() -> u64 {
     use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -17,12 +20,17 @@ pub fn get_timestamp() -> u64 {
 #[grammar = "email_address.pest"]
 struct Rules;
 
+/// Struct of email address, with two parts:
+/// local and domain. It supports RFC 6530 e.g.
+/// UTF-8 supported, like Göthe@Weimar-straßen.de
 #[derive(Debug)]
 pub struct EmailAddress {
     pub local: String,
     pub domain: String,
 }
 
+/// Use pest parser to parse email address inputs
+/// Returns `None` when it it illegal address
 pub fn parse_email(input: &str) -> Option<EmailAddress> {
     match Rules::parse(Rule::address, input) {
         Ok(mut parsed) => {
@@ -36,6 +44,9 @@ pub fn parse_email(input: &str) -> Option<EmailAddress> {
     }
 }
 
+/// Generate passkey used for torrents with sha256 and will be encoded with
+/// hex, stripped into 32bits.
+/// The format: {username}{timestamp}{random u64}
 pub fn generate_passkey(username: &str) -> Result<String, Error> {
     use sha2::{Digest, Sha256};
     use std::convert::TryInto;
@@ -53,6 +64,8 @@ pub fn generate_passkey(username: &str) -> Result<String, Error> {
     Ok(String::from(&string[..32]))
 }
 
+/// Hash password for database.
+/// Used crate: rust-argon2, champion of HPC.
 pub fn hash_password(password: &str) -> Result<String, Error> {
     let salt: [u8; 20] = rand::thread_rng().gen();
     let config = argon2::Config::default();
@@ -60,10 +73,19 @@ pub fn hash_password(password: &str) -> Result<String, Error> {
     argon2::hash_encoded(password.as_ref(), &salt, &config).map_err(error_string)
 }
 
+/// Verify password selected from password with
+/// user input.
+/// Used crate: rust-argon2, champion of HPC.
 pub fn verify_password(password: &str, hash: &str) -> Result<bool, Error> {
     argon2::verify_encoded(hash, password.as_ref()).map_err(error_string)
 }
 
+/// send invitation mail to someone
+/// since it is not asynchronous we need another thread
+/// to handle it. SMTP is used so config is need.
+///
+/// Default retry count: 5
+/// TODO: configurable?
 pub fn send_mail(
     receiver: String,
     address: String,
@@ -97,6 +119,7 @@ pub fn send_mail(
 
     while let Err(err) = client.send(&mail) {
         retry_count = retry_count - 1;
+        // retry after 1 seconds
         sleep(std::time::Duration::from_secs(1));
         if retry_count == 0 {
             return Err(Error::OtherError(err.to_string()));
@@ -106,6 +129,9 @@ pub fn send_mail(
     Ok(())
 }
 
+/// Generate invite code for invitations
+///
+/// format: {random 10 chars}_{timestamp}
 pub fn generate_invitation_code() -> String {
     use rand::distributions::Alphanumeric;
 
@@ -115,6 +141,8 @@ pub fn generate_invitation_code() -> String {
         .map(char::from)
         .collect();
 
+    // is it proper to add a timestamp
+    // maybe easier to check expiration
     format!("{}_{}", rand_string, get_timestamp()).to_string()
 }
 

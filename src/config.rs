@@ -1,6 +1,12 @@
 use config::ConfigError;
 use serde::Deserialize;
 
+/// Configs read from `.env` file
+/// 1. server_addr: actix-web bind server
+/// 2. redis
+/// 3. database_url: postgres url, see
+/// [Postgres Docs](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING)
+/// for more information
 #[derive(Deserialize)]
 pub struct Config {
     pub server_addr: String,

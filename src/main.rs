@@ -21,6 +21,7 @@ async fn main() -> std::io::Result<()> {
         .await
         .expect("unable to connect to database");
     let redis_pool = cfg.redis.create_pool().unwrap();
+    // A key is needed to generate reliable cookie
     let cookie_key: [u8; 32] = rand::thread_rng().gen();
     println!("==========SOPT is running==========");
 

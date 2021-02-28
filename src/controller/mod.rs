@@ -5,6 +5,8 @@ mod torrent;
 use actix_web::{HttpResponse, Scope, web};
 use crate::error::Error;
 
+/// A wrapper of Error so to reduce panic
+/// and make HttpError more smooth
 pub type HttpResult = Result<HttpResponse, Error>;
 
 pub fn api_service() -> Scope {

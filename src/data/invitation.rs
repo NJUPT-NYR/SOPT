@@ -8,6 +8,11 @@ type InviteVecRet = Result<Vec<InvitationCode>, Error>;
 type SlimInvitationRet = Result<SlimInvitation, Error>;
 type SlimInvitationRecRet = Result<Vec<SlimInvitation>, Error>;
 
+/// A invitation code struct contains
+/// 1. sender: invitor of this code
+/// 2. code: invitation code itself
+/// 3. send_to: this is a email address
+/// 4. is_used: whether it is used
 #[derive(Deserialize, Serialize, Debug, ToResponse)]
 pub struct InvitationCode {
     pub id: i64,
@@ -17,7 +22,8 @@ pub struct InvitationCode {
     pub is_used: bool,
 }
 
-// A wrapper for json
+/// A wrapper for json,
+/// remove unnecessary sender and id columns
 #[derive(Deserialize, Serialize, Debug, ToResponse)]
 pub struct SlimInvitation {
     pub code: String,
@@ -51,6 +57,8 @@ impl InvitationCode {
     }
 }
 
+/// Add invitation into database and return the full `SlimInvitation` struct
+/// Return a `SlimInvitation`
 pub async fn add_invitation_code(client: &sqlx::PgPool, code: InvitationCode) -> SlimInvitationRet {
     let ret: InvitationCode = sqlx::query_as!(
         InvitationCode,
@@ -67,6 +75,8 @@ pub async fn add_invitation_code(client: &sqlx::PgPool, code: InvitationCode) ->
     Ok(SlimInvitation::from(&ret))
 }
 
+/// Find all codes sent by one invitor
+/// Return a `Vec<SlimInvitation>`
 pub async fn find_invitation_by_user(client: &sqlx::PgPool, username: &str) -> SlimInvitationRecRet {
     let vec: Vec<InvitationCode> = sqlx::query_as!(
         InvitationCode,
@@ -80,6 +90,8 @@ pub async fn find_invitation_by_user(client: &sqlx::PgPool, username: &str) -> S
     Ok(vec.iter().map(|row| SlimInvitation::from(row)).collect())
 }
 
+/// Find the unique full column by code,
+/// useful to check whether the code is valid.
 pub async fn find_invitation_by_code(client: &sqlx::PgPool, code: &str) -> InviteVecRet {
     Ok(sqlx::query_as!(
         InvitationCode,
@@ -91,13 +103,16 @@ pub async fn find_invitation_by_code(client: &sqlx::PgPool, code: &str) -> Invit
         .await?)
 }
 
-pub async fn update_invitation_usage(client: &sqlx::PgPool, code: &str) -> InviteRet {
-    Ok(sqlx::query_as!(
+/// Called when invitation code is used.
+pub async fn update_invitation_usage(client: &sqlx::PgPool, code: &str) -> Result<(), Error> {
+    sqlx::query_as!(
         InvitationCode,
         "UPDATE invitations SET is_used = TRUE \
-         WHERE code = $1 RETURNING *;",
+         WHERE code = $1;",
         code,
         )
-        .fetch_one(client)
-        .await?)
+        .execute(client)
+        .await?;
+
+    Ok(())
 }
