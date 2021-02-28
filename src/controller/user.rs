@@ -17,6 +17,13 @@ static ALLOWED_DOMAIN: [&str; 3] = [
     "outlook.com"
 ];
 
+static ALLOWED_AVATAR_EXTENSION: [&str; 4] = [
+    "jpg",
+    "jpeg",
+    "png",
+    "webp",
+];
+
 #[derive(Deserialize, Debug)]
 struct Validation {
     pub password: String,
@@ -152,10 +159,38 @@ async fn personal_info_update(
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
+// will it block?
+#[post("/upload_avatar")]
 async fn upload_avatar(
-
+    mut payload: actix_multipart::Multipart,
+    id: Identity,
+    client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    todo!()
+    use futures::{StreamExt, TryStreamExt};
+
+    let username = id.identity().ok_or(Error::CookieError)?;
+
+    if let Ok(Some(mut file)) = payload.try_next().await {
+        let content_type = file.content_disposition().ok_or(Error::OtherError("incomplete file".to_string()))?;
+        let filename = content_type.get_filename().ok_or("incomplete file".to_string())?;
+        let cleaned_name = sanitize_filename::sanitize(&filename);
+
+        let suffix = cleaned_name.rfind('.').ok_or(Error::OtherError("missing filename extension".to_string()))?;
+        let ext = cleaned_name[suffix+1..].to_ascii_lowercase();
+        if ALLOWED_AVATAR_EXTENSION.iter().find(|x| x == &&ext.as_str()).is_none() {
+            return Ok(HttpResponse::UnsupportedMediaType().json(GeneralResponse::from_err("must be jpg or png or webp")))
+        }
+
+        let mut buf: Vec<u8> = vec![];
+        while let Some(chunk) = file.next().await {
+            let data = chunk.unwrap();
+            buf.append(&mut data.to_vec());
+        }
+        let encoded_avatar = base64::encode(buf);
+        user_info_model::update_avatar_by_name(&client, &username, encoded_avatar).await?;
+    }
+
+    Ok(HttpResponse::Ok().finish())
 }
 
 /// Here comes danger action, so a validation must be performed.
@@ -266,6 +301,7 @@ pub fn user_service() -> Scope {
         .service(login)
         .service(logout)
         .service(personal_info_update)
+        .service(upload_avatar)
         .service(web::scope("/auth")
             .service(check_identity)
             .service(reset_password)

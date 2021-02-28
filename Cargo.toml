@@ -15,9 +15,9 @@ email-restriction = []
 
 [dependencies]
 # actix stuff
-#actix-web = "4.0.0-beta.3"
 actix-web = "3.3.2"
 actix-identity = "*"
+actix-multipart = "0.3.0"
 
 # low version of tokio
 deadpool-redis = "0.5.0"
@@ -30,6 +30,7 @@ serde_bytes = "*"
 serde_json = "*"
 
 # utils
+futures = "0.3.13"
 dotenv = "0.15.0"
 config = "0.10.1"
 derive_more = "0.99.11"
@@ -40,6 +41,7 @@ lettre = "0.10.0-alpha.4"
 hex = "0.4.2"
 base64 = "0.13.0"
 syn = "*"
+sanitize-filename = "0.3.0"
 chrono = { version = "0.4.19", features = ["serde"] }
 
 # crypto related

@@ -115,3 +115,16 @@ pub async fn update_other_by_name(client: &sqlx::PgPool, username: &str, info: s
         .fetch_one(client)
         .await?)
 }
+
+pub async fn update_avatar_by_name(client: &sqlx::PgPool, username: &str, avatar: String) -> Result<(), Error> {
+    sqlx::query!(
+        "UPDATE user_info SET avatar = $1 \
+        WHERE username = $2;",
+        avatar,
+        username
+        )
+        .execute(client)
+        .await?;
+
+    Ok(())
+}

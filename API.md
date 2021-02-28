@@ -180,6 +180,23 @@ for 5 minutes, then user can perform actions like a charm.
 1. Error: `GeneralResponse` with `errMsg`
 2. Success: Http 200
 
+### user/upload_avatar
+**Type**: POST
+
+**Request**
+
+Multipart Files
+
+**Response**
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: Http 200
+
+**Comment**
+
+Allowed file types are `JPG` `PNG` and `WebP`.
+
+Avatar will be stored in the database with base64 encoded.
+
 ### /user/personal_info_update
 **Type**: POST
 
