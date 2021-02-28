@@ -5,6 +5,8 @@ use sopt::*;
 
 type UserRet = Result<User, Error>;
 type UserVecRet = Result<Vec<User>, Error>;
+type SlimUserRet = Result<SlimUser, Error>;
+type SlimUserVecRet = Result<Vec<SlimUser>, Error>;
 
 #[derive(Deserialize, Serialize, Debug, ToResponse)]
 pub struct User {
@@ -12,6 +14,14 @@ pub struct User {
     pub email: String,
     pub username: String,
     pub password: String,
+    pub passkey: String,
+}
+
+#[derive(Serialize, Debug, ToResponse)]
+pub struct SlimUser {
+    pub id: i64,
+    pub email: String,
+    pub username: String,
     pub passkey: String,
 }
 
@@ -27,11 +37,11 @@ impl User {
     }
 }
 
-pub async fn add_user(client: &sqlx::PgPool, user: User) -> UserRet {
+pub async fn add_user(client: &sqlx::PgPool, user: User) -> SlimUserRet {
     Ok(sqlx::query_as!(
-        User,
+        SlimUser,
         "INSERT INTO users(email, username, password, passkey) \
-        VALUES ($1, $2, $3, $4) RETURNING *;",
+        VALUES ($1, $2, $3, $4) RETURNING id, email, username, passkey;",
         user.email,
         user.username,
         user.password,
@@ -41,10 +51,10 @@ pub async fn add_user(client: &sqlx::PgPool, user: User) -> UserRet {
         .await?)
 }
 
-pub async fn find_user_by_username(client: &sqlx::PgPool, username: &str) -> UserVecRet {
+pub async fn find_user_by_username(client: &sqlx::PgPool, username: &str) -> SlimUserVecRet {
     Ok(sqlx::query_as!(
-        User,
-        "SELECT * FROM users \
+        SlimUser,
+        "SELECT id, email, username, passkey FROM users \
         WHERE username = $1;",
         username,
         )

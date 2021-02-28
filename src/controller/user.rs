@@ -130,20 +130,20 @@ async fn login(
     match validation {
         Some(val) => {
             if !verify_password(&user.password, &val.password)? {
-                return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("wrong password")))
+                return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("password not match")))
             }
             user_info_model::update_activity_by_name(&client, &user.username).await?;
             id.remember(user.username);
-            Ok(HttpResponse::Ok().finish())
+            Ok(HttpResponse::Ok().json(GeneralResponse::default()))
         },
-        None => Ok(HttpResponse::Ok().json(GeneralResponse::from_err("user not registered"))),
+        None => Ok(HttpResponse::Ok().json(GeneralResponse::from_err("password not match"))),
     }
 }
 
 #[get("/logout")]
 async fn logout(id: Identity) -> HttpResult {
     id.forget();
-    Ok(HttpResponse::Ok().finish())
+    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
 #[post("/personal_info_update")]
@@ -190,7 +190,7 @@ async fn upload_avatar(
         user_info_model::update_avatar_by_name(&client, &username, encoded_avatar).await?;
     }
 
-    Ok(HttpResponse::Ok().finish())
+    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
 /// Here comes danger action, so a validation must be performed.
@@ -216,9 +216,9 @@ async fn check_identity(
         pipe.set_ex(&username, "authed", 300);
         pipe.execute_async(&mut conn)
             .await.map_err(error_string)?;
-        Ok(HttpResponse::Ok().finish())
+        Ok(HttpResponse::Ok().json(GeneralResponse::default()))
     } else {
-        Ok(HttpResponse::Ok().json(GeneralResponse::from_err("wrong password")))
+        Ok(HttpResponse::Ok().json(GeneralResponse::from_err("password not match")))
     }
 }
 
@@ -241,9 +241,8 @@ async fn reset_password(
         return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("not authed yet")))
     }
 
-    let ret_user = user_model::update_password_by_username(&client, &username, &new_pass)
-            .await?;
-    Ok(HttpResponse::Ok().json(ret_user.to_json()))
+    user_model::update_password_by_username(&client, &username, &new_pass).await?;
+    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
 #[get("/reset_passkey")]
@@ -264,7 +263,7 @@ async fn reset_passkey(
     }
 
     user_model::update_passkey_by_username(&client, &username, &generate_passkey(&username)?).await?;
-    Ok(HttpResponse::Ok().finish())
+    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
 #[post("/transfer_money")]
@@ -291,7 +290,7 @@ async fn transfer_money(
         Ok(HttpResponse::Ok().json(GeneralResponse::from_err("no enough money to pay")))
     } else {
         user_info_model::transfer_money_by_name(&client, &username, &data.to, data.amount).await?;
-        Ok(HttpResponse::Ok().finish())
+        Ok(HttpResponse::Ok().json(GeneralResponse::default()))
     }
 }
 

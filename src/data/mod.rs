@@ -24,6 +24,16 @@ impl GeneralResponse {
     }
 }
 
+impl Default for GeneralResponse {
+    fn default() -> Self {
+        GeneralResponse {
+            data: serde_json::from_str("null").unwrap(),
+            success: true,
+            err_msg: String::from(""),
+        }
+    }
+}
+
 pub trait ToResponse: Serialize {
     fn to_json(&self) -> GeneralResponse {
         let json_val = serde_json::to_value(self).expect("unable to parse to json");

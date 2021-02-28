@@ -8,12 +8,11 @@
     - success: Boolean
     - errMsg: String
 
-### User
+### SlimUser
 
     - id: Int
     - email: String
     - username: String
-    - password: String
     - passkey: String
 
 ## UserInfo(draft)
@@ -79,7 +78,7 @@
 
 **Response**
 1. Error: `GeneralResponse` with `errMsg`
-2. Success: `GeneralResponse` with a single `User`
+2. Success: `GeneralResponse` with a single `SlimUser`
 
 ### /user/login
 **Type**: POST
@@ -100,13 +99,13 @@
 
 **Response**
 1. Error: `GeneralResponse` with `errMsg`
-2. Success: Http 200
+2. Success: Default success `GeneralResponse`
 
 ### /user/logout
 **Type**: GET
 
 **Response**
-1. Success: Http 200
+1. Success: Default success `GeneralResponse`
 
 ### /user/auth/check_identity
 **Type**: POST
@@ -125,7 +124,7 @@
 
 **Response**
 1. Error: `GeneralResponse` with `errMsg`
-2. Success: Http 200
+2. Success: Default success `GeneralResponse`
 
 **Comment**
 
@@ -150,14 +149,14 @@ for 5 minutes, then user can perform actions like a charm.
 
 **Response**
 1. Error: `GeneralResponse` with `errMsg`
-2. Success: `GeneralResponse` with a single `User`
+2. Success: Default success `GeneralResponse`
 
 ### /user/auth/reset_passkey
 **Type**: GET
 
 **Response**
 1. Error: `GeneralResponse` with `errMsg`
-2. Success: Http 200
+2. Success: Default success `GeneralResponse`
 
 ### /user/auth/transfer_money
 **Type**: POST
@@ -178,7 +177,7 @@ for 5 minutes, then user can perform actions like a charm.
 
 **Response**
 1. Error: `GeneralResponse` with `errMsg`
-2. Success: Http 200
+2. Success: Default success `GeneralResponse`
 
 ### user/upload_avatar
 **Type**: POST
@@ -189,7 +188,7 @@ Multipart Files
 
 **Response**
 1. Error: `GeneralResponse` with `errMsg`
-2. Success: Http 200
+2. Success: Default success `GeneralResponse`
 
 **Comment**
 
