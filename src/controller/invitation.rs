@@ -13,6 +13,8 @@ struct Message {
     pub body: String,
 }
 
+/// consume money and send a mail
+/// with another thread.
 #[post("/send_invitation")]
 async fn send_invitation(
     data: web::Json<Message>,
@@ -49,6 +51,7 @@ async fn send_invitation(
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
+/// list all invitations sent by current user
 #[get("/list_invitations")]
 async fn list_invitations(
     id: Identity,

@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use crate::error::Error;
 use chrono::{DateTime, Utc};
 use super::*;
@@ -8,7 +8,17 @@ type TorrentInfoRet = Result<TorrentInfo, Error>;
 type TorrentInfoVecRet = Result<Vec<TorrentInfo>, Error>;
 type SlimTorrentVecRet = Result<Vec<SlimTorrent>, Error>;
 
-#[derive(Serialize, Deserialize, Debug, ToResponse)]
+/// A TorrentInfo struct contains
+/// 1. title
+/// 2. poster: only poster and admin can edit
+/// 3. description: full text of post
+/// 4. downloaded: total downloads of torrent
+/// 5. visible: default is invisible
+/// 6. tag: at most 5 tags
+/// 7. create_time
+/// 8. last_edit
+/// 9. last_activity: updated when new comments
+#[derive(Serialize, Debug, ToResponse)]
 pub struct TorrentInfo {
     pub id: i64,
     pub title: String,
@@ -22,7 +32,9 @@ pub struct TorrentInfo {
     pub last_activity: DateTime<Utc>,
 }
 
-#[derive(Serialize, Deserialize, Debug, ToResponse)]
+/// Slim Version used for list purpose
+/// No description and dull information
+#[derive(Serialize, Debug, ToResponse)]
 pub struct SlimTorrent {
     pub id: i64,
     pub title: String,
@@ -50,6 +62,7 @@ impl TorrentInfo {
     }
 }
 
+/// Add torrent post into database and return the full struct
 pub async fn add_torrent_info(client: &sqlx::PgPool, info: TorrentInfo) -> TorrentInfoRet {
     let desc = info.description.unwrap_or("".to_string());
 
@@ -65,10 +78,11 @@ pub async fn add_torrent_info(client: &sqlx::PgPool, info: TorrentInfo) -> Torre
         .await?)
 }
 
+/// Update the information, will be replaced as a whole
 pub async fn update_torrent_info(client: &sqlx::PgPool, id: i64, info: TorrentInfo) -> TorrentInfoRet {
     let desc = info.description.unwrap_or("".to_string());
 
-    Ok(sqlx::query_as!(
+    sqlx::query_as!(
         TorrentInfo,
         "UPDATE torrent_info SET title = $1, description = $2, last_edit = NOW() \
         WHERE id = $3 RETURNING *;",
@@ -76,33 +90,45 @@ pub async fn update_torrent_info(client: &sqlx::PgPool, id: i64, info: TorrentIn
         desc,
         id
         )
-        .fetch_one(client)
-        .await?)
+        .fetch_all(client)
+        .await?
+        .pop()
+        .ok_or(Error::NotFound)
 }
 
+/// add tags as replaced(so front end needs to
+/// pass a whole including previous tags)
 pub async fn add_tag_for_torrent(client: &sqlx::PgPool, id: i64, tags: &Vec<String>) -> TorrentInfoRet {
-    Ok(sqlx::query_as!(
+    sqlx::query_as!(
         TorrentInfo,
-        "UPDATE torrent_info SET tag = tag || $1, last_edit = NOW() \
+        "UPDATE torrent_info SET tag = $1, last_edit = NOW() \
         WHERE id = $2 RETURNING *;",
         tags,
         id
         )
-        .fetch_one(client)
-        .await?)
+        .fetch_all(client)
+        .await?
+        .pop()
+        .ok_or(Error::NotFound)
 }
 
+/// Find torrent info by id, return the full structure
 pub async fn find_torrent_by_id(client: &sqlx::PgPool, id: i64) -> TorrentInfoRet {
-    Ok(sqlx::query_as!(
+    sqlx::query_as!(
         TorrentInfo,
         "SELECT * FROM torrent_info \
         WHERE id = $1;",
         id
         )
-        .fetch_one(client)
-        .await?)
+        .fetch_all(client)
+        .await?
+        .pop()
+        .ok_or(Error::NotFound)
 }
 
+/// Find the torrent by poster, return a vector of full struct
+///
+/// **Is it proper to return slim one?**
 pub async fn find_torrent_by_poster(client: &sqlx::PgPool, poster: String) -> TorrentInfoVecRet {
     Ok(sqlx::query_as!(
         TorrentInfo,
@@ -114,6 +140,8 @@ pub async fn find_torrent_by_poster(client: &sqlx::PgPool, poster: String) -> To
         .await?)
 }
 
+/// find all visible torrents
+/// TODO: add pagination
 pub async fn find_visible_torrent(client: &sqlx::PgPool) -> SlimTorrentVecRet {
     Ok(sqlx::query_as!(
         SlimTorrent,
@@ -124,6 +152,9 @@ pub async fn find_visible_torrent(client: &sqlx::PgPool) -> SlimTorrentVecRet {
         .await?)
 }
 
+/// Find visible torrent with definite tags
+/// multiple tags will be filtered by rust runtime
+/// instead of database
 pub async fn find_visible_torrent_by_tag(client: &sqlx::PgPool, tag: &str) -> SlimTorrentVecRet {
     Ok(sqlx::query_as!(
         SlimTorrent,
@@ -135,13 +166,17 @@ pub async fn find_visible_torrent_by_tag(client: &sqlx::PgPool, tag: &str) -> Sl
         .await?)
 }
 
+/// make certain torrent visible, accessed by administrator
+#[allow(dead_code)]
 pub async fn make_torrent_visible(client: &sqlx::PgPool, id: i64) -> TorrentInfoRet {
-    Ok(sqlx::query_as!(
+    sqlx::query_as!(
         TorrentInfo,
         "UPDATE torrent_info SET visible = TRUE \
         WHERE id = $1 RETURNING *;",
         id
         )
-        .fetch_one(client)
-        .await?)
+        .fetch_all(client)
+        .await?
+        .pop()
+        .ok_or(Error::NotFound)
 }

@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use crate::error::Error;
 use super::*;
 use sopt::*;
@@ -8,7 +8,12 @@ type UserVecRet = Result<Vec<User>, Error>;
 type SlimUserRet = Result<SlimUser, Error>;
 type SlimUserVecRet = Result<Vec<SlimUser>, Error>;
 
-#[derive(Deserialize, Serialize, Debug, ToResponse)]
+/// A full user struct
+/// 1. email, unique one
+/// 2. username: unique one, at most 50 chars
+/// 3. password: hashed password
+/// 4. passkey: 32bit string
+#[derive(Serialize, Debug, ToResponse)]
 pub struct User {
     pub id: i64,
     pub email: String,
@@ -17,6 +22,7 @@ pub struct User {
     pub passkey: String,
 }
 
+/// Slim one, mainly for security, hiding password
 #[derive(Serialize, Debug, ToResponse)]
 pub struct SlimUser {
     pub id: i64,
@@ -37,6 +43,7 @@ impl User {
     }
 }
 
+/// Add new user to database, return the slim struct
 pub async fn add_user(client: &sqlx::PgPool, user: User) -> SlimUserRet {
     Ok(sqlx::query_as!(
         SlimUser,
@@ -51,6 +58,8 @@ pub async fn add_user(client: &sqlx::PgPool, user: User) -> SlimUserRet {
         .await?)
 }
 
+/// Find user by username, return the slim one
+/// **Is is performant to use username instead of primary key?**
 pub async fn find_user_by_username(client: &sqlx::PgPool, username: &str) -> SlimUserVecRet {
     Ok(sqlx::query_as!(
         SlimUser,
@@ -62,6 +71,7 @@ pub async fn find_user_by_username(client: &sqlx::PgPool, username: &str) -> Sli
         .await?)
 }
 
+/// Find user by username, return the full one
 pub async fn find_user_by_username_full(client: &sqlx::PgPool, username: &str) -> UserVecRet {
     Ok(sqlx::query_as!(
         User,
@@ -73,6 +83,7 @@ pub async fn find_user_by_username_full(client: &sqlx::PgPool, username: &str) -
         .await?)
 }
 
+/// Find user by email, for checking purpose
 pub async fn find_user_by_email(client: &sqlx::PgPool, email: &str) -> UserVecRet {
     Ok(sqlx::query_as!(
         User,
@@ -84,26 +95,32 @@ pub async fn find_user_by_email(client: &sqlx::PgPool, email: &str) -> UserVecRe
         .await?)
 }
 
+/// update password, return the full one(for Debug use)
 pub async fn update_password_by_username(client: &sqlx::PgPool, username: &str, new_pass: &str) -> UserRet {
-    Ok(sqlx::query_as!(
+    sqlx::query_as!(
         User,
         "UPDATE users SET password = $1 \
          WHERE username = $2 RETURNING *;",
         new_pass,
         username
         )
-        .fetch_one(client)
-        .await?)
+        .fetch_all(client)
+        .await?
+        .pop()
+        .ok_or(Error::NotFound)
 }
 
+/// update passkey, return the full one(for Debug use)
 pub async fn update_passkey_by_username(client: &sqlx::PgPool, username: &str, new_key: &str) -> UserRet {
-    Ok(sqlx::query_as!(
+    sqlx::query_as!(
         User,
         "UPDATE users SET passkey = $1 \
          WHERE username = $2 RETURNING *;",
         new_key,
         username
         )
-        .fetch_one(client)
-        .await?)
+        .fetch_all(client)
+        .await?
+        .pop()
+        .ok_or(Error::NotFound)
 }

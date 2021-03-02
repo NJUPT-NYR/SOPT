@@ -1,9 +1,8 @@
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use crate::error::Error;
 use super::*;
 use sopt::*;
 
-type InviteRet = Result<InvitationCode, Error>;
 type InviteVecRet = Result<Vec<InvitationCode>, Error>;
 type SlimInvitationRet = Result<SlimInvitation, Error>;
 type SlimInvitationRecRet = Result<Vec<SlimInvitation>, Error>;
@@ -13,7 +12,7 @@ type SlimInvitationRecRet = Result<Vec<SlimInvitation>, Error>;
 /// 2. code: invitation code itself
 /// 3. send_to: this is a email address
 /// 4. is_used: whether it is used
-#[derive(Deserialize, Serialize, Debug, ToResponse)]
+#[derive(Serialize, Debug, ToResponse)]
 pub struct InvitationCode {
     pub id: i64,
     pub sender: Option<String>,
@@ -24,7 +23,7 @@ pub struct InvitationCode {
 
 /// A wrapper for json,
 /// remove unnecessary sender and id columns
-#[derive(Deserialize, Serialize, Debug, ToResponse)]
+#[derive(Serialize, Debug, ToResponse)]
 pub struct SlimInvitation {
     pub code: String,
     #[serde(rename="sendTo")]

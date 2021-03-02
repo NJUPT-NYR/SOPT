@@ -11,6 +11,7 @@ use std::fmt::{Display, Formatter};
 /// 3. DBError, wrapper for sqlx `Error`
 /// 4. OtherError, with a generic to rewrite other errors to string
 ///     like utilities and standard library error.
+/// 5. NotFound
 ///
 /// All errors will be transformed to Http Response so no panic will happen.
 #[derive(From, Debug)]
@@ -19,6 +20,7 @@ pub enum Error {
     OtherError(String),
     RedisError(PoolError),
     DBError(DBError),
+    NotFound,
 }
 
 impl Display for Error {
@@ -38,7 +40,8 @@ impl ResponseError for Error {
             Error::DBError(ref err) => HttpResponse::InternalServerError().body(err.to_string()),
             Error::CookieError => {
                 HttpResponse::Unauthorized().json(GeneralResponse::from_err("not login yet"))
-            }
+            },
+            Error::NotFound => HttpResponse::NotFound().body("Not Found"),
         }
     }
 }

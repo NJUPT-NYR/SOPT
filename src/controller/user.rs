@@ -10,6 +10,7 @@ use crate::data::{ToResponse, user as user_model, GeneralResponse,
 use crate::error::{Error, error_string};
 use crate::data::invitation::InvitationCode;
 
+/// Allow email to register
 #[cfg(feature = "email-restriction")]
 static ALLOWED_DOMAIN: [&str; 3] = [
     "gmail.com",
@@ -54,6 +55,7 @@ struct InfoWrapper {
     pub info: serde_json::Value,
 }
 
+/// sign up controller
 #[post("/add_user")]
 async fn add_user(
     data: web::Json<Registry>,
@@ -117,6 +119,7 @@ async fn add_user(
     Ok(HttpResponse::Ok().json(new_user.to_json()))
 }
 
+/// use `username` and `password` to login
 #[post("/login")]
 async fn login(
     data: web::Json<Login>,
@@ -146,6 +149,8 @@ async fn logout(id: Identity) -> HttpResult {
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
+/// update user defined json fields
+/// replace all without any check
 #[post("/personal_info_update")]
 async fn personal_info_update(
     data: web::Json<InfoWrapper>,
@@ -159,7 +164,8 @@ async fn personal_info_update(
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
-// will it block?
+/// will it block?
+/// upload avatar and b64encode it into database
 #[post("/upload_avatar")]
 async fn upload_avatar(
     mut payload: actix_multipart::Multipart,
@@ -222,6 +228,7 @@ async fn check_identity(
     }
 }
 
+/// reset user password
 #[post("/reset_password")]
 async fn reset_password(
     data: web::Json<Validation>,
@@ -245,6 +252,7 @@ async fn reset_password(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
+/// reset user passkey
 #[get("/reset_passkey")]
 async fn reset_passkey(
     id: Identity,
@@ -266,6 +274,7 @@ async fn reset_passkey(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
+/// transfer certain money to user
 #[post("/transfer_money")]
 async fn transfer_money(
     data: web::Json<Transfer>,

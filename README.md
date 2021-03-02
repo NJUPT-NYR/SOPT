@@ -49,9 +49,9 @@ We also reduce unnecessary rtt, memory copy and database communications.
 ### Light-weighted
 Software becomes hard to maintain and loses so much elegance when 
 growing up too big. We do not like that and control the size of
-this Project.
+this project.
 
-SOPT is simple in APIs, database Design, dependencies and source code.
+SOPT is simple in APIs, database design, dependencies and source code.
 Also, most of the codes are documented.
 
 ## API

@@ -23,6 +23,8 @@ struct DetailRequest {
     pub id: i64,
 }
 
+/// add a post for definite torrent
+/// by default this post is invisible
 #[post("/add_torrent")]
 async fn add_torrent(
     data: web::Json<TorrentPost>,
@@ -39,12 +41,12 @@ async fn add_torrent(
                                                        poster,
                                                        post.description
                                                    )).await?;
+    // TODO: eliminate duplication codes
     if post.tags.is_some() {
         let tags = post.tags.unwrap();
         if tags.len() > 5 {
             return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("tags max amount is 5")))
         }
-        // TODO: eliminate duplications
         let new_ret =
             torrent_info_model::add_tag_for_torrent(&client, ret.id, &tags)
                 .await?;
@@ -54,6 +56,7 @@ async fn add_torrent(
     }
 }
 
+/// update a post, like setting tags and add descriptions
 #[post("/update_torrent")]
 async fn update_torrent(
     data: web::Json<TorrentPost>,
@@ -92,13 +95,15 @@ async fn update_torrent(
     }
 }
 
+/// list torrent with tags and pages
 #[get("/list_torrents")]
 async fn list_torrents(
-    data: web::Json<TagsList>,
+    web::Query(data): web::Query<TagsList>,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     // TODO: is it better to show available tags to users?
-    let tags: Option<Vec<String>> = data.into_inner().tags;
+    // TODO pagination
+    let tags: Option<Vec<String>> = data.tags;
 
     if tags.is_none() {
         let ret = torrent_info_model::find_visible_torrent(&client).await?;
@@ -123,6 +128,7 @@ async fn list_torrents(
     }
 }
 
+/// list all torrents current user posted
 #[get("list_posted_torrent")]
 async fn list_posted_torrent(
     id: Identity,
@@ -134,6 +140,7 @@ async fn list_posted_torrent(
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
+/// upload torrent file and parse to database column
 #[post("/upload_torrent")]
 async fn upload_torrent(
 
@@ -141,12 +148,13 @@ async fn upload_torrent(
     todo!()
 }
 
+/// show definite torrent with an id
 #[get("/show_torrent")]
 async fn show_torrent(
-    data: web::Json<DetailRequest>,
-    client: web::Data<&sqlx::PgPool>,
+    web::Query(data): web::Query<DetailRequest>,
+    client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let id: i64 = data.into_inner().id;
+    let id: i64 = data.id;
     let ret = torrent_info_model::find_torrent_by_id(&client, id).await?;
 
     Ok(HttpResponse::Ok().json(ret.to_json()))
