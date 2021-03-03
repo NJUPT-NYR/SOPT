@@ -4,21 +4,22 @@ pub mod user;
 pub mod user_info;
 // pub mod torrent;
 
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use crate::error::Error;
 use sopt::*;
 
 /// General Response structure used to
-/// communicate with frontend.
+/// communicate with frontends.
 ///
 /// it contains:
 /// 1. data, returned data or null
 /// 2. success, the status of request
 /// 3. errMsg, not so severe errors prompt
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct GeneralResponse {
     data: serde_json::Value,
-    success: bool,
+    // pub is for test use
+    pub(crate) success: bool,
     #[serde(rename = "errMsg")]
     err_msg: String,
 }

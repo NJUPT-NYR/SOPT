@@ -16,6 +16,7 @@ email-restriction = []
 [dependencies]
 # actix stuff
 actix-web = "3.3.2"
+actix-rt = "*"
 actix-identity = "*"
 actix-multipart = "0.3.0"
 
@@ -28,6 +29,7 @@ serde = { version = "^1.0", features = ["derive"] }
 serde_bencode = "*"
 serde_bytes = "*"
 serde_json = "*"
+serde_qs = { version = "0.8.2", features = [ "actix2" ] }
 
 # utils
 futures = "0.3.13"

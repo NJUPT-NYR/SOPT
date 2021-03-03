@@ -1,7 +1,7 @@
 use actix_web::{HttpResponse, *};
 use actix_identity::Identity;
 use deadpool_redis::Pipeline;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use super::*;
 use crate::util::*;
 use crate::data::{ToResponse, user as user_model, GeneralResponse,
@@ -30,7 +30,7 @@ struct Validation {
     pub password: String,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 struct Registry {
     pub email: String,
     pub username: String,
@@ -75,8 +75,7 @@ async fn add_user(
                 }
             }
         },
-        None => return Ok(HttpResponse::BadRequest()
-                              .json(GeneralResponse::from_err("invalid email address"))),
+        None => return Ok(HttpResponse::BadRequest().json(GeneralResponse::from_err("invalid email address"))),
     };
 
     if let Some(str) = user.invite_code {
@@ -315,4 +314,143 @@ pub fn user_service() -> Scope {
             .service(reset_password)
             .service(reset_passkey)
             .service(transfer_money))
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::config::Config;
+    use crate::data::GeneralResponse;
+    use actix_identity::{CookieIdentityPolicy, IdentityService};
+    use actix_web::{test, App};
+    use dotenv::dotenv;
+    use rand::Rng;
+    use serde_json::*;
+
+    #[actix_rt::test]
+    async fn test_signup_and_login() {
+        dotenv().ok();
+        let cfg = Config::from_env().unwrap();
+        let pool = sqlx::PgPool::connect(&cfg.database_url)
+            .await
+            .expect("unable to connect to database");
+        let cookie_key: [u8; 32] = rand::thread_rng().gen();
+        let mut app = test::init_service(
+            App::new()
+                .wrap(IdentityService::new(
+                    CookieIdentityPolicy::new(&cookie_key)
+                        .name("user-auth")
+                        .secure(false),
+                ))
+                .data(pool.clone())
+                .service(crate::controller::api_service()))
+            .await;
+
+        let signup_ok = json!({
+            "email": "tadokoro@gmail.com",
+            "username": "kusa114",
+            "password": "114514",
+        });
+        let req = test::TestRequest::post().uri("/api/user/add_user").set_json(&signup_ok).to_request();
+        let resp: GeneralResponse = test::read_response_json(&mut app, req).await;
+        assert_eq!(resp.success, true);
+        // duplicate register should fail
+        let req = test::TestRequest::post().uri("/api/user/add_user").set_json(&signup_ok).to_request();
+        let resp: GeneralResponse = test::read_response_json(&mut app, req).await;
+        assert_eq!(resp.success, false);
+
+        let login_ok  = json!({
+            "username": "kusa114",
+            "password": "114514",
+        });
+        let req = test::TestRequest::post().uri("/api/user/login").set_json(&login_ok).to_request();
+        let resp: GeneralResponse = test::read_response_json(&mut app, req).await;
+        assert_eq!(resp.success, true);
+
+        let login_failed_1 = json!({
+            "username": "kusa114",
+            "password": "1919810",
+        });
+        let req = test::TestRequest::post().uri("/api/user/login").set_json(&login_failed_1).to_request();
+        let resp: GeneralResponse = test::read_response_json(&mut app, req).await;
+        assert_eq!(resp.success, false);
+
+        let login_failed_2 = json!({
+            "username": "phantom_user",
+            "password": "fake_@pass",
+        });
+        let req = test::TestRequest::post().uri("/api/user/login").set_json(&login_failed_2).to_request();
+        let resp: GeneralResponse = test::read_response_json(&mut app, req).await;
+        assert_eq!(resp.success, false);
+
+        #[cfg(feature = "email-restriction")]
+        {
+            let signup_banned_mail = json!({
+                "email": "thief@banned.org",
+                "username": "anyway",
+                "password": "114514",
+            });
+            let req = test::TestRequest::post().uri("/api/user/add_user").set_json(&signup_banned_mail).to_request();
+            let resp: GeneralResponse = test::read_response_json(&mut app, req).await;
+            assert_eq!(resp.success, false);
+        }
+
+        // not pollute database
+        sqlx::query!("DELETE FROM user_info WHERE username = 'kusa114';").execute(&pool).await.unwrap();
+        sqlx::query!("DELETE FROM users WHERE username = 'kusa114';").execute(&pool).await.unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn test_personal_info_update() {
+        use crate::data::user::User;
+        dotenv().ok();
+        let cfg = Config::from_env().unwrap();
+        let pool = sqlx::PgPool::connect(&cfg.database_url)
+            .await
+            .expect("unable to connect to database");
+        let cookie_key: [u8; 32] = rand::thread_rng().gen();
+        let mut app = test::init_service(
+            App::new()
+                .wrap(IdentityService::new(
+                    CookieIdentityPolicy::new(&cookie_key)
+                        .name("user-auth")
+                        .secure(false),
+                ))
+                .data(pool.clone())
+                .service(crate::controller::api_service()))
+            .await;
+
+        let ret = crate::data::user::add_user(&pool, User::new(
+            "yuki@nago.to".to_string(),
+            "YUKI.N".to_string(),
+            crate::util::hash_password("20060707").unwrap(),
+            "akdaskjkaschakjsc".to_string()
+        )).await.unwrap();
+        crate::data::user_info::add_user_info(&pool, ret.id, &ret.username).await.unwrap();
+
+        let login_ok  = json!({
+            "username": "YUKI.N",
+            "password": "20060707",
+        });
+        let resp = test::TestRequest::post().uri("/api/user/login").set_json(&login_ok)
+            .send_request(&mut app).await;
+        let header = resp.headers().get("set-cookie").unwrap().to_str().unwrap();
+        let pos = header.find(";").unwrap();
+        let header = &header[..pos];
+
+        let data = json!({
+            "info": json!({
+                "高校": "县立北高",
+                "Job": "信息统合生命体对有机生命体接触用人形终端",
+                "紹介": "まだ図書館に行く"
+            })
+        });
+        let req = test::TestRequest::post().set_json(&data)
+            .header("Cookie", header)
+            .uri("/api/user/personal_info_update").to_request();
+        let resp: GeneralResponse = test::read_response_json(&mut app, req).await;
+        assert_eq!(resp.success, true);
+
+        sqlx::query!("DELETE FROM user_info WHERE username = 'YUKI.N';").execute(&pool).await.unwrap();
+        sqlx::query!("DELETE FROM users WHERE username = 'YUKI.N';").execute(&pool).await.unwrap();
+    }
 }

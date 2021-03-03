@@ -1,9 +1,9 @@
 use actix_web::{HttpResponse, *};
 use actix_identity::Identity;
-use serde::{Deserialize, Deserializer};
+use serde::Deserialize;
 use super::*;
 use crate::data::{ToResponse, torrent_info as torrent_info_model, GeneralResponse, DataWithCount};
-use crate::error::Error;
+use crate::error::{Error, error_string};
 
 #[derive(Deserialize, Debug)]
 struct TorrentPost {
@@ -13,56 +13,10 @@ struct TorrentPost {
     pub tags: Option<Vec<String>>,
 }
 
-#[derive(Debug)]
+#[derive(Deserialize, Debug)]
 struct QueryList {
     pub tags: Option<Vec<String>>,
     pub page: Option<usize>,
-}
-
-/// actix does not support multiple params of url encode
-/// so i wrote the deserialize myself
-impl<'de> Deserialize<'de> for QueryList {
-    fn deserialize<D>(deserializer: D) -> Result<QueryList, D::Error>
-        where
-            D: Deserializer<'de>,
-    {
-        use std::fmt;
-        use serde::de::{Visitor, MapAccess};
-        struct FieldVisitor;
-
-        impl<'de> Visitor<'de> for FieldVisitor {
-            type Value = QueryList;
-
-            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("expect tags and page row")
-            }
-
-            fn visit_map<V>(self, mut map: V) -> Result<QueryList, V::Error>
-                where
-                    V: MapAccess<'de>
-            {
-                let mut tags:  Vec<String> = Vec::default();
-                let mut page: Option<usize> = None;
-                while let Some(key) = map.next_key()? {
-                    match key {
-                        "tags" => tags.push(map.next_value::<String>()?),
-                        "page" => page = Some(map.next_value::<usize>()?),
-                        _ => (),
-                    }
-                }
-                let real_tags = if tags.len() == 0 {
-                    None
-                } else {
-                    Some(tags)
-                };
-                Ok(QueryList {
-                    tags: real_tags,
-                    page,
-                })
-            }
-        }
-        deserializer.deserialize_identifier(FieldVisitor)
-    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -145,11 +99,13 @@ async fn update_torrent(
 /// list torrent with tags and pages
 #[get("/list_torrents")]
 async fn list_torrents(
-    web::Query(data): web::Query<QueryList>,
+    req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let tags: Option<Vec<String>> = data.tags;
-    let page: usize = data.page.unwrap_or(0);
+    let query = req.uri().query().unwrap_or_default();
+    let data: QueryList = serde_qs::from_str(query).map_err(error_string)?;
+    let tags = data.tags;
+    let page = data.page.unwrap_or(0);
 
     if tags.is_none() {
         let count = torrent_info_model::query_torrent_counts(&client).await?;
