@@ -171,9 +171,10 @@ pub async fn find_visible_torrent(client: &sqlx::PgPool, page_offset: i64) -> Sl
 
 /// Get counts of torrents definite tags
 pub async fn query_torrent_counts_by_tag(client: &sqlx::PgPool, tags: &Vec<String>) -> CountRet {
-    Ok(sqlx::query!(
+    // due to sqlx not support type cast of postgres
+    Ok(sqlx::query_unchecked!(
         "SELECT COUNT(*) FROM torrent_info \
-        WHERE visible = TRUE AND ($1 && tag);",
+        WHERE visible = TRUE AND ($1::VARCHAR[] <@ tag);",
         tags
         )
         .fetch_one(client)
@@ -184,12 +185,13 @@ pub async fn query_torrent_counts_by_tag(client: &sqlx::PgPool, tags: &Vec<Strin
 
 /// Find visible torrent with definite tags
 pub async fn find_visible_torrent_by_tag(client: &sqlx::PgPool, tags: &Vec<String>, page_offset: i64) -> SlimTorrentVecRet {
-    Ok(sqlx::query_as!(
+    // due to sqlx not support type cast of postgres
+    Ok(sqlx::query_as_unchecked!(
         SlimTorrent,
         "SELECT id, title, poster, downloaded, tag, last_activity FROM( \
             SELECT ROW_NUMBER() OVER ( ORDER BY last_activity DESC ) AS RowNum, * \
             FROM torrent_info \
-            WHERE visible = TRUE AND ($1 && tag) \
+            WHERE visible = TRUE AND ($1::VARCHAR[] <@ tag) \
         ) AS RowConstrainedResult \
         WHERE RowNum > $2 AND RowNum <= $2 + 20 \
         ORDER BY RowNum;",

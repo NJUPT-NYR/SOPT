@@ -331,7 +331,7 @@ By default, post will be hide until checked by administer.
 **Example**
 
 ```
-https://localhost:8000/torrent/list_torrents?page=0&tags=电影,新浪潮
+https://localhost:8000/torrent/list_torrents?page=0&tags=电影&tags=新浪潮
 ```
 
 **Response**
