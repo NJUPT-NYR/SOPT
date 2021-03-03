@@ -8,6 +8,11 @@
     - success: Boolean
     - errMsg: String
 
+### DataWithCount
+
+    - count: Int
+    - ret: Json
+
 ### SlimUser
 
     - id: Int
@@ -320,17 +325,18 @@ By default, post will be hide until checked by administer.
 
 **Request**
 
+    - page: Option<Int>(>= zero)
     - tags: Option<Vec<String>>
 
 **Example**
 
 ```
-    https://localhost:8000/torrent/list_torrents?tags=电影,新浪潮
+https://localhost:8000/torrent/list_torrents?page=0&tags=电影,新浪潮
 ```
 
 **Response**
 1. Error: `GeneralResponse` with `errMsg`
-2. Success: `GeneralResponse` with a list of `SlimTorrent`
+2. Success: `GeneralResponse` with page count and a list of `SlimTorrent`(`DataWithCount`)
 
 ### /torrent/list_posted_torrent
 **Type**: GET
@@ -353,7 +359,7 @@ List all torrents posted by current user.
 **Example**
 
 ```
-    https://localhost:8000/torrent/show_torrent?id=1919810
+https://localhost:8000/torrent/show_torrent?id=1919810
 ```
 
 **Response**

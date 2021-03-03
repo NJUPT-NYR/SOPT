@@ -2,7 +2,7 @@ use actix_web::{HttpResponse, *};
 use actix_identity::Identity;
 use serde::Deserialize;
 use super::*;
-use crate::data::{ToResponse, torrent_info as torrent_info_model, GeneralResponse};
+use crate::data::{ToResponse, torrent_info as torrent_info_model, GeneralResponse, DataWithCount};
 use crate::error::Error;
 
 #[derive(Deserialize, Debug)]
@@ -14,8 +14,9 @@ struct TorrentPost {
 }
 
 #[derive(Deserialize, Debug)]
-struct TagsList {
+struct QueryList {
     pub tags: Option<Vec<String>>,
+    pub page: Option<usize>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -98,33 +99,30 @@ async fn update_torrent(
 /// list torrent with tags and pages
 #[get("/list_torrents")]
 async fn list_torrents(
-    web::Query(data): web::Query<TagsList>,
+    web::Query(data): web::Query<QueryList>,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     // TODO: is it better to show available tags to users?
-    // TODO pagination
+    // TODO: Custom Page Offset(Draft)
     let tags: Option<Vec<String>> = data.tags;
+    // is it safe?
+    let page: usize = data.page.unwrap_or(0);
 
     if tags.is_none() {
-        let ret = torrent_info_model::find_visible_torrent(&client).await?;
-        Ok(HttpResponse::Ok().json(ret.to_json()))
+        let count = torrent_info_model::query_torrent_counts(&client).await?;
+        let ret = torrent_info_model::find_visible_torrent(&client, (page * 20) as i64).await?;
+        let resp = DataWithCount::new(serde_json::to_value(ret).unwrap(), count / 20 + 1);
+        Ok(HttpResponse::Ok().json(resp.to_json()))
     } else {
         let tags = tags.unwrap();
-        let len = tags.len();
-        if len == 0 {
-            let ret = torrent_info_model::find_visible_torrent(&client).await?;
-            return Ok(HttpResponse::Ok().json(ret.to_json()))
+        if tags.len() == 0 {
+            return Ok(HttpResponse::BadRequest().json(GeneralResponse::from_err("tags are empty")))
         }
 
-        let mut stream =
-            torrent_info_model::find_visible_torrent_by_tag(&client, &tags[0])
-                .await?;
-        for i in 1..len - 1 {
-            stream = stream.into_iter().filter(|row|
-                row.tag.as_ref().unwrap().contains(&tags[i])
-            ).collect();
-        }
-        Ok(HttpResponse::Ok().json(stream.to_json()))
+        let count = torrent_info_model::query_torrent_counts_by_tag(&client, &tags).await?;
+        let ret = torrent_info_model::find_visible_torrent_by_tag(&client, &tags, (page * 20) as i64).await?;
+        let resp = DataWithCount::new(serde_json::to_value(ret).unwrap(), count / 20 + 1);
+        Ok(HttpResponse::Ok().json(resp.to_json()))
     }
 }
 

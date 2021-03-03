@@ -67,19 +67,19 @@ Also, most of the codes are documented.
   - [x] Invite
   - [ ] Rank
 - [ ] Torrent
-  - [x] Add
+  - [x] Add a post
   - [ ] Generate with passkey
   - [ ] Sync with tracker
-  - [ ] Search and filter
+  - [x] Tags filter
 - [ ] Admin
-  - [ ] Ban user
+  - [ ] User management
   - [ ] Site general setting
-  - [ ] Torrent info update
-  - [ ] Open feature
+  - [ ] Torrent review
 - [ ] Anti-Cheating
   - [ ] IP limitation
-  - [ ] Client Ban
+  - [ ] Client ban
   - [ ] Monitor
+- [ ] Search  
 
 ## Contribution
 SOPT is now under active development. Any contribution is welcomed.

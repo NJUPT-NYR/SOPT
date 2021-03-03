@@ -140,27 +140,61 @@ pub async fn find_torrent_by_poster(client: &sqlx::PgPool, poster: String) -> To
         .await?)
 }
 
-/// find all visible torrents
-/// TODO: add pagination
-pub async fn find_visible_torrent(client: &sqlx::PgPool) -> SlimTorrentVecRet {
+/// Get counts of total torrents
+pub async fn query_torrent_counts(client: &sqlx::PgPool) -> CountRet {
+    Ok(sqlx::query!(
+        "SELECT COUNT(*) FROM torrent_info \
+        WHERE visible = TRUE;"
+        )
+        .fetch_one(client)
+        .await?
+        .count
+        .expect("sql function not right"))
+}
+
+/// Find all visible torrents
+pub async fn find_visible_torrent(client: &sqlx::PgPool, page_offset: i64) -> SlimTorrentVecRet {
     Ok(sqlx::query_as!(
         SlimTorrent,
-        "SELECT id, title, poster, downloaded, tag, last_activity FROM torrent_info \
-        WHERE visible = TRUE;"
+        "SELECT id, title, poster, downloaded, tag, last_activity FROM( \
+            SELECT ROW_NUMBER() OVER ( ORDER BY last_activity DESC ) AS RowNum, * \
+            FROM torrent_info \
+            WHERE visible = TRUE \
+        ) AS RowConstrainedResult \
+        WHERE RowNum > $1 AND RowNum <= $1 + 20 \
+        ORDER BY RowNum;",
+        page_offset
         )
         .fetch_all(client)
         .await?)
 }
 
+/// Get counts of torrents definite tags
+pub async fn query_torrent_counts_by_tag(client: &sqlx::PgPool, tags: &Vec<String>) -> CountRet {
+    Ok(sqlx::query!(
+        "SELECT COUNT(*) FROM torrent_info \
+        WHERE visible = TRUE AND ($1 && tag);",
+        tags
+        )
+        .fetch_one(client)
+        .await?
+        .count
+        .expect("sql function not right"))
+}
+
 /// Find visible torrent with definite tags
-/// multiple tags will be filtered by rust runtime
-/// instead of database
-pub async fn find_visible_torrent_by_tag(client: &sqlx::PgPool, tag: &str) -> SlimTorrentVecRet {
+pub async fn find_visible_torrent_by_tag(client: &sqlx::PgPool, tags: &Vec<String>, page_offset: i64) -> SlimTorrentVecRet {
     Ok(sqlx::query_as!(
         SlimTorrent,
-        "SELECT id, title, poster, downloaded, tag, last_activity FROM torrent_info \
-        WHERE visible = TRUE AND $1 = ANY(tag);",
-        tag
+        "SELECT id, title, poster, downloaded, tag, last_activity FROM( \
+            SELECT ROW_NUMBER() OVER ( ORDER BY last_activity DESC ) AS RowNum, * \
+            FROM torrent_info \
+            WHERE visible = TRUE AND ($1 && tag) \
+        ) AS RowConstrainedResult \
+        WHERE RowNum > $2 AND RowNum <= $2 + 20 \
+        ORDER BY RowNum;",
+        tags,
+        page_offset
         )
         .fetch_all(client)
         .await?)

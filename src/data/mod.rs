@@ -5,6 +5,8 @@ pub mod user_info;
 // pub mod torrent;
 
 use serde::Serialize;
+use crate::error::Error;
+use sopt::*;
 
 /// General Response structure used to
 /// communicate with frontend.
@@ -59,3 +61,21 @@ pub trait ToResponse: Serialize {
         }
     }
 }
+
+/// A common wrapper used to return page count with list
+#[derive(Serialize, Debug, ToResponse)]
+pub struct DataWithCount {
+    pub count: i64,
+    pub ret: serde_json::Value,
+}
+
+impl DataWithCount {
+    pub fn new(ret: serde_json::Value, count: i64) -> Self {
+        DataWithCount {
+            count,
+            ret,
+        }
+    }
+}
+
+type CountRet = Result<i64, Error>;
