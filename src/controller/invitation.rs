@@ -1,10 +1,9 @@
 use actix_web::{HttpResponse, web, *};
-use actix_identity::Identity;
 use serde::Deserialize;
 use super::*;
 use crate::util::*;
 use crate::data::{ToResponse, invitation as invitation_model};
-use crate::error::Error;
+use crate::KeyWrapper;
 
 #[derive(Deserialize, Debug)]
 struct Message {
@@ -18,11 +17,13 @@ struct Message {
 #[post("/send_invitation")]
 async fn send_invitation(
     data: web::Json<Message>,
-    id: Identity,
+    req: HttpRequest,
+    key: web::Data<KeyWrapper>,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let message: Message = data.into_inner();
-    let username = id.identity().ok_or(Error::CookieError)?;
+    let secret: &[u8] = key.0.as_bytes();
+    let username = get_name_in_token(req, secret)?;
 
     let code = generate_invitation_code();
     let body = format!("{}\n\nYour Invitation Code is: {}\n", &message.body, &code);
@@ -54,10 +55,12 @@ async fn send_invitation(
 /// list all invitations sent by current user
 #[get("/list_invitations")]
 async fn list_invitations(
-    id: Identity,
+    req: HttpRequest,
+    key: web::Data<KeyWrapper>,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let username = id.identity().ok_or(Error::CookieError)?;
+    let secret: &[u8] = key.0.as_bytes();
+    let username = get_name_in_token(req, secret)?;
 
     let ret = invitation_model::find_invitation_by_user(&client, &username)
             .await?;

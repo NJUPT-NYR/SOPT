@@ -1,14 +1,15 @@
 use actix_web::{HttpResponse, *};
-use actix_identity::Identity;
-use deadpool_redis::Pipeline;
 use serde::{Deserialize, Serialize};
+use jsonwebtoken::{encode, EncodingKey, Header};
 use super::*;
 use crate::util::*;
-use crate::data::{ToResponse, user as user_model, GeneralResponse,
+use crate::data::{ToResponse, GeneralResponse, Claim,
+                  user as user_model,
                   invitation as invitation_model,
                  user_info as user_info_model};
-use crate::error::{Error, error_string};
+use crate::error::Error;
 use crate::data::invitation::InvitationCode;
+use crate::KeyWrapper;
 
 /// Allow email to register
 #[cfg(feature = "email-restriction")]
@@ -122,10 +123,13 @@ async fn add_user(
 #[post("/login")]
 async fn login(
     data: web::Json<Login>,
-    id: Identity,
     client: web::Data<sqlx::PgPool>,
+    key: web::Data<KeyWrapper>,
 ) -> HttpResult {
+    use chrono::{Utc, Duration};
+
     let user: Login = data.into_inner();
+    let secret: &[u8] = key.0.as_bytes();
 
     let validation = user_model::find_user_by_username_full(&client, &user.username)
         .await?.pop();
@@ -135,17 +139,18 @@ async fn login(
                 return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("password not match")))
             }
             user_info_model::update_activity_by_name(&client, &user.username).await?;
-            id.remember(user.username);
-            Ok(HttpResponse::Ok().json(GeneralResponse::default()))
+            let claim = Claim {
+                sub: user.username,
+                exp: (Utc::now() + Duration::days(30)).timestamp() as u64,
+            };
+            let tokens = encode(
+                &Header::default(),
+                &claim,
+                &EncodingKey::from_secret(secret)).unwrap();
+            Ok(HttpResponse::Ok().json(tokens.to_json()))
         },
         None => Ok(HttpResponse::Ok().json(GeneralResponse::from_err("password not match"))),
     }
-}
-
-#[get("/logout")]
-async fn logout(id: Identity) -> HttpResult {
-    id.forget();
-    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
 /// update user defined json fields
@@ -153,11 +158,14 @@ async fn logout(id: Identity) -> HttpResult {
 #[post("/personal_info_update")]
 async fn personal_info_update(
     data: web::Json<InfoWrapper>,
-    id: Identity,
+    req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
+    key: web::Data<KeyWrapper>,
 ) -> HttpResult {
     let data: InfoWrapper = data.into_inner();
-    let username = id.identity().ok_or(Error::CookieError)?;
+    let secret: &[u8] = key.0.as_bytes();
+    let username = get_name_in_token(req, secret)?;
+    println!("{}", username);
 
     let ret = user_info_model::update_other_by_name(&client, &username, data.info).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
@@ -168,12 +176,14 @@ async fn personal_info_update(
 #[post("/upload_avatar")]
 async fn upload_avatar(
     mut payload: actix_multipart::Multipart,
-    id: Identity,
+    req: HttpRequest,
+    key: web::Data<KeyWrapper>,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     use futures::{StreamExt, TryStreamExt};
 
-    let username = id.identity().ok_or(Error::CookieError)?;
+    let secret: &[u8] = key.0.as_bytes();
+    let username = get_name_in_token(req, secret)?;
 
     if let Ok(Some(mut file)) = payload.try_next().await {
         let content_type = file.content_disposition().ok_or(Error::OtherError("incomplete file".to_string()))?;
@@ -199,28 +209,21 @@ async fn upload_avatar(
 }
 
 /// Here comes danger action, so a validation must be performed.
-/// By store the identity in redis, we are able to allow user
-/// to perform other operations like a charm.
-/// TODO: Use jwt instead?
 #[post("/check_identity")]
 async fn check_identity(
     data: web::Json<Validation>,
-    id: Identity,
+    req: HttpRequest,
+    key: web::Data<KeyWrapper>,
     client: web::Data<sqlx::PgPool>,
-    redis_pool: web::Data<deadpool_redis::Pool>,
 ) -> HttpResult {
     let password: String = data.into_inner().password;
-    let username = id.identity().ok_or(Error::CookieError)?;
-    let mut conn = redis_pool.get().await.map_err(Error::RedisError)?;
+    let secret: &[u8] = key.0.as_bytes();
+    let username = get_name_in_token(req, secret)?;
 
     let validation = user_model::find_user_by_username_full(&client, &username)
-        .await?.pop().expect("Someone hacked our cookie!");
+        .await?.pop().expect("Someone hacked our token!");
 
     if verify_password(&password, &validation.password)? {
-        let mut pipe = Pipeline::new();
-        pipe.set_ex(&username, "authed", 300);
-        pipe.execute_async(&mut conn)
-            .await.map_err(error_string)?;
         Ok(HttpResponse::Ok().json(GeneralResponse::default()))
     } else {
         Ok(HttpResponse::Ok().json(GeneralResponse::from_err("password not match")))
@@ -231,21 +234,13 @@ async fn check_identity(
 #[post("/reset_password")]
 async fn reset_password(
     data: web::Json<Validation>,
-    id: Identity,
+    req: HttpRequest,
+    key: web::Data<KeyWrapper>,
     client: web::Data<sqlx::PgPool>,
-    redis_pool: web::Data<deadpool_redis::Pool>,
 ) -> HttpResult {
     let new_pass = hash_password(&data.into_inner().password)?;
-    let username = id.identity().ok_or(Error::CookieError)?;
-    let mut conn = redis_pool.get().await.map_err(Error::RedisError)?;
-
-    let mut pipe = Pipeline::new();
-    pipe.get(&username);
-    let resp: String = pipe.query_async(&mut conn)
-        .await.map_err(error_string)?;
-    if resp == "nil" {
-        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("not authed yet")))
-    }
+    let secret: &[u8] = key.0.as_bytes();
+    let username = get_name_in_token(req, secret)?;
 
     user_model::update_password_by_username(&client, &username, &new_pass).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
@@ -254,20 +249,12 @@ async fn reset_password(
 /// reset user passkey
 #[get("/reset_passkey")]
 async fn reset_passkey(
-    id: Identity,
+    req: HttpRequest,
+    key: web::Data<KeyWrapper>,
     client: web::Data<sqlx::PgPool>,
-    redis_pool: web::Data<deadpool_redis::Pool>,
 ) -> HttpResult {
-    let username = id.identity().ok_or(Error::CookieError)?;
-    let mut conn = redis_pool.get().await.map_err(Error::RedisError)?;
-
-    let mut pipe = Pipeline::new();
-    pipe.get(&username);
-    let resp: String = pipe.query_async(&mut conn)
-        .await.map_err(error_string)?;
-    if resp == "nil" {
-        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("not authed yet")))
-    }
+    let secret: &[u8] = key.0.as_bytes();
+    let username = get_name_in_token(req, secret)?;
 
     user_model::update_passkey_by_username(&client, &username, &generate_passkey(&username)?).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
@@ -277,21 +264,13 @@ async fn reset_passkey(
 #[post("/transfer_money")]
 async fn transfer_money(
     data: web::Json<Transfer>,
-    id: Identity,
+    req: HttpRequest,
+    key: web::Data<KeyWrapper>,
     client: web::Data<sqlx::PgPool>,
-    redis_pool: web::Data<deadpool_redis::Pool>
 ) -> HttpResult {
     let data: Transfer = data.into_inner();
-    let username = id.identity().ok_or(Error::CookieError)?;
-    let mut conn = redis_pool.get().await.map_err(Error::RedisError)?;
-
-    let mut pipe = Pipeline::new();
-    pipe.get(&username);
-    let resp: String = pipe.query_async(&mut conn)
-        .await.map_err(error_string)?;
-    if resp == "nil" {
-        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("not authed yet")))
-    }
+    let secret: &[u8] = key.0.as_bytes();
+    let username = get_name_in_token(req, secret)?;
 
     let now_amount = user_info_model::find_slim_info_by_name(&client, &username).await?;
     if now_amount.money - data.amount < 0.0 {
@@ -306,7 +285,6 @@ pub fn user_service() -> Scope {
     web::scope("/user")
         .service(add_user)
         .service(login)
-        .service(logout)
         .service(personal_info_update)
         .service(upload_avatar)
         .service(web::scope("/auth")
@@ -320,11 +298,10 @@ pub fn user_service() -> Scope {
 mod tests {
     use crate::config::Config;
     use crate::data::GeneralResponse;
-    use actix_identity::{CookieIdentityPolicy, IdentityService};
     use actix_web::{test, App};
     use dotenv::dotenv;
-    use rand::Rng;
     use serde_json::*;
+    use crate::KeyWrapper;
 
     #[actix_rt::test]
     async fn test_signup_and_login() {
@@ -333,14 +310,10 @@ mod tests {
         let pool = sqlx::PgPool::connect(&cfg.database_url)
             .await
             .expect("unable to connect to database");
-        let cookie_key: [u8; 32] = rand::thread_rng().gen();
+        let key = KeyWrapper(Box::new(cfg.secret_key));
         let mut app = test::init_service(
             App::new()
-                .wrap(IdentityService::new(
-                    CookieIdentityPolicy::new(&cookie_key)
-                        .name("user-auth")
-                        .secure(false),
-                ))
+                .data(key.clone())
                 .data(pool.clone())
                 .service(crate::controller::api_service()))
             .await;
@@ -407,14 +380,10 @@ mod tests {
         let pool = sqlx::PgPool::connect(&cfg.database_url)
             .await
             .expect("unable to connect to database");
-        let cookie_key: [u8; 32] = rand::thread_rng().gen();
+        let key = KeyWrapper(Box::new(cfg.secret_key));
         let mut app = test::init_service(
             App::new()
-                .wrap(IdentityService::new(
-                    CookieIdentityPolicy::new(&cookie_key)
-                        .name("user-auth")
-                        .secure(false),
-                ))
+                .data(key.clone())
                 .data(pool.clone())
                 .service(crate::controller::api_service()))
             .await;
@@ -431,11 +400,9 @@ mod tests {
             "username": "YUKI.N",
             "password": "20060707",
         });
-        let resp = test::TestRequest::post().uri("/api/user/login").set_json(&login_ok)
-            .send_request(&mut app).await;
-        let header = resp.headers().get("set-cookie").unwrap().to_str().unwrap();
-        let pos = header.find(";").unwrap();
-        let header = &header[..pos];
+        let req = test::TestRequest::post().uri("/api/user/login").set_json(&login_ok).to_request();
+        let resp: GeneralResponse = test::read_response_json(&mut app, req).await;
+        let token: String = from_value(resp.data).unwrap();
 
         let data = json!({
             "info": json!({
@@ -445,7 +412,7 @@ mod tests {
             })
         });
         let req = test::TestRequest::post().set_json(&data)
-            .header("Cookie", header)
+            .header("Authorization", format!("Bearer {}", token))
             .uri("/api/user/personal_info_update").to_request();
         let resp: GeneralResponse = test::read_response_json(&mut app, req).await;
         assert_eq!(resp.success, true);

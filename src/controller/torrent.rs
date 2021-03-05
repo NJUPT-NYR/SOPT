@@ -1,9 +1,9 @@
 use actix_web::{HttpResponse, *};
-use actix_identity::Identity;
 use serde::Deserialize;
 use super::*;
 use crate::data::{ToResponse, torrent_info as torrent_info_model, GeneralResponse, DataWithCount};
-use crate::error::{Error, error_string};
+use crate::error::error_string;
+use crate::KeyWrapper;
 
 #[derive(Deserialize, Debug)]
 struct TorrentPost {
@@ -29,17 +29,19 @@ struct DetailRequest {
 #[post("/add_torrent")]
 async fn add_torrent(
     data: web::Json<TorrentPost>,
-    id: Identity,
+    req: HttpRequest,
+    key: web::Data<KeyWrapper>,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let post: TorrentPost = data.into_inner();
-    let poster = id.identity().ok_or(Error::CookieError)?;
+    let secret: &[u8] = key.0.as_bytes();
+    let username = get_name_in_token(req, secret)?;
 
     // TODO: check qualification
     let ret = torrent_info_model::add_torrent_info(&client,
                                                    torrent_info_model::TorrentInfo::new(
                                                        post.title,
-                                                       poster,
+                                                       username,
                                                        post.description
                                                    )).await?;
     // TODO: eliminate duplication codes
@@ -61,11 +63,13 @@ async fn add_torrent(
 #[post("/update_torrent")]
 async fn update_torrent(
     data: web::Json<TorrentPost>,
-    id: Identity,
+    req: HttpRequest,
+    key: web::Data<KeyWrapper>,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let post: TorrentPost = data.into_inner();
-    let username = id.identity().ok_or(Error::CookieError)?;
+    let secret: &[u8] = key.0.as_bytes();
+    let username = get_name_in_token(req, secret)?;
     if post.id.is_none() {
         return Ok(HttpResponse::BadRequest().json(GeneralResponse::from_err("missing torrent id")))
     }
@@ -124,11 +128,13 @@ async fn list_torrents(
 /// list all torrents current user posted
 #[get("list_posted_torrent")]
 async fn list_posted_torrent(
-    id: Identity,
+    req: HttpRequest,
+    key: web::Data<KeyWrapper>,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let poster = id.identity().ok_or(Error::CookieError)?;
-    let ret = torrent_info_model::find_torrent_by_poster(&client, poster).await?;
+    let secret: &[u8] = key.0.as_bytes();
+    let username = get_name_in_token(req, secret)?;
+    let ret = torrent_info_model::find_torrent_by_poster(&client, username).await?;
 
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }

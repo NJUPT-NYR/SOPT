@@ -3,14 +3,14 @@ use serde::Deserialize;
 
 /// Configs read from `.env` file
 /// 1. server_addr: actix-web bind server
-/// 2. redis
+/// 2. secret_key
 /// 3. database_url: postgres url, see
 /// [Postgres Docs](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING)
 /// for more information
 #[derive(Deserialize)]
 pub struct Config {
     pub server_addr: String,
-    pub redis: deadpool_redis::Config,
+    pub secret_key: String,
     pub database_url: String,
 }
 

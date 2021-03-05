@@ -45,7 +45,8 @@ pub fn parse_email(input: &str) -> Option<EmailAddress> {
 }
 
 /// Generate passkey used for torrents with sha256 and will be encoded with
-/// hex, stripped into 32bits.
+/// hex, stripped into 24bytes（will append uid when generating torrents).
+///
 /// The format: {username}{timestamp}{random u64}
 pub fn generate_passkey(username: &str) -> Result<String, Error> {
     use sha2::{Digest, Sha256};
@@ -61,7 +62,7 @@ pub fn generate_passkey(username: &str) -> Result<String, Error> {
         .try_into()
         .map_err(error_string)?;
     let string = hex::encode(res);
-    Ok(String::from(&string[..32]))
+    Ok(String::from(&string[..24]))
 }
 
 /// Hash password for database.
@@ -146,6 +147,24 @@ pub fn generate_invitation_code() -> String {
     format!("{}_{}", rand_string, get_timestamp()).to_string()
 }
 
+/// try decode and verify if jwt is expired
+pub fn decode_and_verify_jwt(token: &str, secret: &[u8]) -> Result<String, Error> {
+    use jsonwebtoken::{decode, Validation, DecodingKey};
+    use crate::data::Claim;
+
+    let decoded =
+        decode::<Claim>(token, &DecodingKey::from_secret(secret), &Validation::default())
+            .map_err(error_string)?;
+
+    let claim: Claim = decoded.claims;
+    let now = get_timestamp();
+    if claim.exp < now {
+        Err(Error::AuthError)
+    } else {
+        Ok(claim.sub)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -187,5 +206,23 @@ mod tests {
         for &password in passwords.iter() {
             hash_and_verify_password_works(password);
         }
+    }
+    #[test]
+    fn decode_and_verify_jwt_works() {
+        use chrono::{Utc, Duration};
+        use jsonwebtoken::{encode, EncodingKey, Header};
+        use crate::data::Claim;
+
+        let claim = Claim {
+            sub: "YUKI.N".to_string(),
+            exp: (Utc::now() + Duration::days(30)).timestamp() as u64,
+        };
+        let tokens = encode(
+            &Header::default(),
+            &claim,
+            &EncodingKey::from_secret("secret".as_bytes())).unwrap();
+        let ret = decode_and_verify_jwt(&tokens, "secret".as_bytes()).unwrap();
+
+        assert_eq!(ret, "YUKI.N".to_string())
     }
 }

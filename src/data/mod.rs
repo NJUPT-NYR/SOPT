@@ -17,8 +17,7 @@ use sopt::*;
 /// 3. errMsg, not so severe errors prompt
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GeneralResponse {
-    data: serde_json::Value,
-    // pub is for test use
+    pub(crate) data: serde_json::Value,
     pub(crate) success: bool,
     #[serde(rename = "errMsg")]
     err_msg: String,
@@ -63,6 +62,8 @@ pub trait ToResponse: Serialize {
     }
 }
 
+impl ToResponse for String {}
+
 /// A common wrapper used to return page count with list
 #[derive(Serialize, Debug, ToResponse)]
 pub struct DataWithCount {
@@ -77,6 +78,15 @@ impl DataWithCount {
             ret,
         }
     }
+}
+
+/// custom jwt struct
+/// for now we only need its username
+/// TODO: is it better to use uid?
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Claim {
+    pub sub: String,
+    pub exp: u64,
 }
 
 type CountRet = Result<i64, Error>;

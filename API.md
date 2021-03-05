@@ -104,13 +104,7 @@
 
 **Response**
 1. Error: `GeneralResponse` with `errMsg`
-2. Success: Default success `GeneralResponse`
-
-### /user/logout
-**Type**: GET
-
-**Response**
-1. Success: Default success `GeneralResponse`
+2. Success: `GeneralResponse` with data a string represents jwt token
 
 ### /user/auth/check_identity
 **Type**: POST
@@ -134,8 +128,8 @@
 **Comment**
 
 This api is used for check current user's identity when it comes to some dangerous
-actions like `reset_password` and `reset_passkey`. We will store the passed identity
-for 5 minutes, then user can perform actions like a charm.
+actions like `reset_password` and `reset_passkey`. 
+Then user can perform actions like a charm.
 
 ### /user/auth/reset_password
 **Type**: POST
