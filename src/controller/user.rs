@@ -82,6 +82,10 @@ async fn add_user(
     if let Some(str) = user.invite_code {
         let mut ret = invitation_model::find_invitation_by_code(&client, &str).await?;
         if !ret.is_empty() {
+            let is_used = ret.first().unwrap().is_used;
+            if is_used {
+                return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("invitation code already be used")))
+            }
             code = Some(ret.pop().unwrap());
             allowed = true;
         }

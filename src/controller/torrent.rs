@@ -1,7 +1,9 @@
 use actix_web::{HttpResponse, *};
 use serde::Deserialize;
 use super::*;
-use crate::data::{ToResponse, torrent_info as torrent_info_model, GeneralResponse, DataWithCount};
+use crate::data::{ToResponse, GeneralResponse, DataWithCount,
+                  torrent_info as torrent_info_model,
+                  tag as tag_model};
 use crate::error::error_string;
 use crate::KeyWrapper;
 
@@ -24,6 +26,11 @@ struct DetailRequest {
     pub id: i64,
 }
 
+#[derive(Deserialize, Debug)]
+struct TagRequest {
+    pub num: Option<usize>,
+}
+
 /// add a post for definite torrent
 /// by default this post is invisible
 #[post("/add_torrent")]
@@ -44,7 +51,6 @@ async fn add_torrent(
                                                        username,
                                                        post.description
                                                    )).await?;
-    // TODO: eliminate duplication codes
     if post.tags.is_some() {
         let tags = post.tags.unwrap();
         if tags.len() > 5 {
@@ -53,6 +59,11 @@ async fn add_torrent(
         let new_ret =
             torrent_info_model::add_tag_for_torrent(&client, ret.id, &tags)
                 .await?;
+        // async closure is unstable now
+        for tag in tags {
+            tag_model::update_or_add_tag(&client, &tag).await?;
+        }
+
         Ok(HttpResponse::Ok().json(new_ret.to_json()))
     } else {
         Ok(HttpResponse::Ok().json(ret.to_json()))
@@ -74,7 +85,8 @@ async fn update_torrent(
         return Ok(HttpResponse::BadRequest().json(GeneralResponse::from_err("missing torrent id")))
     }
 
-    let poster = torrent_info_model::find_torrent_by_id(&client, post.id.unwrap()).await?.poster;
+    let old_torrent = torrent_info_model::find_torrent_by_id(&client, post.id.unwrap()).await?;
+    let poster = old_torrent.poster;
     if !username.eq(&poster) {
         return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("not the owner of post")))
     }
@@ -91,13 +103,38 @@ async fn update_torrent(
         if tags.len() > 5 {
             return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("tags max amount is 5")))
         }
+        let old_tags = old_torrent.tag.unwrap_or(vec![]);
+        let to_decrease: Vec<&String> = old_tags.iter().filter(|tag| !tags.contains(tag)).collect();
+        let to_increase: Vec<&String> = tags.iter().filter(|tag| !old_tags.contains(tag)).collect();
+
         let new_ret =
             torrent_info_model::add_tag_for_torrent(&client, ret.id, &tags)
                 .await?;
+        for tag in to_decrease {
+            tag_model::decrease_amount_by_name(&client, tag).await?;
+        }
+        for tag in to_increase {
+            tag_model::update_or_add_tag(&client, tag).await?;
+        }
+
         Ok(HttpResponse::Ok().json(new_ret.to_json()))
     } else {
         Ok(HttpResponse::Ok().json(ret.to_json()))
     }
+}
+
+/// Get hottest tags by amount, default number is 10
+#[get("/hot_tags")]
+async fn hot_tags(
+    req: HttpRequest,
+    client: web::Data<sqlx::PgPool>,
+) -> HttpResult {
+    let query = req.uri().query().unwrap_or_default();
+    let num_want = serde_qs::from_str::<TagRequest>(query)
+        .map_err(error_string)?.num.unwrap_or(10);
+
+    let ret = tag_model::find_hot_tag_by_amount(&client, num_want as i64).await?;
+    Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
 /// list torrent with tags and pages
@@ -163,6 +200,7 @@ pub fn torrent_service() -> Scope {
     web::scope("/torrent")
         .service(add_torrent)
         .service(update_torrent)
+        .service(hot_tags)
         .service(list_torrents)
         .service(show_torrent)
         .service(list_posted_torrent)

@@ -59,6 +59,12 @@
     - downloaded: Int
     - tag: Vec<String>
 
+### Tag
+
+    - id: Int
+    - name: String
+    - amount: Int
+
 ## User API
 
 ### /user/add_user
@@ -314,12 +320,29 @@ By default, post will be hide until checked by administer.
 1. Error: `GeneralResponse` with `errMsg`
 2. Success: `GeneralResponse` with a single `TorrentInfo`
 
+### /torrent/hot_tags
+**Type**: GET
+
+**Request**
+
+    - num: Option<Int>(>= 0)
+
+**Example**
+
+```
+https://localhost:8000/torrent/hot_tags?num=20
+```
+
+**Response**
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: `GeneralResponse` with a list of `Tag`
+
 ### /torrent/list_torrents
 **Type**: GET
 
 **Request**
 
-    - page: Option<Int>(>= zero)
+    - page: Option<Int>(>= 0)
     - tags: Option<Vec<String>>
 
 **Example**
