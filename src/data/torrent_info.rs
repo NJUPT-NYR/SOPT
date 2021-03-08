@@ -30,6 +30,7 @@ pub struct TorrentInfo {
     pub create_time: DateTime<Utc>,
     pub last_edit: DateTime<Utc>,
     pub last_activity: DateTime<Utc>,
+    pub stick: bool,
 }
 
 /// Slim Version used for list purpose
@@ -58,6 +59,7 @@ impl TorrentInfo {
             create_time: Utc::now(),
             last_edit: Utc::now(),
             last_activity: Utc::now(),
+            stick: false,
         }
     }
 }
@@ -140,11 +142,11 @@ pub async fn find_torrent_by_poster(client: &sqlx::PgPool, poster: String) -> To
         .await?)
 }
 
-/// Get counts of total torrents
+/// Get counts of total torrents that are not stick
 pub async fn query_torrent_counts(client: &sqlx::PgPool) -> CountRet {
     Ok(sqlx::query!(
         "SELECT COUNT(*) FROM torrent_info \
-        WHERE visible = TRUE;"
+        WHERE visible = TRUE AND stick = FALSE;"
         )
         .fetch_one(client)
         .await?
@@ -152,14 +154,14 @@ pub async fn query_torrent_counts(client: &sqlx::PgPool) -> CountRet {
         .expect("sql function not right"))
 }
 
-/// Find all visible torrents
+/// Find all visible torrents that are not stick
 pub async fn find_visible_torrent(client: &sqlx::PgPool, page_offset: i64) -> SlimTorrentVecRet {
     Ok(sqlx::query_as!(
         SlimTorrent,
         "SELECT id, title, poster, downloaded, tag, last_activity FROM( \
             SELECT ROW_NUMBER() OVER ( ORDER BY last_activity DESC ) AS RowNum, * \
             FROM torrent_info \
-            WHERE visible = TRUE \
+            WHERE visible = TRUE AND stick = FALSE \
         ) AS RowConstrainedResult \
         WHERE RowNum > $1 AND RowNum <= $1 + 20 \
         ORDER BY RowNum;",
@@ -169,12 +171,12 @@ pub async fn find_visible_torrent(client: &sqlx::PgPool, page_offset: i64) -> Sl
         .await?)
 }
 
-/// Get counts of torrents definite tags
+/// Get counts of torrents definite tags that are not stick
 pub async fn query_torrent_counts_by_tag(client: &sqlx::PgPool, tags: &Vec<String>) -> CountRet {
     // due to sqlx not support type cast of postgres
     Ok(sqlx::query_unchecked!(
         "SELECT COUNT(*) FROM torrent_info \
-        WHERE visible = TRUE AND ($1::VARCHAR[] <@ tag);",
+        WHERE visible = TRUE AND ($1::VARCHAR[] <@ tag) AND stick = FALSE;",
         tags
         )
         .fetch_one(client)
@@ -183,7 +185,7 @@ pub async fn query_torrent_counts_by_tag(client: &sqlx::PgPool, tags: &Vec<Strin
         .expect("sql function not right"))
 }
 
-/// Find visible torrent with definite tags
+/// Find visible torrent with definite tags that are not stick
 pub async fn find_visible_torrent_by_tag(client: &sqlx::PgPool, tags: &Vec<String>, page_offset: i64) -> SlimTorrentVecRet {
     // due to sqlx not support type cast of postgres
     Ok(sqlx::query_as_unchecked!(
@@ -191,7 +193,7 @@ pub async fn find_visible_torrent_by_tag(client: &sqlx::PgPool, tags: &Vec<Strin
         "SELECT id, title, poster, downloaded, tag, last_activity FROM( \
             SELECT ROW_NUMBER() OVER ( ORDER BY last_activity DESC ) AS RowNum, * \
             FROM torrent_info \
-            WHERE visible = TRUE AND ($1::VARCHAR[] <@ tag) \
+            WHERE visible = TRUE AND ($1::VARCHAR[] <@ tag) AND stick = FALSE \
         ) AS RowConstrainedResult \
         WHERE RowNum > $2 AND RowNum <= $2 + 20 \
         ORDER BY RowNum;",
@@ -202,12 +204,40 @@ pub async fn find_visible_torrent_by_tag(client: &sqlx::PgPool, tags: &Vec<Strin
         .await?)
 }
 
+/// Find all stick torrent
+pub async fn find_stick_torrent(client: &sqlx::PgPool) -> SlimTorrentVecRet {
+    Ok(sqlx::query_as!(
+        SlimTorrent,
+        "SELECT id, title, poster, downloaded, tag, last_activity FROM torrent_info \
+        WHERE visible = TRUE AND stick = TRUE \
+        ORDER BY last_activity DESC;",
+        )
+        .fetch_all(client)
+        .await?)
+}
+
 /// make certain torrent visible, accessed by administrator
+/// TODO: make it some group action
 #[allow(dead_code)]
 pub async fn make_torrent_visible(client: &sqlx::PgPool, id: i64) -> TorrentInfoRet {
     sqlx::query_as!(
         TorrentInfo,
         "UPDATE torrent_info SET visible = TRUE \
+        WHERE id = $1 RETURNING *;",
+        id
+        )
+        .fetch_all(client)
+        .await?
+        .pop()
+        .ok_or(Error::NotFound)
+}
+
+/// stick some of the torrents
+#[allow(dead_code)]
+pub async fn make_torrent_stick(client: &sqlx::PgPool, id: i64) -> TorrentInfoRet {
+    sqlx::query_as!(
+        TorrentInfo,
+        "UPDATE torrent_info SET stick = TRUE \
         WHERE id = $1 RETURNING *;",
         id
         )

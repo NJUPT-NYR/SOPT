@@ -148,16 +148,23 @@ async fn list_torrents(
     let tags = data.tags;
     let page = data.page.unwrap_or(0);
 
+    // by default you can add infinite number of stick torrents
+    // but we recommend the number is less than 20
+    let mut all_torrents = torrent_info_model::find_stick_torrent(&client).await?;
+    let len = all_torrents.len();
+
     if tags.is_none() {
-        let count = torrent_info_model::query_torrent_counts(&client).await?;
-        let ret = torrent_info_model::find_visible_torrent(&client, (page * 20) as i64).await?;
-        let resp = DataWithCount::new(serde_json::to_value(ret).unwrap(), count / 20 + 1);
+        let count = torrent_info_model::query_torrent_counts(&client).await? + len as i64;
+        let mut ret = torrent_info_model::find_visible_torrent(&client, (page * 20) as i64).await?;
+        all_torrents.append(&mut ret);
+        let resp = DataWithCount::new(serde_json::to_value(all_torrents).unwrap(), count / 20 + 1);
         Ok(HttpResponse::Ok().json(resp.to_json()))
     } else {
         let tags = tags.unwrap();
-        let count = torrent_info_model::query_torrent_counts_by_tag(&client, &tags).await?;
-        let ret = torrent_info_model::find_visible_torrent_by_tag(&client, &tags, (page * 20) as i64).await?;
-        let resp = DataWithCount::new(serde_json::to_value(ret).unwrap(), count / 20 + 1);
+        let count = torrent_info_model::query_torrent_counts_by_tag(&client, &tags).await? + len as i64;
+        let mut ret = torrent_info_model::find_visible_torrent_by_tag(&client, &tags, (page * 20) as i64).await?;
+        all_torrents.append(&mut ret);
+        let resp = DataWithCount::new(serde_json::to_value(all_torrents).unwrap(), count / 20 + 1);
         Ok(HttpResponse::Ok().json(resp.to_json()))
     }
 }

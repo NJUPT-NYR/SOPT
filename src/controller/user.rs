@@ -169,7 +169,6 @@ async fn personal_info_update(
     let data: InfoWrapper = data.into_inner();
     let secret: &[u8] = key.0.as_bytes();
     let username = get_name_in_token(req, secret)?;
-    println!("{}", username);
 
     let ret = user_info_model::update_other_by_name(&client, &username, data.info).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
