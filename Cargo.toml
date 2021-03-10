@@ -24,7 +24,7 @@ serde = { version = "^1.0", features = ["derive"] }
 serde_bencode = "*"
 serde_json = "*"
 serde_bytes = "*"
-serde_qs = { version = "0.8.2", features = [ "actix2" ] }
+serde_qs = "0.8.2"
 
 # utils
 futures = "0.3.13"
@@ -48,4 +48,4 @@ rust-argon2 = "0.8"
 base64 = "0.13.0"
 
 [dev-dependencies]
-actix-rt = "*"
+actix-rt = "^1"
