@@ -22,8 +22,8 @@ sqlx = { version = "0.4.1", features = [ "postgres", "runtime-actix-native-tls",
 #serde related
 serde = { version = "^1.0", features = ["derive"] }
 serde_bencode = "*"
-serde_bytes = "*"
 serde_json = "*"
+serde_bytes = "*"
 serde_qs = { version = "0.8.2", features = [ "actix2" ] }
 
 # utils

@@ -2,10 +2,12 @@ use actix_web::{HttpResponse, *};
 use serde::Deserialize;
 use super::*;
 use crate::data::{ToResponse, GeneralResponse, DataWithCount,
+                  torrent as torrent_model,
                   torrent_info as torrent_info_model,
                   tag as tag_model};
-use crate::error::error_string;
+use crate::error::{error_string, Error};
 use crate::KeyWrapper;
+use crate::util::*;
 
 #[derive(Deserialize, Debug)]
 struct TorrentPost {
@@ -155,14 +157,14 @@ async fn list_torrents(
 
     if tags.is_none() {
         let count = torrent_info_model::query_torrent_counts(&client).await? + len as i64;
-        let mut ret = torrent_info_model::find_visible_torrent(&client, (page * 20) as i64).await?;
+        let mut ret = torrent_info_model::find_visible_torrent(&client, (page * 20 - len) as i64).await?;
         all_torrents.append(&mut ret);
         let resp = DataWithCount::new(serde_json::to_value(all_torrents).unwrap(), count / 20 + 1);
         Ok(HttpResponse::Ok().json(resp.to_json()))
     } else {
         let tags = tags.unwrap();
         let count = torrent_info_model::query_torrent_counts_by_tag(&client, &tags).await? + len as i64;
-        let mut ret = torrent_info_model::find_visible_torrent_by_tag(&client, &tags, (page * 20) as i64).await?;
+        let mut ret = torrent_info_model::find_visible_torrent_by_tag(&client, &tags, (page * 20 - len) as i64).await?;
         all_torrents.append(&mut ret);
         let resp = DataWithCount::new(serde_json::to_value(all_torrents).unwrap(), count / 20 + 1);
         Ok(HttpResponse::Ok().json(resp.to_json()))
@@ -186,9 +188,43 @@ async fn list_posted_torrent(
 /// upload torrent file and parse to database column
 #[post("/upload_torrent")]
 async fn upload_torrent(
-
+    mut payload: actix_multipart::Multipart,
+    req: HttpRequest,
+    key: web::Data<KeyWrapper>,
+    client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    todo!()
+    use futures::{StreamExt, TryStreamExt};
+    use std::str::FromStr;
+    use std::collections::HashMap;
+
+    let secret: &[u8] = key.0.as_bytes();
+    let mut parsed = None;
+    let mut hash_map = HashMap::new();
+    let username = get_name_in_token(req, secret)?;
+
+    while let Ok(Some(mut file)) = payload.try_next().await {
+        let content_type = file.content_disposition().ok_or(Error::OtherError("incomplete file".to_string()))?;
+        let name = content_type.get_name().ok_or("incomplete file".to_string())?;
+        let mut buf: Vec<u8> = vec![];
+        while let Some(chunk) = file.next().await {
+            let data = chunk.unwrap();
+            buf.append(&mut data.to_vec());
+        }
+        if name.is_empty() {
+            parsed = Some(parse_torrent_file(&buf)?);
+        } else {
+            hash_map.insert(name.to_string(), String::from_utf8(buf).unwrap());
+        }
+    }
+
+    if parsed.is_none() {
+        return Ok(HttpResponse::BadRequest().json(GeneralResponse::from_err("missing torrent file")))
+    }
+    let id_string = hash_map.get("id").ok_or(Error::OtherError("missing id field".to_string()))?;
+    let id = i64::from_str(id_string).map_err(error_string)?;
+    torrent_model::update_or_add_torrent(&client, &parsed.unwrap(), id).await?;
+
+    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
 /// show definite torrent with an id
@@ -211,4 +247,5 @@ pub fn torrent_service() -> Scope {
         .service(list_torrents)
         .service(show_torrent)
         .service(list_posted_torrent)
+        .service(upload_torrent)
 }

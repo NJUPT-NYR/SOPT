@@ -165,6 +165,47 @@ pub fn decode_and_verify_jwt(token: &str, secret: &[u8]) -> Result<String, Error
     }
 }
 
+/// Parse uploaded torrent file and convert into a table row
+use crate::data::torrent::{Torrent, TorrentTable};
+pub fn parse_torrent_file(buf: &[u8]) -> Result<TorrentTable, Error> {
+    use serde_bencode::{de, ser};
+
+    let ret = de::from_bytes::<Torrent>(buf).map_err(error_string)?;
+    let info = ser::to_bytes(&ret.info).map_err(error_string)?;
+    let length = ret.info.length.unwrap_or(ret.info.piece_length * 8);
+    let files = ret.info.files.unwrap_or_default()
+        .iter()
+        .map(|file| file.path.iter()
+            .fold("".to_string(),
+                  |acc, x| acc + "/" + x))
+        .collect();
+
+    Ok(TorrentTable {
+        id: 1919810,
+        name: ret.info.name,
+        length,
+        comment: ret.comment,
+        files,
+        info,
+    })
+}
+
+static ANNOUNCE_ADDR: &str = "https://tracker.sopt.rs/announce";
+
+pub fn generate_torrent_file(mut info: Vec<u8>, passkey: &str, tid: i64, uid: i64, comment: &str) -> Vec<u8> {
+    use serde_bencode::to_string;
+
+    let ext_passkey = to_string(&format!("{}{}", passkey, uid)).unwrap();
+    let announce_address = to_string(&format!("{}?passkey={}&tid={}", ANNOUNCE_ADDR, ext_passkey, tid)).unwrap();
+    let comment = to_string(&comment).unwrap();
+
+    let mut hand_ser: Vec<u8> = "d4:info".to_string().into_bytes();
+    hand_ser.append(&mut info);
+    hand_ser.append(&mut format!("8:announce{}7:comment{}e", announce_address, comment).into_bytes());
+
+    hand_ser
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

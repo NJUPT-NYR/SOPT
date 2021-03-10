@@ -68,7 +68,7 @@ Also, most of the codes are documented.
   - [ ] Rank
 - [ ] Torrent
   - [x] Add a post
-  - [ ] Generate with passkey
+  - [x] Generate with passkey
   - [ ] Sync with tracker
   - [x] Tags filter
 - [ ] Admin

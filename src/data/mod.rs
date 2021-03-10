@@ -3,7 +3,7 @@ pub mod torrent_info;
 pub mod user;
 pub mod user_info;
 pub mod tag;
-// pub mod torrent;
+pub mod torrent;
 
 use serde::{Serialize, Deserialize};
 use crate::error::Error;
