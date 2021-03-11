@@ -1,5 +1,20 @@
 use config::ConfigError;
 use serde::Deserialize;
+use lazy_static::lazy_static;
+use std::sync::Arc;
+
+lazy_static! {
+    pub static ref CONFIG: Arc<Config> = Arc::new(Config::from_env().unwrap());
+}
+
+/// SMTP configuration when used to
+/// send invitation codes
+#[derive(Deserialize)]
+pub struct SMTPAccount {
+    pub server: String,
+    pub username: String,
+    pub password: String,
+}
 
 /// Configs read from `.env` file
 /// 1. server_addr: actix-web bind server
@@ -7,11 +22,15 @@ use serde::Deserialize;
 /// 3. database_url: postgres url, see
 /// [Postgres Docs](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING)
 /// for more information
+/// 4. tracker announce addr
+/// 5. smtp configuration
 #[derive(Deserialize)]
 pub struct Config {
     pub server_addr: String,
     pub secret_key: String,
     pub database_url: String,
+    pub announce_addr: String,
+    pub smtp: SMTPAccount,
 }
 
 impl Config {

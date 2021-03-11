@@ -1,13 +1,8 @@
-use actix_web::{HttpResponse, *};
-use serde::Deserialize;
 use super::*;
 use crate::data::{ToResponse, GeneralResponse, DataWithCount,
                   torrent as torrent_model,
                   torrent_info as torrent_info_model,
                   tag as tag_model};
-use crate::error::{error_string, Error};
-use crate::KeyWrapper;
-use crate::util::*;
 
 #[derive(Deserialize, Debug)]
 struct TorrentPost {
@@ -39,14 +34,11 @@ struct TagRequest {
 async fn add_torrent(
     data: web::Json<TorrentPost>,
     req: HttpRequest,
-    key: web::Data<KeyWrapper>,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let post: TorrentPost = data.into_inner();
-    let secret: &[u8] = key.0.as_bytes();
-    let username = get_name_in_token(req, secret)?;
+    let username = get_name_in_token(req)?;
 
-    // TODO: check qualification
     let ret = torrent_info_model::add_torrent_info(&client,
                                                    torrent_info_model::TorrentInfo::new(
                                                        post.title,
@@ -77,12 +69,10 @@ async fn add_torrent(
 async fn update_torrent(
     data: web::Json<TorrentPost>,
     req: HttpRequest,
-    key: web::Data<KeyWrapper>,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let post: TorrentPost = data.into_inner();
-    let secret: &[u8] = key.0.as_bytes();
-    let username = get_name_in_token(req, secret)?;
+    let username = get_name_in_token(req)?;
     if post.id.is_none() {
         return Ok(HttpResponse::BadRequest().json(GeneralResponse::from_err("missing torrent id")))
     }
@@ -175,11 +165,9 @@ async fn list_torrents(
 #[get("list_posted_torrent")]
 async fn list_posted_torrent(
     req: HttpRequest,
-    key: web::Data<KeyWrapper>,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let secret: &[u8] = key.0.as_bytes();
-    let username = get_name_in_token(req, secret)?;
+    let username = get_name_in_token(req)?;
     let ret = torrent_info_model::find_torrent_by_poster(&client, username).await?;
 
     Ok(HttpResponse::Ok().json(ret.to_json()))
@@ -190,17 +178,15 @@ async fn list_posted_torrent(
 async fn upload_torrent(
     mut payload: actix_multipart::Multipart,
     req: HttpRequest,
-    key: web::Data<KeyWrapper>,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     use futures::{StreamExt, TryStreamExt};
     use std::str::FromStr;
     use std::collections::HashMap;
 
-    let secret: &[u8] = key.0.as_bytes();
+    let username = get_name_in_token(req)?;
     let mut parsed = None;
     let mut hash_map = HashMap::new();
-    let username = get_name_in_token(req, secret)?;
 
     while let Ok(Some(mut file)) = payload.try_next().await {
         let content_type = file.content_disposition().ok_or(Error::OtherError("incomplete file".to_string()))?;
@@ -233,9 +219,7 @@ async fn show_torrent(
     web::Query(data): web::Query<DetailRequest>,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let id: i64 = data.id;
-    let ret = torrent_info_model::find_torrent_by_id(&client, id).await?;
-
+    let ret = torrent_info_model::find_torrent_by_id(&client, data.id).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 

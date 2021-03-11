@@ -1,8 +1,4 @@
-use serde::Serialize;
-use crate::error::Error;
-use chrono::{DateTime, Utc};
 use super::*;
-use sopt::*;
 
 type UserInfoRet = Result<UserInfo, Error>;
 type SlimUserInfoRet = Result<SlimUserInfo, Error>;
@@ -44,13 +40,6 @@ pub struct SlimUserInfo {
     pub upload: i64,
     pub download: i64,
     pub money: f64
-}
-
-impl UserInfo {
-    #[allow(dead_code)]
-    pub fn encode_avatar(&mut self, buf: Vec<u8>) {
-        self.avatar = Some(base64::encode(buf));
-    }
 }
 
 /// Add a full user info when sign up

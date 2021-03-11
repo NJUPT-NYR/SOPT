@@ -20,7 +20,7 @@
     - username: String
     - passkey: String
 
-## UserInfo(draft)
+## UserInfo
 
     - id: Int
     - username: String
@@ -31,7 +31,7 @@
     - download: Int
     - money: Float
     - rank: Int
-    - avatar: Option<Vec<u8>>
+    - avatar: Option<String>(b64 encoded)
     - other: Option<Json>
 
 ### SlimInvitation
@@ -319,6 +319,22 @@ By default, post will be hide until checked by administer.
 **Response**
 1. Error: `GeneralResponse` with `errMsg`
 2. Success: `GeneralResponse` with a single `TorrentInfo`
+
+### /torrent/upload_torrent
+**Type**: POST
+
+**Request**
+Form data with following field:
+
+    - id: String
+    - torrent file
+
+**Response**
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: Default success `GeneralResponse`
+
+**Comment**
+Only one torrent will be accepted.
 
 ### /torrent/hot_tags
 **Type**: GET

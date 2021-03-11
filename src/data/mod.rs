@@ -6,6 +6,7 @@ pub mod tag;
 pub mod torrent;
 
 use serde::{Serialize, Deserialize};
+use chrono::{DateTime, Utc};
 use crate::error::Error;
 use sopt::*;
 
@@ -83,7 +84,6 @@ impl DataWithCount {
 
 /// custom jwt struct
 /// for now we only need its username
-/// TODO: is it better to use uid?
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Claim {
     pub sub: String,

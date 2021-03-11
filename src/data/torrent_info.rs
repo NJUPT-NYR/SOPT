@@ -1,8 +1,4 @@
-use serde::Serialize;
-use crate::error::Error;
-use chrono::{DateTime, Utc};
 use super::*;
-use sopt::*;
 
 type TorrentInfoRet = Result<TorrentInfo, Error>;
 type TorrentInfoVecRet = Result<Vec<TorrentInfo>, Error>;
@@ -66,15 +62,13 @@ impl TorrentInfo {
 
 /// Add torrent post into database and return the full struct
 pub async fn add_torrent_info(client: &sqlx::PgPool, info: TorrentInfo) -> TorrentInfoRet {
-    let desc = info.description.unwrap_or("".to_string());
-
     Ok(sqlx::query_as!(
         TorrentInfo,
         "INSERT INTO torrent_info(title, poster, description, create_time, last_edit, last_activity) \
         VALUES ($1, $2, $3, NOW(), NOW(), NOW()) RETURNING *;",
         info.title,
         info.poster,
-        desc
+        info.description
         )
         .fetch_one(client)
         .await?)
@@ -82,14 +76,12 @@ pub async fn add_torrent_info(client: &sqlx::PgPool, info: TorrentInfo) -> Torre
 
 /// Update the information, will be replaced as a whole
 pub async fn update_torrent_info(client: &sqlx::PgPool, id: i64, info: TorrentInfo) -> TorrentInfoRet {
-    let desc = info.description.unwrap_or("".to_string());
-
     sqlx::query_as!(
         TorrentInfo,
         "UPDATE torrent_info SET title = $1, description = $2, last_edit = NOW() \
         WHERE id = $3 RETURNING *;",
         info.title,
-        desc,
+        info.description,
         id
         )
         .fetch_all(client)

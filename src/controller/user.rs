@@ -1,15 +1,8 @@
-use actix_web::{HttpResponse, *};
-use serde::{Deserialize, Serialize};
-use jsonwebtoken::{encode, EncodingKey, Header};
 use super::*;
-use crate::util::*;
 use crate::data::{ToResponse, GeneralResponse, Claim,
                   user as user_model,
                   invitation as invitation_model,
                  user_info as user_info_model};
-use crate::error::Error;
-use crate::data::invitation::InvitationCode;
-use crate::KeyWrapper;
 
 /// Allow email to register
 #[cfg(feature = "email-restriction")]
@@ -65,7 +58,7 @@ async fn add_user(
     let user: Registry = data.into_inner();
     // not so elegant
     let mut allowed = false;
-    let mut code: Option<InvitationCode> = None;
+    let mut code: Option<invitation_model::InvitationCode> = None;
 
     match parse_email(user.email.as_str()) {
         Some(_email) => {
@@ -128,14 +121,14 @@ async fn add_user(
 async fn login(
     data: web::Json<Login>,
     client: web::Data<sqlx::PgPool>,
-    key: web::Data<KeyWrapper>,
 ) -> HttpResult {
     use chrono::{Utc, Duration};
+    use jsonwebtoken::{encode, EncodingKey, Header};
 
     let user: Login = data.into_inner();
-    let secret: &[u8] = key.0.as_bytes();
+    let secret: &[u8] = CONFIG.secret_key.as_bytes();
 
-    let validation = user_model::find_user_by_username_full(&client, &user.username)
+    let validation = user_model::find_user_by_username(&client, &user.username)
         .await?.pop();
     match validation {
         Some(val) => {
@@ -164,29 +157,24 @@ async fn personal_info_update(
     data: web::Json<InfoWrapper>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
-    key: web::Data<KeyWrapper>,
 ) -> HttpResult {
     let data: InfoWrapper = data.into_inner();
-    let secret: &[u8] = key.0.as_bytes();
-    let username = get_name_in_token(req, secret)?;
+    let username = get_name_in_token(req)?;
 
     let ret = user_info_model::update_other_by_name(&client, &username, data.info).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
-/// will it block?
 /// upload avatar and b64encode it into database
 #[post("/upload_avatar")]
 async fn upload_avatar(
     mut payload: actix_multipart::Multipart,
     req: HttpRequest,
-    key: web::Data<KeyWrapper>,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     use futures::{StreamExt, TryStreamExt};
 
-    let secret: &[u8] = key.0.as_bytes();
-    let username = get_name_in_token(req, secret)?;
+    let username = get_name_in_token(req)?;
 
     if let Ok(Some(mut file)) = payload.try_next().await {
         let content_type = file.content_disposition().ok_or(Error::OtherError("incomplete file".to_string()))?;
@@ -216,14 +204,12 @@ async fn upload_avatar(
 async fn check_identity(
     data: web::Json<Validation>,
     req: HttpRequest,
-    key: web::Data<KeyWrapper>,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let password: String = data.into_inner().password;
-    let secret: &[u8] = key.0.as_bytes();
-    let username = get_name_in_token(req, secret)?;
+    let username = get_name_in_token(req)?;
 
-    let validation = user_model::find_user_by_username_full(&client, &username)
+    let validation = user_model::find_user_by_username(&client, &username)
         .await?.pop().expect("Someone hacked our token!");
 
     if verify_password(&password, &validation.password)? {
@@ -238,12 +224,10 @@ async fn check_identity(
 async fn reset_password(
     data: web::Json<Validation>,
     req: HttpRequest,
-    key: web::Data<KeyWrapper>,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let new_pass = hash_password(&data.into_inner().password)?;
-    let secret: &[u8] = key.0.as_bytes();
-    let username = get_name_in_token(req, secret)?;
+    let username = get_name_in_token(req)?;
 
     user_model::update_password_by_username(&client, &username, &new_pass).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
@@ -253,11 +237,9 @@ async fn reset_password(
 #[get("/reset_passkey")]
 async fn reset_passkey(
     req: HttpRequest,
-    key: web::Data<KeyWrapper>,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let secret: &[u8] = key.0.as_bytes();
-    let username = get_name_in_token(req, secret)?;
+    let username = get_name_in_token(req)?;
 
     user_model::update_passkey_by_username(&client, &username, &generate_passkey(&username)?).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
@@ -268,12 +250,10 @@ async fn reset_passkey(
 async fn transfer_money(
     data: web::Json<Transfer>,
     req: HttpRequest,
-    key: web::Data<KeyWrapper>,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let data: Transfer = data.into_inner();
-    let secret: &[u8] = key.0.as_bytes();
-    let username = get_name_in_token(req, secret)?;
+    let username = get_name_in_token(req)?;
 
     let now_amount = user_info_model::find_slim_info_by_name(&client, &username).await?;
     if now_amount.money - data.amount < 0.0 {
@@ -299,24 +279,18 @@ pub fn user_service() -> Scope {
 
 #[cfg(test)]
 mod tests {
-    use crate::config::Config;
-    use crate::data::GeneralResponse;
-    use actix_web::{test, App};
     use dotenv::dotenv;
     use serde_json::*;
-    use crate::KeyWrapper;
+    use super::*;
 
     #[actix_rt::test]
     async fn test_signup_and_login() {
         dotenv().ok();
-        let cfg = Config::from_env().unwrap();
-        let pool = sqlx::PgPool::connect(&cfg.database_url)
+        let pool = sqlx::PgPool::connect(&CONFIG.database_url)
             .await
             .expect("unable to connect to database");
-        let key = KeyWrapper(Box::new(cfg.secret_key));
         let mut app = test::init_service(
             App::new()
-                .data(key.clone())
                 .data(pool.clone())
                 .service(crate::controller::api_service()))
             .await;
@@ -378,15 +352,13 @@ mod tests {
     #[actix_rt::test]
     async fn test_personal_info_update() {
         use crate::data::user::User;
+
         dotenv().ok();
-        let cfg = Config::from_env().unwrap();
-        let pool = sqlx::PgPool::connect(&cfg.database_url)
+        let pool = sqlx::PgPool::connect(&CONFIG.database_url)
             .await
             .expect("unable to connect to database");
-        let key = KeyWrapper(Box::new(cfg.secret_key));
         let mut app = test::init_service(
             App::new()
-                .data(key.clone())
                 .data(pool.clone())
                 .service(crate::controller::api_service()))
             .await;

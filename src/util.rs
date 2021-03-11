@@ -1,7 +1,8 @@
 use crate::error::{error_string, Error};
 use pest::Parser;
 use pest_derive::*;
-use rand::{thread_rng, Rng, RngCore};
+use rand::{thread_rng, Rng};
+use crate::config::CONFIG;
 
 /// Get timestamp of current time with unix standard.
 ///
@@ -45,7 +46,7 @@ pub fn parse_email(input: &str) -> Option<EmailAddress> {
 }
 
 /// Generate passkey used for torrents with sha256 and will be encoded with
-/// hex, stripped into 24bytes（will append uid when generating torrents).
+/// hex, stripped into 24bytes（append uid when generating torrents).
 ///
 /// The format: {username}{timestamp}{random u64}
 pub fn generate_passkey(username: &str) -> Result<String, Error> {
@@ -53,8 +54,8 @@ pub fn generate_passkey(username: &str) -> Result<String, Error> {
     use std::convert::TryInto;
 
     let mut hasher = Sha256::new();
-    let mut rng = rand::thread_rng();
-    hasher.update(format!("{}{}{}", username, get_timestamp(), rng.next_u64()));
+    let random: u64 = rand::thread_rng().gen();
+    hasher.update(format!("{}{}{}", username, get_timestamp(), random));
 
     let res: Vec<u8> = hasher
         .finalize()
@@ -86,7 +87,6 @@ pub fn verify_password(password: &str, hash: &str) -> Result<bool, Error> {
 /// to handle it. SMTP is used so config is need.
 ///
 /// Default retry count: 5
-/// TODO: configurable?
 pub fn send_mail(
     receiver: String,
     address: String,
@@ -99,20 +99,24 @@ pub fn send_mail(
 
     let mail = Message::builder()
         .from(
-            format!("{} <{}>", from, "brethland@gmail.com")
+            format!("{} <{}>", from, CONFIG.smtp.username)
                 .parse()
                 .unwrap(),
         )
-        .to(format!("{} <{}>", receiver, address).parse().unwrap())
+        .to(
+            format!("{} <{}>", receiver, address)
+                .parse()
+                .unwrap(),
+        )
         .subject("Invitation Code")
         .body(body)
         .map_err(error_string)?;
 
-    let client = SmtpTransport::relay("smtp.gmail.com")
+    let client = SmtpTransport::relay(&CONFIG.smtp.server)
         .map_err(error_string)?
         .credentials(Credentials::new(
-            "brethland@gmail.com".to_string(),
-            "fake_pass".to_string(),
+            CONFIG.smtp.username.clone(),
+            CONFIG.smtp.password.clone(),
         ))
         .build();
 
@@ -168,10 +172,11 @@ pub fn decode_and_verify_jwt(token: &str, secret: &[u8]) -> Result<String, Error
 /// Parse uploaded torrent file and convert into a table row
 use crate::data::torrent::{Torrent, TorrentTable};
 pub fn parse_torrent_file(buf: &[u8]) -> Result<TorrentTable, Error> {
-    use serde_bencode::{de, ser};
+    use serde_bencode::{from_bytes, to_bytes};
 
-    let ret = de::from_bytes::<Torrent>(buf).map_err(error_string)?;
-    let info = ser::to_bytes(&ret.info).map_err(error_string)?;
+    let mut ret = from_bytes::<Torrent>(buf).map_err(error_string)?;
+    ret.info.private = Some(1);
+    let info = to_bytes(&ret.info).map_err(error_string)?;
     let length = ret.info.length.unwrap_or(ret.info.piece_length * 8);
     let files = ret.info.files.unwrap_or_default()
         .iter()
@@ -190,16 +195,17 @@ pub fn parse_torrent_file(buf: &[u8]) -> Result<TorrentTable, Error> {
     })
 }
 
-static ANNOUNCE_ADDR: &str = "https://tracker.sopt.rs/announce";
-
+/// Generate torrent file buf with custom announce and passkey
+///
+/// Announce format: {announce_addr}?passkey={{passkey}{user id}}&tid={torrent id}
 pub fn generate_torrent_file(mut info: Vec<u8>, passkey: &str, tid: i64, uid: i64, comment: &str) -> Vec<u8> {
     use serde_bencode::to_string;
 
     let ext_passkey = to_string(&format!("{}{}", passkey, uid)).unwrap();
-    let announce_address = to_string(&format!("{}?passkey={}&tid={}", ANNOUNCE_ADDR, ext_passkey, tid)).unwrap();
+    let announce_address = to_string(&format!("{}?passkey={}&tid={}", CONFIG.announce_addr, ext_passkey, tid)).unwrap();
     let comment = to_string(&comment).unwrap();
 
-    let mut hand_ser: Vec<u8> = "d4:info".to_string().into_bytes();
+    let mut hand_ser = "d4:info".to_string().into_bytes();
     hand_ser.append(&mut info);
     hand_ser.append(&mut format!("8:announce{}7:comment{}e", announce_address, comment).into_bytes());
 

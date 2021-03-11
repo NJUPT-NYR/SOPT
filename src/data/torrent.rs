@@ -1,6 +1,4 @@
-use serde::Serialize;
 use serde_bytes::ByteBuf;
-use crate::error::Error;
 use super::*;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -28,7 +26,7 @@ pub struct Torrent {
     pub comment: Option<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize)]
 pub struct TorrentTable {
     pub id: i64,
     pub name: String,

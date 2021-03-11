@@ -2246,6 +2246,7 @@ dependencies = [
  "futures",
  "hex",
  "jsonwebtoken",
+ "lazy_static",
  "lettre",
  "pest",
  "pest_derive",

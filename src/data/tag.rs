@@ -1,11 +1,11 @@
-use serde::Serialize;
-use crate::error::Error;
 use super::*;
-use sopt::*;
 
 type TagRet = Result<Tag, Error>;
 type TagVecRet = Result<Vec<Tag>, Error>;
 
+/// A full tag table contains
+/// 1. name, tag's unique name
+/// 2. amount, current tagged torrents count
 #[derive(Serialize, Debug, ToResponse)]
 pub struct Tag {
     pub id: i64,
@@ -13,6 +13,7 @@ pub struct Tag {
     pub amount: i32,
 }
 
+/// add new tag but update the count when existed
 pub async fn update_or_add_tag(client: &sqlx::PgPool, name: &str) -> TagRet {
     Ok(sqlx::query_as!(
         Tag,
@@ -25,6 +26,7 @@ pub async fn update_or_add_tag(client: &sqlx::PgPool, name: &str) -> TagRet {
         .await?)
 }
 
+/// decrease amount when some torrent not share this tag anymore
 pub async fn decrease_amount_by_name(client: &sqlx::PgPool, name: &str) -> TagRet {
     sqlx::query_as!(
         Tag,
@@ -38,8 +40,8 @@ pub async fn decrease_amount_by_name(client: &sqlx::PgPool, name: &str) -> TagRe
         .ok_or(Error::NotFound)
 }
 
+/// find hottest tags with an optioned number
 pub async fn find_hot_tag_by_amount(client: &sqlx::PgPool, num_want: i64) -> TagVecRet {
-
     Ok(sqlx::query_as!(
         Tag,
         "SELECT * FROM tag \

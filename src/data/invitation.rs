@@ -1,7 +1,4 @@
-use serde::Serialize;
-use crate::error::Error;
 use super::*;
-use sopt::*;
 
 type InviteVecRet = Result<Vec<InvitationCode>, Error>;
 type SlimInvitationRet = Result<SlimInvitation, Error>;
@@ -63,7 +60,7 @@ pub async fn add_invitation_code(client: &sqlx::PgPool, code: InvitationCode) ->
         InvitationCode,
         "INSERT INTO invitations(sender, code, send_to, is_used) \
         VALUES ($1, $2, $3, $4) RETURNING *;",
-        code.sender.unwrap(),
+        code.sender,
         code.code,
         code.send_to,
         code.is_used,

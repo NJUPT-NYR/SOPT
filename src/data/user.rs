@@ -1,12 +1,8 @@
-use serde::Serialize;
-use crate::error::Error;
 use super::*;
-use sopt::*;
 
 type UserRet = Result<User, Error>;
 type UserVecRet = Result<Vec<User>, Error>;
 type SlimUserRet = Result<SlimUser, Error>;
-type SlimUserVecRet = Result<Vec<SlimUser>, Error>;
 
 /// A full user struct
 /// 1. email, unique one
@@ -58,21 +54,8 @@ pub async fn add_user(client: &sqlx::PgPool, user: User) -> SlimUserRet {
         .await?)
 }
 
-/// Find user by username, return the slim one
-/// **Is is performant to use username instead of primary key?**
-pub async fn find_user_by_username(client: &sqlx::PgPool, username: &str) -> SlimUserVecRet {
-    Ok(sqlx::query_as!(
-        SlimUser,
-        "SELECT id, email, username, passkey FROM users \
-        WHERE username = $1;",
-        username,
-        )
-        .fetch_all(client)
-        .await?)
-}
-
 /// Find user by username, return the full one
-pub async fn find_user_by_username_full(client: &sqlx::PgPool, username: &str) -> UserVecRet {
+pub async fn find_user_by_username(client: &sqlx::PgPool, username: &str) -> UserVecRet {
     Ok(sqlx::query_as!(
         User,
         "SELECT * FROM users \
