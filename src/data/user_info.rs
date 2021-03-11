@@ -85,22 +85,7 @@ pub async fn add_invitor_by_name(client: &sqlx::PgPool, username: &str, invitor:
         .ok_or(Error::NotFound)
 }
 
-/// find users by name
-pub async fn find_slim_info_by_name(client: &sqlx::PgPool, username: &str) -> SlimUserInfoRet {
-    sqlx::query_as!(
-        SlimUserInfo,
-        "SELECT id, username, last_activity, upload, download, money FROM user_info \
-        WHERE username = $1;",
-        username
-        )
-        .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::NotFound)
-}
-
-/// transfer money with one sql, be sure to check amount size
-/// before call this function
+/// transfer money with one sql
 pub async fn transfer_money_by_name(client: &sqlx::PgPool, from: &str, to: &str, amount: f64) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE user_info SET money = CASE \

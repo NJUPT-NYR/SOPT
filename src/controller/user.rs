@@ -255,13 +255,8 @@ async fn transfer_money(
     let data: Transfer = data.into_inner();
     let username = get_name_in_token(req)?;
 
-    let now_amount = user_info_model::find_slim_info_by_name(&client, &username).await?;
-    if now_amount.money - data.amount < 0.0 {
-        Ok(HttpResponse::Ok().json(GeneralResponse::from_err("no enough money to pay")))
-    } else {
-        user_info_model::transfer_money_by_name(&client, &username, &data.to, data.amount).await?;
-        Ok(HttpResponse::Ok().json(GeneralResponse::default()))
-    }
+    user_info_model::transfer_money_by_name(&client, &username, &data.to, data.amount).await?;
+    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
 pub fn user_service() -> Scope {

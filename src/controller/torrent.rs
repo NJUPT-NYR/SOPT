@@ -208,6 +208,11 @@ async fn upload_torrent(
     }
     let id_string = hash_map.get("id").ok_or(Error::OtherError("missing id field".to_string()))?;
     let id = i64::from_str(id_string).map_err(error_string)?;
+    let poster = torrent_info_model::find_torrent_by_id(&client, id).await?.poster;
+    if poster != username {
+        return Ok(HttpResponse::Forbidden().json(GeneralResponse::from_err("no permission to upload")))
+    }
+
     torrent_model::update_or_add_torrent(&client, &parsed.unwrap(), id).await?;
 
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
