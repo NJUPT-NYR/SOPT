@@ -201,7 +201,8 @@ pub fn parse_torrent_file(buf: &[u8]) -> Result<TorrentTable, Error> {
 pub fn generate_torrent_file(mut info: Vec<u8>, passkey: &str, tid: i64, uid: i64, comment: &str) -> Vec<u8> {
     use serde_bencode::to_string;
 
-    let ext_passkey = to_string(&format!("{}{}", passkey, uid)).unwrap();
+    // now passkey is 40 bytes long
+    let ext_passkey = format!("{}{}", passkey, hex::encode(uid.to_ne_bytes()));
     let announce_address = to_string(&format!("{}?passkey={}&tid={}", CONFIG.announce_addr, ext_passkey, tid)).unwrap();
     let comment = to_string(&comment).unwrap();
 

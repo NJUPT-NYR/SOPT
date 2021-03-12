@@ -1,5 +1,6 @@
 use super::*;
 use crate::data::{ToResponse, GeneralResponse, DataWithCount,
+                  user as user_model,
                   torrent as torrent_model,
                   torrent_info as torrent_info_model,
                   tag as tag_model};
@@ -228,6 +229,34 @@ async fn show_torrent(
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
+/// download torrent with passkey in it
+#[get("/get_torrent")]
+async fn get_torrent(
+    web::Query(data): web::Query<DetailRequest>,
+    req: HttpRequest,
+    client: web::Data<sqlx::PgPool>,
+) -> HttpResult {
+    let username = get_name_in_token(req)?;
+
+    let user = user_model::find_user_by_username(&client, &username).await?.pop().unwrap();
+    let torrent = torrent_model::find_torrent_by_id(&client, data.id).await?;
+
+    let generated_torrent = generate_torrent_file(
+        torrent.info,
+        &user.passkey,
+        torrent.id,
+        user.id,
+        &torrent.comment.unwrap_or_default(),
+    );
+
+    Ok(HttpResponse::Ok()
+        .header(
+            http::header::CONTENT_DISPOSITION,
+            format!("attachment; filename=\"{}.torrent\"", torrent.name))
+        .content_type("application/octet-stream")
+        .body(body::Body::from_slice(&generated_torrent)))
+}
+
 pub fn torrent_service() -> Scope {
     web::scope("/torrent")
         .service(add_torrent)
@@ -237,4 +266,5 @@ pub fn torrent_service() -> Scope {
         .service(show_torrent)
         .service(list_posted_torrent)
         .service(upload_torrent)
+        .service(get_torrent)
 }

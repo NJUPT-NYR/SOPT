@@ -31,6 +31,7 @@ pub struct TorrentInfo {
 
 /// Slim Version used for list purpose
 /// No description and dull information
+/// added length from torrent table
 #[derive(Serialize, Debug, ToResponse)]
 pub struct SlimTorrent {
     pub id: i64,
@@ -39,6 +40,7 @@ pub struct SlimTorrent {
     pub downloaded: i64,
     pub tag: Option<Vec<String>>,
     pub last_activity: DateTime<Utc>,
+    pub length: i64,
 }
 
 impl TorrentInfo {
@@ -150,9 +152,9 @@ pub async fn query_torrent_counts(client: &sqlx::PgPool) -> CountRet {
 pub async fn find_visible_torrent(client: &sqlx::PgPool, page_offset: i64) -> SlimTorrentVecRet {
     Ok(sqlx::query_as!(
         SlimTorrent,
-        "SELECT id, title, poster, downloaded, tag, last_activity FROM( \
-            SELECT ROW_NUMBER() OVER ( ORDER BY last_activity DESC ) AS RowNum, * \
-            FROM torrent_info \
+        "SELECT id, title, poster, downloaded, tag, last_activity, length FROM( \
+            SELECT ROW_NUMBER() OVER ( ORDER BY last_activity DESC ) AS RowNum, torrent_info.*, torrent.length \
+            FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
             WHERE visible = TRUE AND stick = FALSE \
         ) AS RowConstrainedResult \
         WHERE RowNum > $1 AND RowNum <= $1 + 20 \
@@ -182,9 +184,9 @@ pub async fn find_visible_torrent_by_tag(client: &sqlx::PgPool, tags: &Vec<Strin
     // due to sqlx not support type cast of postgres
     Ok(sqlx::query_as_unchecked!(
         SlimTorrent,
-        "SELECT id, title, poster, downloaded, tag, last_activity FROM( \
-            SELECT ROW_NUMBER() OVER ( ORDER BY last_activity DESC ) AS RowNum, * \
-            FROM torrent_info \
+        "SELECT id, title, poster, downloaded, tag, last_activity, length FROM( \
+            SELECT ROW_NUMBER() OVER ( ORDER BY last_activity DESC ) AS RowNum, torrent_info.*, torrent.length \
+            FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
             WHERE visible = TRUE AND ($1::VARCHAR[] <@ tag) AND stick = FALSE \
         ) AS RowConstrainedResult \
         WHERE RowNum > $2 AND RowNum <= $2 + 20 \
@@ -200,9 +202,11 @@ pub async fn find_visible_torrent_by_tag(client: &sqlx::PgPool, tags: &Vec<Strin
 pub async fn find_stick_torrent(client: &sqlx::PgPool) -> SlimTorrentVecRet {
     Ok(sqlx::query_as!(
         SlimTorrent,
-        "SELECT id, title, poster, downloaded, tag, last_activity FROM torrent_info \
-        WHERE visible = TRUE AND stick = TRUE \
-        ORDER BY last_activity DESC;",
+        "SELECT torrent_info.id, torrent_info.title, torrent_info.poster, \
+        torrent_info.downloaded, torrent_info.tag, torrent_info.last_activity, torrent.length \
+        FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
+        WHERE torrent_info.visible = TRUE AND torrent_info.stick = TRUE \
+        ORDER BY torrent_info.last_activity DESC;",
         )
         .fetch_all(client)
         .await?)

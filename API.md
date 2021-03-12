@@ -58,6 +58,7 @@
     - poster: String
     - downloaded: Int
     - tag: Vec<String>
+    - length: Int(size of torrent in bytes)
 
 ### Tag
 
@@ -398,3 +399,20 @@ https://localhost:8000/torrent/show_torrent?id=1919810
 **Response**
 1. Error: `GeneralResponse` with `errMsg`
 2. Success: `GeneralResponse` with a single `TorrentInfo`
+
+### /torrent/get_torrent
+**Type**: GET
+
+**Request**
+
+    - id: Int
+
+**Example**
+
+```
+https://localhost:8000/torrent/get_torrent?id=114514
+```
+
+**Response**
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: multipart file
