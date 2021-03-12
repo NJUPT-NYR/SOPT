@@ -60,6 +60,17 @@
     - tag: Vec<String>
     - length: Int(size of torrent in bytes)
 
+### SlimTorrentTable
+    
+    - length: Int
+    - files: Vec<String>
+    - infohash: String
+
+### JoinedTorrent
+
+    - info: TorrentInfo
+    - torrent: SlimTorrentTable
+
 ### Tag
 
     - id: Int
@@ -398,7 +409,7 @@ https://localhost:8000/torrent/show_torrent?id=1919810
 
 **Response**
 1. Error: `GeneralResponse` with `errMsg`
-2. Success: `GeneralResponse` with a single `TorrentInfo`
+2. Success: `GeneralResponse` with a single `JoinedTorrent`
 
 ### /torrent/get_torrent
 **Type**: GET

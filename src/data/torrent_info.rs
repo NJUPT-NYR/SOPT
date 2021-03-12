@@ -43,6 +43,12 @@ pub struct SlimTorrent {
     pub length: i64,
 }
 
+#[derive(Serialize, Debug, ToResponse)]
+pub struct JoinedTorrent {
+    pub info: TorrentInfo,
+    pub torrent: crate::data::torrent::SlimTorrentTable,
+}
+
 impl TorrentInfo {
     pub fn new(title: String, poster: String, description: Option<String>) -> Self {
         TorrentInfo {

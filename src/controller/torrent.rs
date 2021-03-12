@@ -55,6 +55,7 @@ async fn add_torrent(
             torrent_info_model::add_tag_for_torrent(&client, ret.id, &tags)
                 .await?;
         // async closure is unstable now
+        // TODO: move this to admin
         for tag in tags {
             tag_model::update_or_add_tag(&client, &tag).await?;
         }
@@ -96,18 +97,21 @@ async fn update_torrent(
         if tags.len() > 5 {
             return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("tags max amount is 5")))
         }
-        let old_tags = old_torrent.tag.unwrap_or(vec![]);
-        let to_decrease: Vec<&String> = old_tags.iter().filter(|tag| !tags.contains(tag)).collect();
-        let to_increase: Vec<&String> = tags.iter().filter(|tag| !old_tags.contains(tag)).collect();
-
         let new_ret =
             torrent_info_model::add_tag_for_torrent(&client, ret.id, &tags)
                 .await?;
-        for tag in to_decrease {
-            tag_model::decrease_amount_by_name(&client, tag).await?;
-        }
-        for tag in to_increase {
-            tag_model::update_or_add_tag(&client, tag).await?;
+
+        // tag count will only be updated when it is open
+        if ret.visible {
+            let old_tags = old_torrent.tag.unwrap_or(vec![]);
+            let to_decrease: Vec<&String> = old_tags.iter().filter(|tag| !tags.contains(tag)).collect();
+            let to_increase: Vec<&String> = tags.iter().filter(|tag| !old_tags.contains(tag)).collect();
+            for tag in to_decrease {
+                tag_model::decrease_amount_by_name(&client, tag).await?;
+            }
+            for tag in to_increase {
+                tag_model::update_or_add_tag(&client, tag).await?;
+            }
         }
 
         Ok(HttpResponse::Ok().json(new_ret.to_json()))
@@ -223,9 +227,23 @@ async fn upload_torrent(
 #[get("/show_torrent")]
 async fn show_torrent(
     web::Query(data): web::Query<DetailRequest>,
+    req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let ret = torrent_info_model::find_torrent_by_id(&client, data.id).await?;
+    let info = torrent_info_model::find_torrent_by_id(&client, data.id).await?;
+    let torrent = torrent_model::find_slim_torrent_by_id(&client, data.id).await?;
+
+    if !info.visible {
+        let username = get_name_in_token(req)?;
+        if !info.poster.eq(&username) {
+            return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("no permission to see")))
+        }
+    }
+
+    let ret = torrent_info_model::JoinedTorrent {
+        info,
+        torrent,
+    };
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
@@ -239,8 +257,12 @@ async fn get_torrent(
     let username = get_name_in_token(req)?;
 
     let user = user_model::find_user_by_username(&client, &username).await?.pop().unwrap();
-    let torrent = torrent_model::find_torrent_by_id(&client, data.id).await?;
+    let torrent_info = torrent_info_model::find_torrent_by_id(&client, data.id).await?;
+    if !(torrent_info.visible || username.eq(&torrent_info.poster)) {
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("no permission to download")))
+    }
 
+    let torrent = torrent_model::find_torrent_by_id(&client, data.id).await?;
     let generated_torrent = generate_torrent_file(
         torrent.info,
         &user.passkey,

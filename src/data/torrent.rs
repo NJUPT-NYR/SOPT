@@ -2,6 +2,7 @@ use serde_bytes::ByteBuf;
 use super::*;
 
 type TorrentRet = Result<TorrentTable, Error>;
+type SlimTorrentTableRet = Result<SlimTorrentTable, Error>;
 
 /// a file struct used when parse torrent
 #[derive(Debug, Deserialize, Serialize)]
@@ -48,7 +49,8 @@ pub struct Torrent {
 /// 4. files: file list
 /// 5. info: bencoded info in raw u8
 /// it is used to speed up generations
-#[derive(Debug, Deserialize)]
+/// 6. infohash: sha1 hashed info
+#[derive(Debug, Serialize)]
 pub struct TorrentTable {
     pub id: i64,
     pub name: String,
@@ -56,21 +58,34 @@ pub struct TorrentTable {
     pub comment: Option<String>,
     pub files: Vec<String>,
     pub info: Vec<u8>,
+    pub infohash: String,
+}
+
+/// a slim torrent used to display information
+/// 1. length: total length of torrent
+/// 2. files: file list
+/// 3. infohash: sha1 hashed info
+#[derive(Debug, Serialize, ToResponse)]
+pub struct SlimTorrentTable {
+    pub length: i64,
+    pub files: Vec<String>,
+    pub infohash: String,
 }
 
 /// insert a parsed torrent or replace the old one
 pub async fn update_or_add_torrent(client: &sqlx::PgPool, torrent: &TorrentTable, id: i64) -> Result<(), Error> {
     sqlx::query!(
-        "INSERT INTO torrent(id, name, length, comment, files, info) \
-        VALUES($1, $2, $3, $4, $5, $6) \
+        "INSERT INTO torrent(id, name, length, comment, files, info, infohash) \
+        VALUES($1, $2, $3, $4, $5, $6, $7) \
         ON CONFLICT (id) DO \
-        UPDATE SET name = $2, length = $3, comment = $4, files = $5, info = $6;",
+        UPDATE SET name = $2, length = $3, comment = $4, files = $5, info = $6, infohash = $7;",
         id,
         torrent.name,
         torrent.length,
         torrent.comment,
         &torrent.files,
-        &torrent.info
+        &torrent.info,
+        torrent.infohash
         )
         .execute(client)
         .await?;
@@ -83,6 +98,19 @@ pub async fn find_torrent_by_id(client: &sqlx::PgPool, id: i64) -> TorrentRet {
     Ok(sqlx::query_as!(
         TorrentTable,
         "SELECT * FROM torrent \
+        WHERE id = $1;",
+        id
+        )
+        .fetch_all(client)
+        .await?
+        .pop()
+        .ok_or(Error::NotFound)?)
+}
+
+pub async fn find_slim_torrent_by_id(client: &sqlx::PgPool, id: i64) -> SlimTorrentTableRet {
+    Ok(sqlx::query_as!(
+        SlimTorrentTable,
+        "SELECT length, files, infohash FROM torrent \
         WHERE id = $1;",
         id
         )

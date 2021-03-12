@@ -171,12 +171,23 @@ pub fn decode_and_verify_jwt(token: &str, secret: &[u8]) -> Result<String, Error
 
 /// Parse uploaded torrent file and convert into a table row
 use crate::data::torrent::{Torrent, TorrentTable};
+
 pub fn parse_torrent_file(buf: &[u8]) -> Result<TorrentTable, Error> {
     use serde_bencode::{from_bytes, to_bytes};
+    use sha1::{Sha1, Digest};
+    use std::convert::TryInto;
 
     let mut ret = from_bytes::<Torrent>(buf).map_err(error_string)?;
     ret.info.private = Some(1);
     let info = to_bytes(&ret.info).map_err(error_string)?;
+    let mut hasher = Sha1::new();
+    hasher.update(&info);
+    let res: Vec<u8> = hasher.finalize()
+        .as_slice()
+        .try_into()
+        .map_err(error_string)?;
+    let infohash = hex::encode(res);
+
     let length = ret.info.length.unwrap_or(ret.info.piece_length * 8);
     let files = ret.info.files.unwrap_or_default()
         .iter()
@@ -192,6 +203,7 @@ pub fn parse_torrent_file(buf: &[u8]) -> Result<TorrentTable, Error> {
         comment: ret.comment,
         files,
         info,
+        infohash,
     })
 }
 
