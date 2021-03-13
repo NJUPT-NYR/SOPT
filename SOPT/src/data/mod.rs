@@ -8,7 +8,7 @@ pub mod torrent;
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
 use crate::error::Error;
-use sopt::*;
+use sopt_derive::ToResponse;
 
 /// General Response structure used to
 /// communicate with frontends.
@@ -17,12 +17,12 @@ use sopt::*;
 /// 1. data, returned data or null
 /// 2. success, the status of request
 /// 3. errMsg, not so severe errors prompt
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GeneralResponse {
-    pub(crate) data: serde_json::Value,
-    pub(crate) success: bool,
+    pub data: serde_json::Value,
+    pub success: bool,
     #[serde(rename = "errMsg")]
-    err_msg: String,
+    pub err_msg: String,
 }
 
 impl GeneralResponse {

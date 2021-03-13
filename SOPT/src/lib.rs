@@ -1,6 +1,6 @@
 mod config;
 mod controller;
-mod data;
+pub mod data;
 mod error;
 mod util;
 
@@ -9,7 +9,7 @@ use actix_web::{middleware, web::route, App, HttpResponse, HttpServer};
 use dotenv::dotenv;
 
 #[actix_web::main]
-async fn main() -> std::io::Result<()> {
+pub async fn sopt_main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=debug");
     env_logger::init();
     dotenv().ok();
@@ -26,8 +26,8 @@ async fn main() -> std::io::Result<()> {
             .service(controller::api_service())
             .default_service(route().to(|| HttpResponse::NotFound().body("Not Found")))
     })
-    .workers(4)
-    .bind(&CONFIG.server_addr)?
-    .run()
-    .await
+        .workers(4)
+        .bind(&CONFIG.server_addr)?
+        .run()
+        .await
 }

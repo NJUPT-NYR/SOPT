@@ -233,6 +233,7 @@ pub async fn find_invisible_torrent(client: &sqlx::PgPool) -> SlimTorrentVecRet 
 }
 
 /// make certain torrents visible, accessed by administrator
+/// TODO: Performance?
 pub async fn make_torrent_visible(client: &sqlx::PgPool, ids: Vec<i64>) -> TorrentInfoVecRet {
     Ok(sqlx::query_as!(
         TorrentInfo,
