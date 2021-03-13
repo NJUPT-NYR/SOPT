@@ -95,7 +95,7 @@ pub async fn update_or_add_torrent(client: &sqlx::PgPool, torrent: &TorrentTable
 
 /// find the definite torrent by torrent id
 pub async fn find_torrent_by_id(client: &sqlx::PgPool, id: i64) -> TorrentRet {
-    Ok(sqlx::query_as!(
+    sqlx::query_as!(
         TorrentTable,
         "SELECT * FROM torrent \
         WHERE id = $1;",
@@ -104,11 +104,11 @@ pub async fn find_torrent_by_id(client: &sqlx::PgPool, id: i64) -> TorrentRet {
         .fetch_all(client)
         .await?
         .pop()
-        .ok_or(Error::NotFound)?)
+        .ok_or(Error::NotFound)
 }
 
 pub async fn find_slim_torrent_by_id(client: &sqlx::PgPool, id: i64) -> SlimTorrentTableRet {
-    Ok(sqlx::query_as!(
+    sqlx::query_as!(
         SlimTorrentTable,
         "SELECT length, files, infohash FROM torrent \
         WHERE id = $1;",
@@ -117,5 +117,5 @@ pub async fn find_slim_torrent_by_id(client: &sqlx::PgPool, id: i64) -> SlimTorr
         .fetch_all(client)
         .await?
         .pop()
-        .ok_or(Error::NotFound)?)
+        .ok_or(Error::NotFound)
 }

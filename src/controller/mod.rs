@@ -1,6 +1,7 @@
 mod user;
 mod invitation;
 mod torrent;
+mod admin;
 
 use actix_web::{HttpResponse, *};
 use serde::{Deserialize, Serialize};
@@ -31,4 +32,5 @@ pub fn api_service() -> Scope {
         .service(user::user_service())
         .service(invitation::invitation_service())
         .service(torrent::torrent_service())
+        .service(admin::admin_service())
 }

@@ -74,7 +74,7 @@ Also, most of the codes are documented.
 - [ ] Admin
   - [ ] User management
   - [ ] Site general setting
-  - [ ] Torrent review
+  - [x] Torrent review
 - [ ] Anti-Cheating
   - [ ] IP limitation
   - [ ] Client ban

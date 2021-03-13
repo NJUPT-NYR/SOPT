@@ -55,15 +55,7 @@ async fn add_torrent(
         if tags.len() > 5 {
             return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("tags max amount is 5")))
         }
-        let new_ret =
-            torrent_info_model::add_tag_for_torrent(&client, ret.id, &tags)
-                .await?;
-        // async closure is unstable now
-        // TODO: move this to admin
-        for tag in tags {
-            tag_model::update_or_add_tag(&client, &tag).await?;
-        }
-
+        let new_ret = torrent_info_model::add_tag_for_torrent(&client, ret.id, &tags).await?;
         Ok(HttpResponse::Ok().json(new_ret.to_json()))
     } else {
         Ok(HttpResponse::Ok().json(ret.to_json()))

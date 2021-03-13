@@ -219,33 +219,39 @@ pub async fn find_stick_torrent(client: &sqlx::PgPool) -> SlimTorrentVecRet {
         .await?)
 }
 
-/// make certain torrent visible, accessed by administrator
-/// TODO: make it some group action
-#[allow(dead_code)]
-pub async fn make_torrent_visible(client: &sqlx::PgPool, id: i64) -> TorrentInfoRet {
-    sqlx::query_as!(
-        TorrentInfo,
-        "UPDATE torrent_info SET visible = TRUE \
-        WHERE id = $1 RETURNING *;",
-        id
+/// find all torrent haven't yet accepted
+pub async fn find_invisible_torrent(client: &sqlx::PgPool) -> SlimTorrentVecRet {
+    Ok(sqlx::query_as!(
+        SlimTorrent,
+        "SELECT torrent_info.id, torrent_info.title, torrent_info.poster, \
+        torrent_info.downloaded, torrent_info.tag, torrent_info.last_activity, torrent.length \
+        FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
+        WHERE torrent_info.visible = FALSE;"
         )
         .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::NotFound)
+        .await?)
+}
+
+/// make certain torrents visible, accessed by administrator
+pub async fn make_torrent_visible(client: &sqlx::PgPool, ids: Vec<i64>) -> TorrentInfoVecRet {
+    Ok(sqlx::query_as!(
+        TorrentInfo,
+        "UPDATE torrent_info SET visible = TRUE \
+        WHERE id = ANY($1) RETURNING *;",
+        &ids
+        )
+        .fetch_all(client)
+        .await?)
 }
 
 /// stick some of the torrents
-#[allow(dead_code)]
-pub async fn make_torrent_stick(client: &sqlx::PgPool, id: i64) -> TorrentInfoRet {
-    sqlx::query_as!(
+pub async fn make_torrent_stick(client: &sqlx::PgPool, ids: Vec<i64>) -> TorrentInfoVecRet {
+    Ok(sqlx::query_as!(
         TorrentInfo,
         "UPDATE torrent_info SET stick = TRUE \
-        WHERE id = $1 RETURNING *;",
-        id
+        WHERE id = ANY($1) RETURNING *;",
+        &ids
         )
         .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::NotFound)
+        .await?)
 }
