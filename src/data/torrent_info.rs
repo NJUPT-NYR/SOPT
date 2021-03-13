@@ -14,6 +14,7 @@ type SlimTorrentVecRet = Result<Vec<SlimTorrent>, Error>;
 /// 7. create_time
 /// 8. last_edit
 /// 9. last_activity: updated when new comments
+/// 10. stick status
 #[derive(Serialize, Debug, ToResponse)]
 pub struct TorrentInfo {
     pub id: i64,

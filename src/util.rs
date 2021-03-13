@@ -151,10 +151,10 @@ pub fn generate_invitation_code() -> String {
     format!("{}_{}", rand_string, get_timestamp()).to_string()
 }
 
+use crate::data::Claim;
 /// try decode and verify if jwt is expired
-pub fn decode_and_verify_jwt(token: &str, secret: &[u8]) -> Result<String, Error> {
+pub fn decode_and_verify_jwt(token: &str, secret: &[u8]) -> Result<Claim, Error> {
     use jsonwebtoken::{decode, Validation, DecodingKey};
-    use crate::data::Claim;
 
     let decoded =
         decode::<Claim>(token, &DecodingKey::from_secret(secret), &Validation::default())
@@ -165,7 +165,7 @@ pub fn decode_and_verify_jwt(token: &str, secret: &[u8]) -> Result<String, Error
     if claim.exp < now {
         Err(Error::AuthError)
     } else {
-        Ok(claim.sub)
+        Ok(claim)
     }
 }
 
@@ -275,6 +275,7 @@ mod tests {
 
         let claim = Claim {
             sub: "YUKI.N".to_string(),
+            role: 1,
             exp: (Utc::now() + Duration::days(30)).timestamp() as u64,
         };
         let tokens = encode(
@@ -283,6 +284,6 @@ mod tests {
             &EncodingKey::from_secret("secret".as_bytes())).unwrap();
         let ret = decode_and_verify_jwt(&tokens, "secret".as_bytes()).unwrap();
 
-        assert_eq!(ret, "YUKI.N".to_string())
+        assert_eq!(ret.sub, "YUKI.N".to_string())
     }
 }

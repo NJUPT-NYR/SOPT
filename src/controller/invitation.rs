@@ -1,5 +1,5 @@
 use super::*;
-use crate::data::{ToResponse, invitation as invitation_model};
+use crate::data::{invitation as invitation_model};
 
 #[derive(Deserialize, Debug)]
 struct Message {
@@ -17,7 +17,12 @@ async fn send_invitation(
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let message: Message = data.into_inner();
-    let username = get_name_in_token(req)?;
+    let claim = get_info_in_token(req)?;
+    let username = claim.sub;
+
+    if claim.role & (1 << 1) == 0 {
+        return Err(Error::NoPermission)
+    }
 
     let code = generate_invitation_code();
     let body = format!("{}\n\nYour Invitation Code is: {}\n", &message.body, &code);
@@ -52,7 +57,8 @@ async fn list_invitations(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let username = get_name_in_token(req)?;
+    let claim = get_info_in_token(req)?;
+    let username = claim.sub;
 
     let ret = invitation_model::find_invitation_by_user(&client, &username).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))

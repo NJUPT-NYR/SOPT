@@ -7,13 +7,14 @@ use serde::{Deserialize, Serialize};
 use crate::error::{Error, error_string};
 use crate::config::CONFIG;
 use crate::util::*;
+use crate::data::{Claim, ToResponse, GeneralResponse, DataWithCount};
 
 /// A wrapper of Error so to reduce panic
 /// and make HttpError more smooth
 pub type HttpResult = Result<HttpResponse, Error>;
 
 /// get username in jwt token
-pub fn get_name_in_token(req: HttpRequest) -> Result<String, Error> {
+pub fn get_info_in_token(req: HttpRequest) -> Result<Claim, Error> {
     let auth = req.headers().get("Authorization");
     if auth.is_none() {
         return Err(Error::AuthError)

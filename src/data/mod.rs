@@ -83,10 +83,11 @@ impl DataWithCount {
 }
 
 /// custom jwt struct
-/// for now we only need its username
+/// for now we need its username and role
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Claim {
     pub sub: String,
+    pub role: i64,
     pub exp: u64,
 }
 

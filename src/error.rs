@@ -10,6 +10,7 @@ use std::fmt::{Display, Formatter};
 /// 3. OtherError, with a generic to rewrite other errors to string
 ///     like utilities and standard library error.
 /// 4. NotFound
+/// 5. No permission in this account
 ///
 /// All errors will be transformed to Http Response so no panic will happen.
 #[derive(From, Debug)]
@@ -18,6 +19,7 @@ pub enum Error {
     OtherError(String),
     DBError(DBError),
     NotFound,
+    NoPermission,
 }
 
 impl Display for Error {
@@ -38,6 +40,7 @@ impl ResponseError for Error {
                 HttpResponse::Unauthorized().json(GeneralResponse::from_err("not login yet"))
             },
             Error::NotFound => HttpResponse::NotFound().body("Not Found"),
+            Error::NoPermission => HttpResponse::Ok().json(GeneralResponse::from_err("no permission")),
         }
     }
 }

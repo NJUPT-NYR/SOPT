@@ -1,6 +1,5 @@
 use super::*;
-use crate::data::{ToResponse, GeneralResponse, Claim,
-                  user as user_model,
+use crate::data::{user as user_model,
                   invitation as invitation_model,
                  user_info as user_info_model};
 
@@ -137,7 +136,8 @@ async fn login(
             }
             user_info_model::update_activity_by_name(&client, &user.username).await?;
             let claim = Claim {
-                sub: user.username,
+                sub: val.username,
+                role: val.role,
                 exp: (Utc::now() + Duration::days(30)).timestamp() as u64,
             };
             let tokens = encode(
@@ -159,7 +159,8 @@ async fn personal_info_update(
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let data: InfoWrapper = data.into_inner();
-    let username = get_name_in_token(req)?;
+    let claim = get_info_in_token(req)?;
+    let username = claim.sub;
 
     let ret = user_info_model::update_other_by_name(&client, &username, data.info).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
@@ -174,7 +175,8 @@ async fn upload_avatar(
 ) -> HttpResult {
     use futures::{StreamExt, TryStreamExt};
 
-    let username = get_name_in_token(req)?;
+    let claim = get_info_in_token(req)?;
+    let username = claim.sub;
 
     if let Ok(Some(mut file)) = payload.try_next().await {
         let content_type = file.content_disposition().ok_or(Error::OtherError("incomplete file".to_string()))?;
@@ -207,7 +209,8 @@ async fn check_identity(
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let password: String = data.into_inner().password;
-    let username = get_name_in_token(req)?;
+    let claim = get_info_in_token(req)?;
+    let username = claim.sub;
 
     let validation = user_model::find_user_by_username(&client, &username)
         .await?.pop().expect("Someone hacked our token!");
@@ -227,7 +230,8 @@ async fn reset_password(
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let new_pass = hash_password(&data.into_inner().password)?;
-    let username = get_name_in_token(req)?;
+    let claim = get_info_in_token(req)?;
+    let username = claim.sub;
 
     user_model::update_password_by_username(&client, &username, &new_pass).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
@@ -239,7 +243,8 @@ async fn reset_passkey(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let username = get_name_in_token(req)?;
+    let claim = get_info_in_token(req)?;
+    let username = claim.sub;
 
     user_model::update_passkey_by_username(&client, &username, &generate_passkey(&username)?).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
@@ -253,7 +258,12 @@ async fn transfer_money(
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let data: Transfer = data.into_inner();
-    let username = get_name_in_token(req)?;
+    let claim = get_info_in_token(req)?;
+    let username = claim.sub;
+
+    if claim.role & 1 == 0 {
+        return Err(Error::NoPermission)
+    }
 
     user_info_model::transfer_money_by_name(&client, &username, &data.to, data.amount).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))

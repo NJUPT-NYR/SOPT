@@ -16,6 +16,7 @@ pub struct User {
     pub username: String,
     pub password: String,
     pub passkey: String,
+    pub role: i64,
 }
 
 /// Slim one, mainly for security, hiding password
@@ -25,6 +26,7 @@ pub struct SlimUser {
     pub email: String,
     pub username: String,
     pub passkey: String,
+    pub role: i64,
 }
 
 impl User {
@@ -35,6 +37,7 @@ impl User {
             username,
             password,
             passkey,
+            role: 1,
         }
     }
 }
@@ -44,7 +47,7 @@ pub async fn add_user(client: &sqlx::PgPool, user: User) -> SlimUserRet {
     Ok(sqlx::query_as!(
         SlimUser,
         "INSERT INTO users(email, username, password, passkey) \
-        VALUES ($1, $2, $3, $4) RETURNING id, email, username, passkey;",
+        VALUES ($1, $2, $3, $4) RETURNING id, email, username, passkey, role;",
         user.email,
         user.username,
         user.password,

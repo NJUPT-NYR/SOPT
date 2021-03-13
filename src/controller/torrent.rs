@@ -1,6 +1,5 @@
 use super::*;
-use crate::data::{ToResponse, GeneralResponse, DataWithCount,
-                  user as user_model,
+use crate::data::{user as user_model,
                   torrent as torrent_model,
                   torrent_info as torrent_info_model,
                   tag as tag_model};
@@ -38,7 +37,12 @@ async fn add_torrent(
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let post: TorrentPost = data.into_inner();
-    let username = get_name_in_token(req)?;
+    let claim = get_info_in_token(req)?;
+    let username = claim.sub;
+
+    if claim.role & 1 == 0 {
+        return Err(Error::NoPermission)
+    }
 
     let ret = torrent_info_model::add_torrent_info(&client,
                                                    torrent_info_model::TorrentInfo::new(
@@ -74,15 +78,16 @@ async fn update_torrent(
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let post: TorrentPost = data.into_inner();
-    let username = get_name_in_token(req)?;
+    let claim = get_info_in_token(req)?;
+    let username = claim.sub;
     if post.id.is_none() {
         return Ok(HttpResponse::BadRequest().json(GeneralResponse::from_err("missing torrent id")))
     }
 
     let old_torrent = torrent_info_model::find_torrent_by_id(&client, post.id.unwrap()).await?;
     let poster = old_torrent.poster;
-    if !username.eq(&poster) {
-        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("not the owner of post")))
+    if !username.eq(&poster) && claim.role & (1 << 62) == 0 {
+        return Err(Error::NoPermission)
     }
 
     let ret = torrent_info_model::update_torrent_info(&client,
@@ -172,7 +177,8 @@ async fn list_posted_torrent(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let username = get_name_in_token(req)?;
+    let claim = get_info_in_token(req)?;
+    let username = claim.sub;
     let ret = torrent_info_model::find_torrent_by_poster(&client, username).await?;
 
     Ok(HttpResponse::Ok().json(ret.to_json()))
@@ -189,7 +195,8 @@ async fn upload_torrent(
     use std::str::FromStr;
     use std::collections::HashMap;
 
-    let username = get_name_in_token(req)?;
+    let claim = get_info_in_token(req)?;
+    let username = claim.sub;
     let mut parsed = None;
     let mut hash_map = HashMap::new();
 
@@ -214,8 +221,8 @@ async fn upload_torrent(
     let id_string = hash_map.get("id").ok_or(Error::OtherError("missing id field".to_string()))?;
     let id = i64::from_str(id_string).map_err(error_string)?;
     let poster = torrent_info_model::find_torrent_by_id(&client, id).await?.poster;
-    if poster != username {
-        return Ok(HttpResponse::Forbidden().json(GeneralResponse::from_err("no permission to upload")))
+    if poster != username && claim.role & (1 << 62) == 0 {
+        return Err(Error::NoPermission)
     }
 
     torrent_model::update_or_add_torrent(&client, &parsed.unwrap(), id).await?;
@@ -234,9 +241,10 @@ async fn show_torrent(
     let torrent = torrent_model::find_slim_torrent_by_id(&client, data.id).await?;
 
     if !info.visible {
-        let username = get_name_in_token(req)?;
+        let claim = get_info_in_token(req)?;
+        let username = claim.sub;
         if !info.poster.eq(&username) {
-            return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("no permission to see")))
+            return Err(Error::NoPermission)
         }
     }
 
@@ -254,12 +262,19 @@ async fn get_torrent(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let username = get_name_in_token(req)?;
+    let claim = get_info_in_token(req)?;
+    let username = claim.sub;
+
+    if claim.role & 1 == 0 {
+        return Err(Error::NoPermission)
+    }
 
     let user = user_model::find_user_by_username(&client, &username).await?.pop().unwrap();
     let torrent_info = torrent_info_model::find_torrent_by_id(&client, data.id).await?;
-    if !(torrent_info.visible || username.eq(&torrent_info.poster)) {
-        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("no permission to download")))
+    if !torrent_info.visible &&
+        !username.eq(&torrent_info.poster) &&
+        claim.role & (1 << 62) == 0 {
+        return Err(Error::NoPermission)
     }
 
     let torrent = torrent_model::find_torrent_by_id(&client, data.id).await?;
