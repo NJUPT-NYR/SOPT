@@ -1,7 +1,4 @@
 use cucumber_rust::{Steps, t};
-use sopt::sopt_main;
-use rand::{thread_rng, Rng};
-use rand::distributions::Alphanumeric;
 use std::convert::Infallible;
 use serde::{Serialize};
 use cucumber_rust::{async_trait, World};
@@ -39,13 +36,14 @@ impl World for MyWorld {
 
 
 pub fn steps() -> Steps<MyWorld> {
-    std::thread::spawn(|| sopt_main());
-
     let mut steps: Steps<MyWorld> = Steps::new();
 
     steps.given_regex(
         r#"a new random user ([\w\s!]+)$"#,
         |mut world, ctx| {
+            use rand::{thread_rng, Rng};
+            use rand::distributions::Alphanumeric;
+
             let s = &ctx.matches[1].trim().to_string();
             let mut mock: [String; 3] = ["".to_string(), "".to_string(), "".to_string()];
             for i in 0..3 {

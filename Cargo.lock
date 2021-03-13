@@ -2571,6 +2571,7 @@ dependencies = [
 [[package]]
 name = "sopt-derive"
 version = "0.1.0"
+source = "git+https://github.com/NJUPT-NYR/SOPT-derive?branch=master#64b288f0ecdcfc492503537c1468fd689c269b76"
 dependencies = [
  "syn",
 ]

@@ -1,7 +1,7 @@
-use cucumber_rust::{Cucumber, criteria::feature, Context};
-use cucumber_rust::futures::FutureExt;
+use cucumber_rust::{Cucumber, criteria::feature, Context, futures::FutureExt};
+use sopt::sopt_main;
 
-pub mod sign_up_and_login;
+mod sign_up_and_login;
 
 #[tokio::main]
 async fn main() {
@@ -9,6 +9,7 @@ async fn main() {
     let pool = sqlx::PgPool::connect(&addr)
         .await
         .expect("unable to connect to database");
+    std::thread::spawn(|| sopt_main());
 
     Cucumber::<sign_up_and_login::MyWorld>::new()
         .features(&["./tests/features/"])

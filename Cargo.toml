@@ -1,2 +1,58 @@
-[workspace]
-members = ["SOPT", "SOPT-derive"]
+[package]
+name = "sopt"
+version = "0.1.0"
+authors = ["Brethland Yang <brethland@gmail.com>"]
+edition = "2018"
+
+[lib]
+name = "sopt"
+
+[features]
+default = ["email-restriction"]
+email-restriction = []
+
+[dependencies]
+# actix and sql stuff
+actix-web = "3.3.2"
+actix-multipart = "0.3.0"
+sqlx = { version = "0.4.1", features = [ "postgres", "runtime-actix-native-tls", "chrono", "json" ] }
+
+#serde related
+serde = { version = "^1.0", features = ["derive"] }
+serde_bencode = "*"
+serde_json = "*"
+serde_bytes = "*"
+serde_qs = "0.8.2"
+
+# utils
+futures = "0.3.13"
+dotenv = "0.15.0"
+config = "0.10.1"
+derive_more = "0.99.11"
+env_logger = "*"
+pest = "^2.1.3"
+pest_derive = "^2.1.0"
+lettre = "0.10.0-alpha.4"
+hex = "0.4.2"
+sanitize-filename = "0.3.0"
+chrono = { version = "0.4.19", features = ["serde"] }
+jsonwebtoken = "7"
+lazy_static = "*"
+
+# crypto related
+sha2 = "0.9"
+sha-1 = "0.9"
+rand = "0.8.3"
+rust-argon2 = "0.8"
+base64 = "0.13.0"
+
+sopt-derive = { git = "https://github.com/NJUPT-NYR/SOPT-derive", branch = "master" }
+
+[[test]]
+name = "cucumber"
+harness = false
+
+[dev-dependencies]
+reqwest = { version = "^0.10", features = [ "json" ] }
+cucumber_rust = { git = "https://github.com/bbqsrc/cucumber-rust", branch = "main" }
+tokio = { version = "^0.2", features = [ "macros", "time" ] }
