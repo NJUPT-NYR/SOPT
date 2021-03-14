@@ -1,7 +1,7 @@
 use super::*;
 
-type UserInfoRet = Result<UserInfo, Error>;
-type SlimUserInfoRet = Result<SlimUserInfo, Error>;
+// type UserInfoRet = Result<UserInfo, Error>;
+// type SlimUserInfoRet = Result<SlimUserInfo, Error>;
 
 /// A full user info struct contains
 /// 1. username: for performant issue
@@ -39,50 +39,48 @@ pub struct SlimUserInfo {
     pub last_activity: DateTime<Utc>,
     pub upload: i64,
     pub download: i64,
-    pub money: f64
+    pub rank: i32,
 }
 
 /// Add a full user info when sign up
-pub async fn add_user_info(client: &sqlx::PgPool, id: i64, username: &str) -> UserInfoRet {
-    Ok(sqlx::query_as!(
-        UserInfo,
+pub async fn add_user_info(client: &sqlx::PgPool, id: i64, username: &str) -> Result<(), Error> {
+    sqlx::query!(
         "INSERT INTO user_info(id, username, register_time, last_activity) \
-        VALUES($1, $2, NOW(), NOW()) RETURNING *;",
+        VALUES($1, $2, NOW(), NOW());",
         id,
         username
         )
-        .fetch_one(client)
-        .await?)
+        .execute(client)
+        .await?;
+
+    Ok(())
 }
 
 /// Update last activity when login
-pub async fn update_activity_by_name(client: &sqlx::PgPool, username: &str) -> SlimUserInfoRet {
-    sqlx::query_as!(
-        SlimUserInfo,
+pub async fn update_activity_by_name(client: &sqlx::PgPool, username: &str) -> Result<(), Error> {
+    sqlx::query!(
         "UPDATE user_info SET last_activity = now() \
-        WHERE username = $1 RETURNING id, username, last_activity, upload, download, money;",
+        WHERE username = $1;",
         username
         )
-        .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::NotFound)
+        .execute(client)
+        .await?;
+
+    Ok(())
 }
 
 /// add invitor when sign up
-/// since additional checked is needed
-pub async fn add_invitor_by_name(client: &sqlx::PgPool, username: &str, invitor: Option<String>) -> SlimUserInfoRet {
-    sqlx::query_as!(
-        SlimUserInfo,
+pub async fn add_invitor_by_name(client: &sqlx::PgPool, username: &str, invitor: Option<String>) -> Result<(), Error> {
+    sqlx::query!(
         "UPDATE user_info SET invitor = $1 \
-        WHERE username = $2 RETURNING id, username, last_activity, upload, download, money;",
+        WHERE username = $2;",
         invitor,
         username
         )
-        .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::NotFound)
+        .execute(client)
+        .await?;
+
+    Ok(())
 }
 
 /// transfer money with one sql
@@ -104,19 +102,17 @@ pub async fn transfer_money_by_name(client: &sqlx::PgPool, from: &str, to: &str,
 }
 
 /// Update user define columns, replace all without any check
-/// Returns the full user(for Debug use)
-pub async fn update_other_by_name(client: &sqlx::PgPool, username: &str, info: serde_json::Value) -> UserInfoRet {
-    sqlx::query_as!(
-        UserInfo,
+pub async fn update_other_by_name(client: &sqlx::PgPool, username: &str, info: serde_json::Value) -> Result<(), Error> {
+    sqlx::query!(
         "UPDATE user_info SET other = $1 \
-        WHERE username = $2 RETURNING *;",
+        WHERE username = $2;",
         info,
         username
         )
-        .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::NotFound)
+        .execute(client)
+        .await?;
+
+    Ok(())
 }
 
 /// Insert user uploaded avatar

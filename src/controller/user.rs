@@ -69,43 +69,27 @@ async fn add_user(
             }
         },
         None => return Ok(HttpResponse::BadRequest().json(GeneralResponse::from_err("invalid email address"))),
-    };
-
+    }
     if let Some(str) = user.invite_code {
         let mut ret = invitation_model::find_invitation_by_code(&client, &str).await?;
         if !ret.is_empty() {
-            let is_used = ret.first().unwrap().is_used;
-            if is_used {
-                return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("invitation code already be used")))
+            if ret[0].is_used {
+                return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("invitation code already taken")))
             }
             code = Some(ret.pop().unwrap());
             allowed = true;
         }
     }
-
     if !allowed {
         return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("not allowed to register")))
     }
-
-    if !user_model::find_user_by_username(&client, &user.username)
-        .await?
-        .is_empty() {
-        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("username already taken")))
-    } else if !user_model::find_user_by_email(&client, &user.email)
-        .await?
-        .is_empty() {
-        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("email already registered")))
+    let check = user_model::check_existence(&client, &user.email, &user.username).await?;
+    if !check.is_empty() {
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err(&format!("{} already taken", check))))
     }
 
     let passkey = generate_passkey(&user.username)?;
-    let new_user = user_model::add_user(
-        &client,
-        user_model::User::new(
-            user.email,
-            user.username,
-            hash_password(&user.password)?,
-            passkey,
-        )).await?;
+    let new_user = user_model::add_user(&client, &user.email, &user.username, &hash_password(&user.password)?, &passkey).await?;
     user_info_model::add_user_info(&client, new_user.id, &new_user.username).await?;
     if code.is_some() {
         let true_code = code.unwrap();
@@ -162,8 +146,8 @@ async fn personal_info_update(
     let claim = get_info_in_token(req)?;
     let username = claim.sub;
 
-    let ret = user_info_model::update_other_by_name(&client, &username, data.info).await?;
-    Ok(HttpResponse::Ok().json(ret.to_json()))
+    user_info_model::update_other_by_name(&client, &username, data.info).await?;
+    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
 /// upload avatar and b64encode it into database

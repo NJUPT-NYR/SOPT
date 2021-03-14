@@ -44,12 +44,7 @@ async fn add_torrent(
         return Err(Error::NoPermission)
     }
 
-    let ret = torrent_info_model::add_torrent_info(&client,
-                                                   torrent_info_model::TorrentInfo::new(
-                                                       post.title,
-                                                       username,
-                                                       post.description
-                                                   )).await?;
+    let ret = torrent_info_model::add_torrent_info(&client, &post.title,&username, post.description).await?;
     if post.tags.is_some() {
         let tags = post.tags.unwrap();
         if tags.len() > 5 {
@@ -76,27 +71,19 @@ async fn update_torrent(
         return Ok(HttpResponse::BadRequest().json(GeneralResponse::from_err("missing torrent id")))
     }
 
-    let old_torrent = torrent_info_model::find_torrent_by_id(&client, post.id.unwrap()).await?;
+    let old_torrent = torrent_info_model::find_torrent_by_id(&client,post.id.unwrap()).await?;
     let poster = old_torrent.poster;
     if !username.eq(&poster) && claim.role & (1 << 62) == 0 {
         return Err(Error::NoPermission)
     }
 
-    let ret = torrent_info_model::update_torrent_info(&client,
-                                                      post.id.unwrap(),
-                                                      torrent_info_model::TorrentInfo::new(
-                                                          post.title,
-                                                          poster,
-                                                          post.description
-                                                      )).await?;
+    let ret = torrent_info_model::update_torrent_info(&client,post.id.unwrap(), &post.title, post.description).await?;
     if post.tags.is_some() {
         let tags = post.tags.unwrap();
         if tags.len() > 5 {
             return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("tags max amount is 5")))
         }
-        let new_ret =
-            torrent_info_model::add_tag_for_torrent(&client, ret.id, &tags)
-                .await?;
+        let new_ret = torrent_info_model::add_tag_for_torrent(&client, ret.id, &tags).await?;
 
         // tag count will only be updated when it is open
         if ret.visible {
@@ -212,7 +199,7 @@ async fn upload_torrent(
     }
     let id_string = hash_map.get("id").ok_or(Error::OtherError("missing id field".to_string()))?;
     let id = i64::from_str(id_string).map_err(error_string)?;
-    let poster = torrent_info_model::find_torrent_by_id(&client, id).await?.poster;
+    let poster = torrent_info_model::find_torrent_by_id_mini(&client, id).await?.poster;
     if poster != username && claim.role & (1 << 62) == 0 {
         return Err(Error::NoPermission)
     }
@@ -262,7 +249,7 @@ async fn get_torrent(
     }
 
     let user = user_model::find_user_by_username(&client, &username).await?.pop().unwrap();
-    let torrent_info = torrent_info_model::find_torrent_by_id(&client, data.id).await?;
+    let torrent_info = torrent_info_model::find_torrent_by_id_mini(&client, data.id).await?;
     if !torrent_info.visible &&
         !username.eq(&torrent_info.poster) &&
         claim.role & (1 << 62) == 0 {

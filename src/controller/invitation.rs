@@ -41,13 +41,7 @@ async fn send_invitation(
     });
 
     // TODO: some consumption of money(site_general settings)
-    let ret = invitation_model::add_invitation_code(
-            &client,
-            invitation_model::InvitationCode::new(
-                username,
-                code,
-                message.address,
-            )).await?;
+    let ret = invitation_model::add_invitation_code(&client, &username, &code, &message.address).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 

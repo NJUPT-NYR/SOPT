@@ -2,7 +2,7 @@ use super::*;
 
 type InviteVecRet = Result<Vec<InvitationCode>, Error>;
 type SlimInvitationRet = Result<SlimInvitation, Error>;
-type SlimInvitationRecRet = Result<Vec<SlimInvitation>, Error>;
+type SlimInvitationVecRet = Result<Vec<SlimInvitation>, Error>;
 
 /// A invitation code struct contains
 /// 1. sender: invitor of this code
@@ -41,29 +41,16 @@ impl SlimInvitation {
     }
 }
 
-impl InvitationCode {
-    pub fn new(sender: String, code: String, send_to: String) -> Self {
-        InvitationCode {
-            id: 1919810,
-            sender: Some(sender),
-            code,
-            send_to,
-            is_used: false,
-        }
-    }
-}
-
 /// Add invitation into database and return the full `SlimInvitation` struct
 /// Return a `SlimInvitation`
-pub async fn add_invitation_code(client: &sqlx::PgPool, code: InvitationCode) -> SlimInvitationRet {
+pub async fn add_invitation_code(client: &sqlx::PgPool, sender: &str, code: &str, send_to: &str) -> SlimInvitationRet {
     let ret: InvitationCode = sqlx::query_as!(
         InvitationCode,
         "INSERT INTO invitations(sender, code, send_to, is_used) \
-        VALUES ($1, $2, $3, $4) RETURNING *;",
-        code.sender,
-        code.code,
-        code.send_to,
-        code.is_used,
+        VALUES ($1, $2, $3, FALSE) RETURNING *;",
+        sender,
+        code,
+        send_to,
         )
         .fetch_one(client)
         .await?;
@@ -73,7 +60,7 @@ pub async fn add_invitation_code(client: &sqlx::PgPool, code: InvitationCode) ->
 
 /// Find all codes sent by one invitor
 /// Return a `Vec<SlimInvitation>`
-pub async fn find_invitation_by_user(client: &sqlx::PgPool, username: &str) -> SlimInvitationRecRet {
+pub async fn find_invitation_by_user(client: &sqlx::PgPool, username: &str) -> SlimInvitationVecRet {
     let vec: Vec<InvitationCode> = sqlx::query_as!(
         InvitationCode,
         "SELECT * FROM invitations \

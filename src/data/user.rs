@@ -1,6 +1,5 @@
 use super::*;
 
-type UserRet = Result<User, Error>;
 type UserVecRet = Result<Vec<User>, Error>;
 type SlimUserRet = Result<SlimUser, Error>;
 
@@ -9,6 +8,8 @@ type SlimUserRet = Result<SlimUser, Error>;
 /// 2. username: unique one, at most 50 chars
 /// 3. password: hashed password
 /// 4. passkey: 32bit string
+/// 5. role: bit string for
+/// management and permission
 #[derive(Serialize, Debug, ToResponse)]
 pub struct User {
     pub id: i64,
@@ -29,29 +30,16 @@ pub struct SlimUser {
     pub role: i64,
 }
 
-impl User {
-    pub fn new(email: String, username: String, password: String, passkey: String) -> Self {
-        User {
-            id: 114514,
-            email,
-            username,
-            password,
-            passkey,
-            role: 1,
-        }
-    }
-}
-
 /// Add new user to database, return the slim struct
-pub async fn add_user(client: &sqlx::PgPool, user: User) -> SlimUserRet {
+pub async fn add_user(client: &sqlx::PgPool, email: &str, username: &str, password: &str, passkey: &str) -> SlimUserRet {
     Ok(sqlx::query_as!(
         SlimUser,
         "INSERT INTO users(email, username, password, passkey) \
         VALUES ($1, $2, $3, $4) RETURNING id, email, username, passkey, role;",
-        user.email,
-        user.username,
-        user.password,
-        user.passkey
+        email,
+        username,
+        password,
+        passkey
         )
         .fetch_one(client)
         .await?)
@@ -69,44 +57,51 @@ pub async fn find_user_by_username(client: &sqlx::PgPool, username: &str) -> Use
         .await?)
 }
 
-/// Find user by email, for checking purpose
-pub async fn find_user_by_email(client: &sqlx::PgPool, email: &str) -> UserVecRet {
-    Ok(sqlx::query_as!(
+/// Find user by email or username, for checking purpose
+pub async fn check_existence(client: &sqlx::PgPool, email: &str, username: &str) -> Result<String, Error> {
+    let ret: Vec<User> = sqlx::query_as!(
         User,
         "SELECT * FROM users \
-        WHERE email = $1;",
-        email
+        WHERE email = $1 OR username = $2;",
+        email,
+        username
         )
         .fetch_all(client)
-        .await?)
+        .await?;
+
+    if ret.is_empty() {
+        Ok(String::new())
+    } else if ret[0].username.eq(&username) {
+        Ok(String::from("username"))
+    } else {
+        Ok(String::from("email"))
+    }
 }
 
-/// update password, return the full one(for Debug use)
-pub async fn update_password_by_username(client: &sqlx::PgPool, username: &str, new_pass: &str) -> UserRet {
-    sqlx::query_as!(
-        User,
+/// update password
+pub async fn update_password_by_username(client: &sqlx::PgPool, username: &str, new_pass: &str) -> Result<(), Error> {
+    sqlx::query!(
         "UPDATE users SET password = $1 \
-         WHERE username = $2 RETURNING *;",
+         WHERE username = $2;",
         new_pass,
         username
         )
-        .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::NotFound)
+        .execute(client)
+        .await?;
+
+    Ok(())
 }
 
-/// update passkey, return the full one(for Debug use)
-pub async fn update_passkey_by_username(client: &sqlx::PgPool, username: &str, new_key: &str) -> UserRet {
-    sqlx::query_as!(
-        User,
+/// update regenerated passkey
+pub async fn update_passkey_by_username(client: &sqlx::PgPool, username: &str, new_key: &str) -> Result<(), Error> {
+    sqlx::query!(
         "UPDATE users SET passkey = $1 \
-         WHERE username = $2 RETURNING *;",
+         WHERE username = $2;",
         new_key,
         username
         )
-        .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::NotFound)
+        .execute(client)
+        .await?;
+
+    Ok(())
 }

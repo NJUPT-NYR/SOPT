@@ -234,7 +234,7 @@ Avatar will be stored in the database with base64 encoded.
 
 **Response**
 1. Error: `GeneralResponse` with `errMsg`
-2. Success: `GeneralResponse` with a single `UserInfo`
+2. Success: Default success `GeneralResponse`
 
 **Comment**
 
@@ -388,7 +388,7 @@ https://localhost:8000/torrent/list_torrents?page=0&tags[]=电影&tags[]=新浪�
 
 **Response**
 1. Error: `GeneralResponse` with `errMsg`
-2. Success: `GeneralResponse` with a list of `TorrentInfo`
+2. Success: `GeneralResponse` with a list of `SlimTorrentInfo`
 
 **Comment**
 

@@ -1,6 +1,5 @@
 use super::*;
 
-type TagRet = Result<Tag, Error>;
 type TagVecRet = Result<Vec<Tag>, Error>;
 
 /// A full tag table contains
@@ -14,30 +13,31 @@ pub struct Tag {
 }
 
 /// add new tag but update the count when existed
-pub async fn update_or_add_tag(client: &sqlx::PgPool, name: &str) -> TagRet {
-    Ok(sqlx::query_as!(
-        Tag,
+pub async fn update_or_add_tag(client: &sqlx::PgPool, name: &str) -> Result<(), Error> {
+    sqlx::query!(
         "INSERT INTO tag(name) VALUES($1) \
         ON CONFLICT (name) DO \
-        UPDATE SET amount = tag.amount + 1 RETURNING *;",
+        UPDATE SET amount = tag.amount + 1;",
         name
         )
-        .fetch_one(client)
-        .await?)
+        .execute(client)
+        .await?;
+
+    Ok(())
 }
 
 /// decrease amount when some torrent not share this tag anymore
-pub async fn decrease_amount_by_name(client: &sqlx::PgPool, name: &str) -> TagRet {
+pub async fn decrease_amount_by_name(client: &sqlx::PgPool, name: &str) -> Result<(), Error> {
     sqlx::query_as!(
         Tag,
         "UPDATE tag SET amount = amount - 1 \
-        WHERE name = $1 RETURNING *;",
+        WHERE name = $1;",
         name
         )
-        .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::NotFound)
+        .execute(client)
+        .await?;
+
+    Ok(())
 }
 
 /// find hottest tags with an optioned number
