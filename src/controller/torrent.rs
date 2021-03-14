@@ -120,7 +120,7 @@ async fn list_torrents(
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let query = req.uri().query().unwrap_or_default();
-    let data: QueryList = serde_qs::from_str(query).map_err(error_string)?;
+    let data: ListRequest = serde_qs::from_str(query).map_err(error_string)?;
     let tags = data.tags;
     let page = data.page.unwrap_or(0);
 

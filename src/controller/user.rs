@@ -239,7 +239,6 @@ pub(crate) fn user_service() -> Scope {
         .service(personal_info_update)
         .service(upload_avatar)
         .service(web::scope("/auth")
-            .service(check_identity)
             .service(reset_password)
             .service(reset_passkey)
             .service(transfer_money))
