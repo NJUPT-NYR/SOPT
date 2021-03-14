@@ -153,7 +153,7 @@ async fn list_posted_torrent(
 ) -> HttpResult {
     let claim = get_info_in_token(req)?;
     let username = claim.sub;
-    let ret = torrent_info_model::find_torrent_by_poster(&client, username).await?;
+    let ret = torrent_info_model::find_torrent_by_poster(&client, &username).await?;
 
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }

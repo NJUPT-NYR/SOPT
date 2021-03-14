@@ -1,7 +1,29 @@
+use std::convert::TryFrom;
 use super::*;
 
-// type UserInfoRet = Result<UserInfo, Error>;
-// type SlimUserInfoRet = Result<SlimUserInfo, Error>;
+type UserInfoRet = Result<UserInfo, Error>;
+type SlimUserInfoRet = Result<SlimUserInfo, Error>;
+
+#[repr(C)]
+#[derive(Deserialize, Debug)]
+pub enum Level {
+    Public = 0,
+    OnlyFriend,
+    Hidden,
+}
+
+impl TryFrom<i32> for Level {
+    type Error = Error;
+
+    fn try_from(v: i32) -> Result<Self, Self::Error> {
+        match v {
+            x if x == Level::Public as i32 => Ok(Level::Public),
+            x if x == Level::OnlyFriend as i32 => Ok(Level::OnlyFriend),
+            x if x == Level::Hidden as i32 => Ok(Level::Hidden),
+            _ => Err(Error::OtherError("unknown privacy level".to_string())),
+        }
+    }
+}
 
 /// A full user info struct contains
 /// 1. username: for performant issue
@@ -14,6 +36,7 @@ use super::*;
 /// 8. rank: an integer from 0
 /// 9. avatar: b64encoded picture
 /// 10. json values to store user defined columns
+/// 11. privacy: whether show info in public
 #[derive(Serialize, Debug, ToResponse)]
 pub struct UserInfo {
     pub id: i64,
@@ -29,17 +52,22 @@ pub struct UserInfo {
     // b64encode
     pub avatar: Option<String>,
     pub other: Option<serde_json::Value>,
+    pub privacy: i32,
 }
 
-/// Slim version user, mainly for list and performance.
+/// Slim version user, mainly for privacy and performance.
 #[derive(Serialize, Debug, ToResponse)]
 pub struct SlimUserInfo {
     pub id: i64,
     pub username: String,
-    pub last_activity: DateTime<Utc>,
-    pub upload: i64,
-    pub download: i64,
     pub rank: i32,
+    pub avatar: Option<String>,
+}
+
+#[derive(Serialize, Debug, ToResponse)]
+pub struct JoinedUser {
+    pub info: UserInfo,
+    pub account: Option<super::user::SlimUser>,
 }
 
 /// Add a full user info when sign up
@@ -101,6 +129,20 @@ pub async fn transfer_money_by_name(client: &sqlx::PgPool, from: &str, to: &str,
     Ok(())
 }
 
+/// award money to some users
+pub async fn award_money_by_id(client: &sqlx::PgPool, ids: &Vec<i64>, amount: f64) -> Result<(), Error> {
+    sqlx::query!(
+        "UPDATE user_info SET money = money + $1 \
+        WHERE id = ANY($2);",
+        amount,
+        ids
+        )
+        .execute(client)
+        .await?;
+
+    Ok(())
+}
+
 /// Update user define columns, replace all without any check
 pub async fn update_other_by_name(client: &sqlx::PgPool, username: &str, info: serde_json::Value) -> Result<(), Error> {
     sqlx::query!(
@@ -116,7 +158,7 @@ pub async fn update_other_by_name(client: &sqlx::PgPool, username: &str, info: s
 }
 
 /// Insert user uploaded avatar
-pub async fn update_avatar_by_name(client: &sqlx::PgPool, username: &str, avatar: String) -> Result<(), Error> {
+pub async fn update_avatar_by_name(client: &sqlx::PgPool, username: &str, avatar: &str) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE user_info SET avatar = $1 \
         WHERE username = $2;",
@@ -127,4 +169,46 @@ pub async fn update_avatar_by_name(client: &sqlx::PgPool, username: &str, avatar
         .await?;
 
     Ok(())
+}
+
+/// change privacy level
+pub async fn update_privacy_by_name(client: &sqlx::PgPool, username: &str, privacy: Level) -> Result<(), Error> {
+    sqlx::query!(
+        "UPDATE user_info SET privacy = $1 \
+        WHERE username = $2;",
+        privacy as i32,
+        username
+        )
+        .execute(client)
+        .await?;
+
+    Ok(())
+}
+
+/// find user_info with username
+pub async fn find_user_info_by_name(client: &sqlx::PgPool, username: &str) -> UserInfoRet {
+    sqlx::query_as!(
+        UserInfo,
+        "SELECT * FROM user_info \
+        WHERE username = $1",
+        username
+        )
+        .fetch_all(client)
+        .await?
+        .pop()
+        .ok_or(Error::NotFound)
+}
+
+/// find user info with username, return the slim one
+pub async fn find_user_info_by_name_slim(client: &sqlx::PgPool, username: &str) -> SlimUserInfoRet {
+    sqlx::query_as!(
+        SlimUserInfo,
+        "SELECT id, username, rank, avatar FROM user_info \
+        WHERE username = $1",
+        username
+        )
+        .fetch_all(client)
+        .await?
+        .pop()
+        .ok_or(Error::NotFound)
 }

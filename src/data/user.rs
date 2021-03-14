@@ -2,6 +2,7 @@ use super::*;
 
 type UserVecRet = Result<Vec<User>, Error>;
 type SlimUserRet = Result<SlimUser, Error>;
+type SlimUserVecRet = Result<Vec<SlimUser>, Error>;
 
 /// A full user struct
 /// 1. email, unique one
@@ -57,6 +58,20 @@ pub async fn find_user_by_username(client: &sqlx::PgPool, username: &str) -> Use
         .await?)
 }
 
+/// Find user by username, return the full one
+pub async fn find_user_by_username_slim(client: &sqlx::PgPool, username: &str) -> SlimUserRet {
+    sqlx::query_as!(
+        SlimUser,
+        "SELECT id, email, username, passkey, role FROM users \
+        WHERE username = $1;",
+        username
+        )
+        .fetch_all(client)
+        .await?
+        .pop()
+        .ok_or(Error::NotFound)
+}
+
 /// Find user by email or username, for checking purpose
 pub async fn check_existence(client: &sqlx::PgPool, email: &str, username: &str) -> Result<String, Error> {
     let ret: Vec<User> = sqlx::query_as!(
@@ -104,4 +119,43 @@ pub async fn update_passkey_by_username(client: &sqlx::PgPool, username: &str, n
         .await?;
 
     Ok(())
+}
+
+/// give permissions to a user
+pub async fn add_role_by_id(client: &sqlx::PgPool, id: i64, bit: i32) -> Result<(), Error> {
+    sqlx::query!(
+        "UPDATE users SET role = role | (1 << $1) \
+        WHERE id = $2;",
+        bit,
+        id
+        )
+        .execute(client)
+        .await?;
+
+    Ok(())
+}
+
+/// delete permissions to a user
+pub async fn delete_role_by_id(client: &sqlx::PgPool, id: i64, bit: i32) -> Result<(), Error> {
+    sqlx::query!(
+        "UPDATE users SET role = role & ~(1 << $1) \
+        WHERE id = $2;",
+        bit,
+        id
+        )
+        .execute(client)
+        .await?;
+
+    Ok(())
+}
+
+/// list all banned user
+pub async fn list_banned_user(client: &sqlx::PgPool) -> SlimUserVecRet {
+    Ok(sqlx::query_as!(
+        SlimUser,
+        "SELECT id, email, username, passkey, role FROM users \
+        WHERE (role & 1) = 0;"
+        )
+        .fetch_all(client)
+        .await?)
 }

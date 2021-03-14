@@ -20,7 +20,7 @@ async fn send_invitation(
     let claim = get_info_in_token(req)?;
     let username = claim.sub;
 
-    if claim.role & (1 << 1) == 0 {
+    if claim.role & (1 << 1) == 0 || claim.role & 1 == 0 {
         return Err(Error::NoPermission)
     }
 

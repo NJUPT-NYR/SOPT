@@ -168,10 +168,66 @@ async fn upload_avatar(
             buf.append(&mut data.to_vec());
         }
         let encoded_avatar = base64::encode(buf);
-        user_info_model::update_avatar_by_name(&client, &username, encoded_avatar).await?;
+        user_info_model::update_avatar_by_name(&client, &username, &encoded_avatar).await?;
     }
 
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
+}
+
+#[derive(Deserialize, Debug)]
+struct PrivacyLevel {
+    privacy: i32,
+}
+
+#[get("change_privacy")]
+async fn change_privacy(
+    web::Query(data): web::Query<PrivacyLevel>,
+    req: HttpRequest,
+    client: web::Data<sqlx::PgPool>,
+) -> HttpResult {
+    use std::convert::TryInto;
+
+    let claim = get_info_in_token(req)?;
+    let username = claim.sub;
+
+    let level: user_info_model::Level = data.privacy.try_into()?;
+    user_info_model::update_privacy_by_name(&client, &username, level).await?;
+    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
+}
+
+#[derive(Deserialize, Debug)]
+struct UserRequest {
+    username: String,
+}
+
+#[get("show_user")]
+async fn show_user(
+    web::Query(data): web::Query<UserRequest>,
+    req: HttpRequest,
+    client: web::Data<sqlx::PgPool>,
+) -> HttpResult {
+    let claim = get_info_in_token(req)?;
+    let username = claim.sub;
+
+    let info = user_info_model::find_user_info_by_name(&client, &data.username).await?;
+    if username.eq(&data.username) {
+        let account = user_model::find_user_by_username_slim(&client, &username).await?;
+        let ret = user_info_model::JoinedUser {
+            info,
+            account: Some(account),
+        };
+        Ok(HttpResponse::Ok().json(ret.to_json()))
+    } else {
+        if info.privacy > 0 && claim.role & (1 << 61) == 0 {
+            Err(Error::NoPermission)
+        } else {
+            let ret = user_info_model::JoinedUser {
+                info,
+                account: None,
+            };
+            Ok(HttpResponse::Ok().json(ret.to_json()))
+        }
+    }
 }
 
 #[derive(Deserialize, Debug)]
@@ -238,6 +294,8 @@ pub(crate) fn user_service() -> Scope {
         .service(login)
         .service(personal_info_update)
         .service(upload_avatar)
+        .service(change_privacy)
+        .service(show_user)
         .service(web::scope("/auth")
             .service(reset_password)
             .service(reset_passkey)

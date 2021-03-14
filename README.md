@@ -72,12 +72,11 @@ Also, most of the codes are documented.
   - [ ] Sync with tracker
   - [x] Tags filter
 - [ ] Admin
-  - [ ] User management
+  - [x] User management
   - [ ] Site general setting
   - [x] Torrent review
 - [ ] Anti-Cheating
   - [ ] IP limitation
-  - [ ] Client ban
   - [ ] Monitor
 - [ ] Search  
 

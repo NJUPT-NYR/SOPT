@@ -132,7 +132,7 @@ pub async fn find_torrent_by_id_mini(client: &sqlx::PgPool, id: i64) -> Result<M
 }
 
 /// Find the torrent by poster, return a vector of slim struct
-pub async fn find_torrent_by_poster(client: &sqlx::PgPool, poster: String) -> SlimTorrentVecRet {
+pub async fn find_torrent_by_poster(client: &sqlx::PgPool, poster: &str) -> SlimTorrentVecRet {
     Ok(sqlx::query_as!(
         SlimTorrent,
         "SELECT torrent_info.id, title, poster, downloaded, tag, last_activity, length \
@@ -232,23 +232,23 @@ pub async fn find_invisible_torrent(client: &sqlx::PgPool) -> SlimTorrentVecRet 
 }
 
 /// make certain torrents visible, accessed by administrator
-pub async fn make_torrent_visible(client: &sqlx::PgPool, ids: Vec<i64>) -> TorrentInfoVecRet {
+pub async fn make_torrent_visible(client: &sqlx::PgPool, ids: &Vec<i64>) -> TorrentInfoVecRet {
     Ok(sqlx::query_as!(
         TorrentInfo,
         "UPDATE torrent_info SET visible = TRUE \
         WHERE id = ANY($1) RETURNING *;",
-        &ids
+        ids
         )
         .fetch_all(client)
         .await?)
 }
 
 /// stick some of the torrents
-pub async fn make_torrent_stick(client: &sqlx::PgPool, ids: Vec<i64>) -> Result<(), Error> {
+pub async fn make_torrent_stick(client: &sqlx::PgPool, ids: &Vec<i64>) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE torrent_info SET stick = TRUE \
         WHERE id = ANY($1);",
-        &ids
+        ids
         )
         .execute(client)
         .await?;
