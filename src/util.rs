@@ -1,8 +1,8 @@
-use crate::error::{error_string, Error};
 use pest::Parser;
 use pest_derive::*;
 use rand::{thread_rng, Rng};
 use crate::config::CONFIG;
+use crate::error::{error_string, Error};
 
 /// Get timestamp of current time with unix standard.
 ///
@@ -169,9 +169,8 @@ pub fn decode_and_verify_jwt(token: &str, secret: &[u8]) -> Result<Claim, Error>
     }
 }
 
-/// Parse uploaded torrent file and convert into a table row
 use crate::data::torrent::{Torrent, TorrentTable};
-
+/// Parse uploaded torrent file and convert into a table row
 pub fn parse_torrent_file(buf: &[u8]) -> Result<TorrentTable, Error> {
     use serde_bencode::{from_bytes, to_bytes};
     use sha1::{Sha1, Digest};

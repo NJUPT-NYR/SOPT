@@ -3,9 +3,9 @@ use crate::data::{invitation as invitation_model};
 
 #[derive(Deserialize, Debug)]
 struct Message {
-    pub to: String,
-    pub address: String,
-    pub body: String,
+    to: String,
+    address: String,
+    body: String,
 }
 
 /// consume money and send a mail
@@ -58,7 +58,7 @@ async fn list_invitations(
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
-pub fn invitation_service() -> Scope {
+pub(crate) fn invitation_service() -> Scope {
     web::scope("/invitation")
         .service(send_invitation)
         .service(list_invitations)

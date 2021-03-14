@@ -124,31 +124,6 @@
 1. Error: `GeneralResponse` with `errMsg`
 2. Success: `GeneralResponse` with data a string represents jwt token
 
-### /user/auth/check_identity
-**Type**: POST
-
-**Request**
-
-    - password: String(200)
-
-**Example**
-
-```json
-{
-  "password": "password"
-}
-```
-
-**Response**
-1. Error: `GeneralResponse` with `errMsg`
-2. Success: Default success `GeneralResponse`
-
-**Comment**
-
-This api is used for check current user's identity when it comes to some dangerous
-actions like `reset_password` and `reset_passkey`. 
-Then user can perform actions like a charm.
-
 ### /user/auth/reset_password
 **Type**: POST
 

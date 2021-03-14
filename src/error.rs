@@ -1,6 +1,5 @@
 use crate::data::GeneralResponse;
 use actix_web::{HttpResponse, ResponseError};
-use derive_more::From;
 use sqlx::Error as DBError;
 use std::fmt::{Display, Formatter};
 
@@ -13,13 +12,25 @@ use std::fmt::{Display, Formatter};
 /// 5. No permission in this account
 ///
 /// All errors will be transformed to Http Response so no panic will happen.
-#[derive(From, Debug)]
+#[derive(Debug)]
 pub enum Error {
     AuthError,
     OtherError(String),
     DBError(DBError),
     NotFound,
     NoPermission,
+}
+
+impl From<sqlx::Error> for Error {
+    fn from(err: sqlx::Error) -> Self {
+        Error::DBError(err)
+    }
+}
+
+impl From<String> for Error {
+    fn from(err: String) -> Self {
+        Error::OtherError(err)
+    }
 }
 
 impl Display for Error {

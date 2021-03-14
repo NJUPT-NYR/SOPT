@@ -4,7 +4,7 @@ mod torrent;
 mod admin;
 
 use actix_web::{HttpResponse, *};
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use crate::error::{Error, error_string};
 use crate::config::CONFIG;
 use crate::util::*;
@@ -12,10 +12,10 @@ use crate::data::{Claim, ToResponse, GeneralResponse, DataWithCount};
 
 /// A wrapper of Error so to reduce panic
 /// and make HttpError more smooth
-pub type HttpResult = Result<HttpResponse, Error>;
+type HttpResult = Result<HttpResponse, Error>;
 
 /// get username in jwt token
-pub fn get_info_in_token(req: HttpRequest) -> Result<Claim, Error> {
+fn get_info_in_token(req: HttpRequest) -> Result<Claim, Error> {
     let auth = req.headers().get("Authorization");
     if auth.is_none() {
         return Err(Error::AuthError)
@@ -27,7 +27,7 @@ pub fn get_info_in_token(req: HttpRequest) -> Result<Claim, Error> {
     Ok(crate::util::decode_and_verify_jwt(token, secret)?)
 }
 
-pub fn api_service() -> Scope {
+pub(crate) fn api_service() -> Scope {
     web::scope("/api")
         .service(user::user_service())
         .service(invitation::invitation_service())

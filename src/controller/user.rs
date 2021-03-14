@@ -19,33 +19,11 @@ static ALLOWED_AVATAR_EXTENSION: [&str; 4] = [
 ];
 
 #[derive(Deserialize, Debug)]
-struct Validation {
-    pub password: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
 struct Registry {
-    pub email: String,
-    pub username: String,
-    pub password: String,
-    pub invite_code: Option<String>,
-}
-
-#[derive(Deserialize, Debug)]
-struct Login {
-    pub username: String,
-    pub password: String,
-}
-
-#[derive(Deserialize, Debug)]
-struct Transfer {
-    pub to: String,
-    pub amount: f64,
-}
-
-#[derive(Deserialize, Debug)]
-struct InfoWrapper {
-    pub info: serde_json::Value,
+    email: String,
+    username: String,
+    password: String,
+    invite_code: Option<String>,
 }
 
 /// sign up controller
@@ -99,6 +77,12 @@ async fn add_user(
     Ok(HttpResponse::Ok().json(new_user.to_json()))
 }
 
+#[derive(Deserialize, Debug)]
+struct Login {
+    username: String,
+    password: String,
+}
+
 /// use `username` and `password` to login
 #[post("/login")]
 async fn login(
@@ -132,6 +116,11 @@ async fn login(
         },
         None => Ok(HttpResponse::Ok().json(GeneralResponse::from_err("password not match"))),
     }
+}
+
+#[derive(Deserialize, Debug)]
+struct InfoWrapper {
+    info: serde_json::Value,
 }
 
 /// update user defined json fields
@@ -185,31 +174,15 @@ async fn upload_avatar(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
-/// Here comes danger action, so a validation must be performed.
-#[post("/check_identity")]
-async fn check_identity(
-    data: web::Json<Validation>,
-    req: HttpRequest,
-    client: web::Data<sqlx::PgPool>,
-) -> HttpResult {
-    let password: String = data.into_inner().password;
-    let claim = get_info_in_token(req)?;
-    let username = claim.sub;
-
-    let validation = user_model::find_user_by_username(&client, &username)
-        .await?.pop().expect("Someone hacked our token!");
-
-    if verify_password(&password, &validation.password)? {
-        Ok(HttpResponse::Ok().json(GeneralResponse::default()))
-    } else {
-        Ok(HttpResponse::Ok().json(GeneralResponse::from_err("password not match")))
-    }
+#[derive(Deserialize, Debug)]
+struct PassWrapper {
+    password: String,
 }
 
 /// reset user password
 #[post("/reset_password")]
 async fn reset_password(
-    data: web::Json<Validation>,
+    data: web::Json<PassWrapper>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
@@ -234,6 +207,12 @@ async fn reset_passkey(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
+#[derive(Deserialize, Debug)]
+struct Transfer {
+    to: String,
+    amount: f64,
+}
+
 /// transfer certain money to user
 #[post("/transfer_money")]
 async fn transfer_money(
@@ -253,7 +232,7 @@ async fn transfer_money(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
-pub fn user_service() -> Scope {
+pub(crate) fn user_service() -> Scope {
     web::scope("/user")
         .service(add_user)
         .service(login)

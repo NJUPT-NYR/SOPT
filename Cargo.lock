@@ -2542,7 +2542,6 @@ dependencies = [
  "chrono",
  "config",
  "cucumber_rust",
- "derive_more",
  "dotenv",
  "env_logger",
  "futures",

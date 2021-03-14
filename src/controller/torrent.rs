@@ -6,26 +6,10 @@ use crate::data::{user as user_model,
 
 #[derive(Deserialize, Debug)]
 struct TorrentPost {
-    pub id: Option<i64>,
-    pub title: String,
-    pub description: Option<String>,
-    pub tags: Option<Vec<String>>,
-}
-
-#[derive(Deserialize, Debug)]
-struct QueryList {
-    pub tags: Option<Vec<String>>,
-    pub page: Option<usize>,
-}
-
-#[derive(Deserialize, Debug)]
-struct DetailRequest {
-    pub id: i64,
-}
-
-#[derive(Deserialize, Debug)]
-struct TagRequest {
-    pub num: Option<usize>,
+    id: Option<i64>,
+    title: String,
+    description: Option<String>,
+    tags: Option<Vec<String>>,
 }
 
 /// add a post for definite torrent
@@ -104,6 +88,11 @@ async fn update_torrent(
     }
 }
 
+#[derive(Deserialize, Debug)]
+struct TagRequest {
+    num: Option<usize>,
+}
+
 /// Get hottest tags by amount, default number is 10
 #[get("/hot_tags")]
 async fn hot_tags(
@@ -116,6 +105,12 @@ async fn hot_tags(
 
     let ret = tag_model::find_hot_tag_by_amount(&client, num_want as i64).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
+}
+
+#[derive(Deserialize, Debug)]
+struct ListRequest {
+    tags: Option<Vec<String>>,
+    page: Option<usize>,
 }
 
 /// list torrent with tags and pages
@@ -209,10 +204,15 @@ async fn upload_torrent(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
+#[derive(Deserialize, Debug)]
+struct IdWrapper {
+    id: i64,
+}
+
 /// show definite torrent with an id
 #[get("/show_torrent")]
 async fn show_torrent(
-    web::Query(data): web::Query<DetailRequest>,
+    web::Query(data): web::Query<IdWrapper>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
@@ -237,7 +237,7 @@ async fn show_torrent(
 /// download torrent with passkey in it
 #[get("/get_torrent")]
 async fn get_torrent(
-    web::Query(data): web::Query<DetailRequest>,
+    web::Query(data): web::Query<IdWrapper>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
@@ -273,7 +273,7 @@ async fn get_torrent(
         .body(body::Body::from_slice(&generated_torrent)))
 }
 
-pub fn torrent_service() -> Scope {
+pub(crate) fn torrent_service() -> Scope {
     web::scope("/torrent")
         .service(add_torrent)
         .service(update_torrent)

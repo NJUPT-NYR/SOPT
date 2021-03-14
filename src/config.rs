@@ -4,13 +4,13 @@ use lazy_static::lazy_static;
 use std::sync::Arc;
 
 lazy_static! {
-    pub static ref CONFIG: Arc<Config> = Arc::new(Config::from_env().unwrap());
+    pub(crate) static ref CONFIG: Arc<Config> = Arc::new(Config::from_env().unwrap());
 }
 
 /// SMTP configuration when used to
 /// send invitation codes
-#[derive(Deserialize)]
-pub struct SMTPAccount {
+#[derive(Deserialize, Debug)]
+pub(crate) struct SMTPAccount {
     pub server: String,
     pub username: String,
     pub password: String,
@@ -24,8 +24,8 @@ pub struct SMTPAccount {
 /// for more information
 /// 4. tracker announce addr
 /// 5. smtp configuration
-#[derive(Deserialize)]
-pub struct Config {
+#[derive(Deserialize, Debug)]
+pub(crate) struct Config {
     pub server_addr: String,
     pub secret_key: String,
     pub database_url: String,
@@ -34,7 +34,7 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn from_env() -> Result<Self, ConfigError> {
+    fn from_env() -> Result<Self, ConfigError> {
         let mut cfg = config::Config::new();
         cfg.merge(config::Environment::new())?;
         cfg.try_into()

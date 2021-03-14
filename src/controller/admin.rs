@@ -2,11 +2,6 @@ use super::*;
 use crate::data::{torrent_info as torrent_info_model,
                   tag as tag_model};
 
-#[derive(Debug, Deserialize)]
-struct TorrentList {
-    pub ids: Vec<i64>,
-}
-
 fn is_no_permission_to_torrents(role: i64) -> bool {
     role & (1 << 62) == 0
 }
@@ -23,6 +18,11 @@ async fn show_invisible_torrents(
     }
     let ret = torrent_info_model::find_invisible_torrent(&client).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
+}
+
+#[derive(Debug, Deserialize)]
+struct TorrentList {
+    ids: Vec<i64>,
 }
 
 /// make a group of torrents visible
@@ -64,7 +64,7 @@ async fn stick_torrents(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
-pub fn admin_service() -> Scope {
+pub(crate) fn admin_service() -> Scope {
     web::scope("/admin")
         .service(web::scope("/torrent")
             .service(accept_torrents)
