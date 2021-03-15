@@ -3,18 +3,7 @@ use crate::data::{torrent_info as torrent_info_model,
                   tag as tag_model,
                   user as user_model,
                   user_info as user_info_model};
-
-fn is_not_su(role: i64) -> bool {
-    role & (1 << 63) == 0
-}
-
-fn is_no_permission_to_torrents(role: i64) -> bool {
-    role & (1 << 62) == 0
-}
-
-fn is_no_permission_to_users(role: i64) -> bool {
-    role & (1 << 61) == 0
-}
+use std::collections::HashMap;
 
 /// list all invisible torrents
 #[get("/show_invisible_torrents")]
@@ -170,6 +159,97 @@ async fn change_permission(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
+#[cfg(feature = "email-restriction")]
+#[get("/get_email_whitelist")]
+async fn get_email_whitelist(
+    req: HttpRequest,
+) -> HttpResult {
+    let claim = get_info_in_token(req)?;
+    if is_no_permission_to_site(claim.role) {
+        return Err(Error::NoPermission)
+    }
+
+    let ret = ALLOWED_DOMAIN.read().unwrap();
+    Ok(HttpResponse::Ok().json(ret.to_json()))
+}
+
+#[cfg(feature = "email-restriction")]
+#[derive(Deserialize, Debug)]
+struct EmailRequest {
+    add: Vec<String>,
+    delete: Vec<String>,
+}
+
+#[cfg(feature = "email-restriction")]
+#[post("/update_email_whitelist")]
+async fn update_email_whitelist(
+    data: web::Json<EmailRequest>,
+    req: HttpRequest,
+) -> HttpResult {
+    let claim = get_info_in_token(req)?;
+    if is_no_permission_to_site(claim.role) {
+        return Err(Error::NoPermission)
+    }
+
+    // FIXME: maybe block
+    let mut w = ALLOWED_DOMAIN.write().unwrap();
+    data.add.iter().for_each(|s| { w.insert(String::from(s)); });
+    data.delete.iter().for_each(|s| { w.take(s); });
+    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
+}
+
+use quote::{quote, format_ident};
+
+macro_rules! update_bool {
+    ($x:expr, $t:expr) => {
+        let name = format_ident!("{}", $x.to_ascii_uppercase());
+        quote! {
+           #name.store($t, std::sync::atomic::Ordering::Relaxed);
+        }
+    };
+}
+
+macro_rules! update_i64 {
+    ($x:expr, $t:expr) => {
+        let name = format_ident!("{}", $x.to_ascii_uppercase());
+        quote! {
+           #name.store($t, std::sync::atomic::Ordering::Relaxed);
+        }
+    };
+}
+
+#[derive(Deserialize, Debug)]
+struct SettingRequest {
+    switch: HashMap<String, bool>,
+    num: HashMap<String, i64>,
+}
+
+#[post("/update_site_setting")]
+async fn update_site_setting(
+    data: web::Json<SettingRequest>,
+    req: HttpRequest,
+) -> HttpResult {
+    let claim = get_info_in_token(req)?;
+    let req: SettingRequest = data.into_inner();
+    if is_no_permission_to_site(claim.role) {
+        return Err(Error::NoPermission)
+    }
+    for switch in req.switch {
+        if SETTING_LIST_BOOL.iter().find(|&&x| switch.0.eq(x)).is_none() {
+            return Ok(HttpResponse::BadRequest().json(GeneralResponse::from_err("no such settings")))
+        }
+        update_bool!(switch.0, switch.1);
+    }
+    for num in req.num {
+        if SETTING_LIST_I64.iter().find(|&&x| num.0.eq(x)).is_none() {
+            return Ok(HttpResponse::BadRequest().json(GeneralResponse::from_err("no such settings")))
+        }
+        update_i64!(num.0, num.1);
+    }
+
+    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
+}
+
 pub(crate) fn admin_service() -> Scope {
     web::scope("/admin")
         .service(web::scope("/torrent")
@@ -182,4 +262,8 @@ pub(crate) fn admin_service() -> Scope {
             .service(list_banned_user)
             .service(group_awards)
             .service(change_permission))
+        .service(web::scope("/site")
+            .service(get_email_whitelist)
+            .service(update_email_whitelist)
+            .service(update_site_setting))
 }

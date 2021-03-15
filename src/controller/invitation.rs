@@ -1,5 +1,6 @@
 use super::*;
-use crate::data::{invitation as invitation_model};
+use crate::data::{invitation as invitation_model,
+                  user_info as user_info_model};
 
 #[derive(Deserialize, Debug)]
 struct Message {
@@ -20,7 +21,7 @@ async fn send_invitation(
     let claim = get_info_in_token(req)?;
     let username = claim.sub;
 
-    if claim.role & (1 << 1) == 0 || claim.role & 1 == 0 {
+    if is_not_ordinary_user(claim.role) || cannot_invite(claim.role) {
         return Err(Error::NoPermission)
     }
 
@@ -40,7 +41,8 @@ async fn send_invitation(
        ).expect("unable to send mail");
     });
 
-    // TODO: some consumption of money(site_general settings)
+    let num = INVITE_CONSUME.load(std::sync::atomic::Ordering::Relaxed);
+    user_info_model::update_money_by_name(&client, &username, num as f64).await?;
     let ret = invitation_model::add_invitation_code(&client, &username, &code, &message.address).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }

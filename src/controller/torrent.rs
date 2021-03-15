@@ -23,8 +23,7 @@ async fn add_torrent(
     let post: TorrentPost = data.into_inner();
     let claim = get_info_in_token(req)?;
     let username = claim.sub;
-
-    if claim.role & 1 == 0 {
+    if is_not_ordinary_user(claim.role) {
         return Err(Error::NoPermission)
     }
 
@@ -57,7 +56,7 @@ async fn update_torrent(
 
     let old_torrent = torrent_info_model::find_torrent_by_id(&client,post.id.unwrap()).await?;
     let poster = old_torrent.poster;
-    if !username.eq(&poster) && claim.role & (1 << 62) == 0 {
+    if !username.eq(&poster) && is_no_permission_to_torrents(claim.role) {
         return Err(Error::NoPermission)
     }
 
@@ -81,7 +80,6 @@ async fn update_torrent(
                 tag_model::update_or_add_tag(&client, tag).await?;
             }
         }
-
         Ok(HttpResponse::Ok().json(new_ret.to_json()))
     } else {
         Ok(HttpResponse::Ok().json(ret.to_json()))
@@ -195,7 +193,7 @@ async fn upload_torrent(
     let id_string = hash_map.get("id").ok_or(Error::OtherError("missing id field".to_string()))?;
     let id = i64::from_str(id_string).map_err(error_string)?;
     let poster = torrent_info_model::find_torrent_by_id_mini(&client, id).await?.poster;
-    if poster != username && claim.role & (1 << 62) == 0 {
+    if poster != username && is_no_permission_to_torrents(claim.role) {
         return Err(Error::NoPermission)
     }
 
@@ -222,7 +220,7 @@ async fn show_torrent(
     if !info.visible {
         let claim = get_info_in_token(req)?;
         let username = claim.sub;
-        if !info.poster.eq(&username) {
+        if !info.poster.eq(&username) && is_no_permission_to_torrents(claim.role) {
             return Err(Error::NoPermission)
         }
     }
@@ -244,7 +242,7 @@ async fn get_torrent(
     let claim = get_info_in_token(req)?;
     let username = claim.sub;
 
-    if claim.role & 1 == 0 {
+    if is_not_ordinary_user(claim.role) {
         return Err(Error::NoPermission)
     }
 
@@ -252,7 +250,7 @@ async fn get_torrent(
     let torrent_info = torrent_info_model::find_torrent_by_id_mini(&client, data.id).await?;
     if !torrent_info.visible &&
         !username.eq(&torrent_info.poster) &&
-        claim.role & (1 << 62) == 0 {
+        is_no_permission_to_torrents(claim.role) {
         return Err(Error::NoPermission)
     }
 

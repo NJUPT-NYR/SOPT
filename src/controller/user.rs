@@ -3,14 +3,6 @@ use crate::data::{user as user_model,
                   invitation as invitation_model,
                  user_info as user_info_model};
 
-/// Allow email to register
-#[cfg(feature = "email-restriction")]
-static ALLOWED_DOMAIN: [&str; 3] = [
-    "gmail.com",
-    "njupt.edu.cn",
-    "outlook.com"
-];
-
 static ALLOWED_AVATAR_EXTENSION: [&str; 4] = [
     "jpg",
     "jpeg",
@@ -41,7 +33,7 @@ async fn add_user(
         Some(_email) => {
             if let None = user.invite_code {
                 #[cfg(feature = "email-restriction")]
-                if ALLOWED_DOMAIN.iter().find(|x| x == &&_email.domain.as_str()).is_some() {
+                if ALLOWED_DOMAIN.read().unwrap().get(&_email.domain).is_some() {
                     allowed = true;
                 }
             }
@@ -218,7 +210,7 @@ async fn show_user(
         };
         Ok(HttpResponse::Ok().json(ret.to_json()))
     } else {
-        if info.privacy > 0 && claim.role & (1 << 61) == 0 {
+        if info.privacy > 0 && is_no_permission_to_users(claim.role) {
             Err(Error::NoPermission)
         } else {
             let ret = user_info_model::JoinedUser {
@@ -280,10 +272,9 @@ async fn transfer_money(
     let claim = get_info_in_token(req)?;
     let username = claim.sub;
 
-    if claim.role & 1 == 0 {
+    if is_not_ordinary_user(claim.role) {
         return Err(Error::NoPermission)
     }
-
     user_info_model::transfer_money_by_name(&client, &username, &data.to, data.amount).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }

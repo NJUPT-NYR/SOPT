@@ -2,6 +2,7 @@ mod user;
 mod invitation;
 mod torrent;
 mod admin;
+pub(crate) mod config;
 
 use actix_web::{HttpResponse, *};
 use serde::Deserialize;
@@ -9,6 +10,7 @@ use crate::error::{Error, error_string};
 use crate::config::CONFIG;
 use crate::util::*;
 use crate::data::{Claim, ToResponse, GeneralResponse, DataWithCount};
+use crate::controller::config::*;
 
 /// A wrapper of Error so to reduce panic
 /// and make HttpError more smooth

@@ -143,6 +143,20 @@ pub async fn award_money_by_id(client: &sqlx::PgPool, ids: &Vec<i64>, amount: f6
     Ok(())
 }
 
+/// update money of a user
+pub async fn update_money_by_name(client: &sqlx::PgPool, username: &str, amount: f64) -> Result<(), Error> {
+    sqlx::query!(
+        "UPDATE user_info SET money = money + $1 \
+        WHERE username = $2;",
+        amount,
+        username
+        )
+        .execute(client)
+        .await?;
+
+    Ok(())
+}
+
 /// Update user define columns, replace all without any check
 pub async fn update_other_by_name(client: &sqlx::PgPool, username: &str, info: serde_json::Value) -> Result<(), Error> {
     sqlx::query!(

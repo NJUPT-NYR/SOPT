@@ -9,6 +9,7 @@ use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
 use crate::error::Error;
 use sopt_derive::ToResponse;
+use std::collections::HashSet;
 
 /// General Response structure used to
 /// communicate with frontends.
@@ -65,6 +66,7 @@ pub trait ToResponse: Serialize {
 }
 
 impl ToResponse for String {}
+impl ToResponse for HashSet<String> {}
 
 /// A common wrapper used to return page count with list
 #[derive(Serialize, Debug, ToResponse)]

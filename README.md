@@ -71,9 +71,9 @@ Also, most of the codes are documented.
   - [x] Generate with passkey
   - [ ] Sync with tracker
   - [x] Tags filter
-- [ ] Admin
+- [x] Admin
   - [x] User management
-  - [ ] Site general setting
+  - [x] Site general setting
   - [x] Torrent review
 - [ ] Anti-Cheating
   - [ ] IP limitation
