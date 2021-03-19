@@ -25,12 +25,11 @@ async fn add_user(
     data: web::Json<Registry>,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let user: Registry = data.into_inner();
-    // not so elegant
+    let user = data.into_inner();
     let mut allowed = false;
-    let mut code: Option<invitation_model::InvitationCode> = None;
+    let mut code = None;
 
-    match parse_email(user.email.as_str()) {
+    match parse_email(&user.email) {
         Some(_email) => {
             if let None = user.invite_code {
                 #[cfg(feature = "email-restriction")]
@@ -85,61 +84,35 @@ async fn login(
     use chrono::{Utc, Duration};
     use jsonwebtoken::{encode, EncodingKey, Header};
 
-    let user: Login = data.into_inner();
-    let secret: &[u8] = CONFIG.secret_key.as_bytes();
+    let user = data.into_inner();
+    let secret = CONFIG.secret_key.as_bytes();
 
-    let validation = user_model::find_user_by_username(&client, &user.username)
-        .await?.pop();
+    let validation = user_model::find_user_by_username(&client, &user.username).await?.pop();
     match validation {
-        Some(val) => {
+        Some(mut val) => {
             if !verify_password(&user.password, &val.password)? {
                 return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("password not match")))
             }
-            // FIXME: reduce rtt?
             user_info_model::update_activity_by_name(&client, &user.username).await?;
             let current_rank = rank_model::find_rank_by_username(&client, &user.username).await?;
             if current_rank.next.is_some() {
-                let next = current_rank.next;
-                let next_rank = rank_model::find_rank_by_id(&client, next.unwrap()).await?;
+                let next_rank = rank_model::find_rank_by_id(&client, current_rank.next.unwrap()).await?;
                 let info = user_info_model::find_user_info_by_name(&client, &user.username).await?;
-                if next_rank.upload.is_some() {
-                    if info.upload > next_rank.upload.unwrap() {
-                        if next_rank.age.is_some() {
-                            let current = get_timestamp() as i64;
-                            let before = info.register_time.timestamp();
-                            if current - before > next_rank.age.unwrap() {
-                                let roles = next_rank.role;
-                                for role in roles {
-                                    user_model::add_role_by_id(&client, val.id, role as i32).await?;
-                                }
-                                user_info_model::update_rank_by_name(&client, &user.username, &next_rank.name).await?;
-                            }
-                        } else {
-                            let roles = next_rank.role;
-                            for role in roles {
-                                user_model::add_role_by_id(&client, val.id, role as i32).await?;
-                            }
-                            user_info_model::update_rank_by_name(&client, &user.username, &next_rank.name).await?;
-                        }
+                let current = Utc::now().timestamp();
+                let before = info.register_time.timestamp();
+                if info.upload > next_rank.upload && current - before > next_rank.age {
+                    let roles = next_rank.role;
+                    for role in roles {
+                        user_model::add_role_by_id(&client, val.id, role as i32).await?;
                     }
-                } else {
-                    if next_rank.age.is_some() {
-                        let current = get_timestamp() as i64;
-                        let before = info.register_time.timestamp();
-                        if current - before > next_rank.age.unwrap() {
-                            let roles = next_rank.role;
-                            for role in roles {
-                                user_model::add_role_by_id(&client, val.id, role as i32).await?;
-                            }
-                            user_info_model::update_rank_by_name(&client, &user.username, &next_rank.name).await?;
-                        }
-                    }
+                    user_info_model::update_rank_by_name(&client, &user.username, &next_rank.name).await?;
+                    val = user_model::find_user_by_username(&client, &user.username).await?.pop().unwrap();
                 }
             }
             let claim = Claim {
                 sub: val.username,
                 role: val.role,
-                exp: (Utc::now() + Duration::days(3)).timestamp() as u64,
+                exp: (Utc::now() + Duration::days(3)).timestamp(),
             };
             let tokens = encode(
                 &Header::default(),

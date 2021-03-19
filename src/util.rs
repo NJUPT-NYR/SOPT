@@ -1,21 +1,9 @@
 use pest::Parser;
 use pest_derive::*;
 use rand::{thread_rng, Rng};
+use chrono::Utc;
 use crate::config::CONFIG;
 use crate::error::{error_string, Error};
-
-/// Get timestamp of current time with unix standard.
-///
-/// it will return a `u64`.
-pub fn get_timestamp() -> u64 {
-    use std::time::{SystemTime, UNIX_EPOCH};
-
-    let start = SystemTime::now();
-    let since_the_epoch = start
-        .duration_since(UNIX_EPOCH)
-        .expect("Time went backwards");
-    since_the_epoch.as_secs()
-}
 
 #[derive(Parser)]
 #[grammar = "email_address.pest"]
@@ -55,7 +43,7 @@ pub fn generate_passkey(username: &str) -> Result<String, Error> {
 
     let mut hasher = Sha256::new();
     let random: u64 = rand::thread_rng().gen();
-    hasher.update(format!("{}{}{}", username, get_timestamp(), random));
+    hasher.update(format!("{}{}{}", username, Utc::now().timestamp(), random));
 
     let res: Vec<u8> = hasher
         .finalize()
@@ -148,7 +136,7 @@ pub fn generate_invitation_code() -> String {
 
     // is it proper to add a timestamp
     // maybe easier to check expiration
-    format!("{}_{}", rand_string, get_timestamp()).to_string()
+    format!("{}_{}", rand_string, Utc::now().timestamp()).to_string()
 }
 
 use crate::data::Claim;
@@ -161,8 +149,7 @@ pub fn decode_and_verify_jwt(token: &str, secret: &[u8]) -> Result<Claim, Error>
             .map_err(error_string)?;
 
     let claim: Claim = decoded.claims;
-    let now = get_timestamp();
-    if claim.exp < now {
+    if claim.exp < Utc::now().timestamp() {
         Err(Error::AuthError)
     } else {
         Ok(claim)
@@ -268,14 +255,13 @@ mod tests {
     }
     #[test]
     fn decode_and_verify_jwt_works() {
-        use chrono::{Utc, Duration};
         use jsonwebtoken::{encode, EncodingKey, Header};
         use crate::data::Claim;
 
         let claim = Claim {
             sub: "YUKI.N".to_string(),
             role: 1,
-            exp: (Utc::now() + Duration::days(30)).timestamp() as u64,
+            exp: (Utc::now() + chrono::Duration::days(30)).timestamp(),
         };
         let tokens = encode(
             &Header::default(),

@@ -91,7 +91,7 @@ impl DataWithCount {
 pub struct Claim {
     pub sub: String,
     pub role: i64,
-    pub exp: u64,
+    pub exp: i64,
 }
 
 type CountRet = Result<i64, Error>;

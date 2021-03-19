@@ -8,8 +8,8 @@ pub struct Rank {
     pub id: i32,
     pub name: String,
     pub role: Vec<i16>,
-    pub upload: Option<i64>,
-    pub age: Option<i64>,
+    pub upload: i64,
+    pub age: i64,
     pub available: bool,
     pub next: Option<i32>,
 }

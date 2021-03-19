@@ -1,5 +1,9 @@
 -- Add migration script here
 DROP TABLE if exists invitations;
+DROP TABLE if exists user_info;
+DROP TABLE if exists rank;
+DROP TABLE IF EXISTS torrent;
+DROP TABLE if exists torrent_info;
 DROP TABLE if exists users;
 CREATE TABLE users (
                        id BIGSERIAL PRIMARY KEY,
