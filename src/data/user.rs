@@ -124,7 +124,7 @@ pub async fn update_passkey_by_username(client: &sqlx::PgPool, username: &str, n
 /// give permissions to a user
 pub async fn add_role_by_id(client: &sqlx::PgPool, id: i64, bit: i32) -> Result<(), Error> {
     sqlx::query!(
-        "UPDATE users SET role = role | (1 << $1) \
+        "UPDATE users SET role = role | (1::BIGINT << $1) \
         WHERE id = $2;",
         bit,
         id
@@ -138,7 +138,7 @@ pub async fn add_role_by_id(client: &sqlx::PgPool, id: i64, bit: i32) -> Result<
 /// delete permissions to a user
 pub async fn delete_role_by_id(client: &sqlx::PgPool, id: i64, bit: i32) -> Result<(), Error> {
     sqlx::query!(
-        "UPDATE users SET role = role & ~(1 << $1) \
+        "UPDATE users SET role = role & ~(1::BIGINT << $1) \
         WHERE id = $2;",
         bit,
         id
