@@ -2551,7 +2551,6 @@ dependencies = [
  "lettre",
  "pest",
  "pest_derive",
- "quote",
  "rand 0.8.3",
  "reqwest",
  "rust-argon2",

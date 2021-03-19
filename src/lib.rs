@@ -25,6 +25,10 @@ fn load_email_whitelist() {
     *w = HashSet::from_iter(lines);
 }
 
+// fn init_settings(db: &rocksdb::DB) {
+//     db.put("INVITE_CONSUME", 5000).unwrap();
+// }
+
 #[actix_web::main]
 pub async fn sopt_main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=debug");
@@ -36,12 +40,16 @@ pub async fn sopt_main() -> std::io::Result<()> {
     let pool = sqlx::PgPool::connect(&CONFIG.database_url)
         .await
         .expect("unable to connect to database");
+    // let rocksdb = rocksdb::DB::open_default(&CONFIG.rocksdb_path)
+    //     .expect("unable to connect to rocksdb");
+    // init_settings(&rocksdb);
     println!("==========SOPT is running==========");
 
     HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::default())
             .data(pool.clone())
+            // .data(rocksdb)
             .service(controller::api_service())
             .default_service(route().to(|| HttpResponse::NotFound().body("Not Found")))
     })

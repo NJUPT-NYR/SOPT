@@ -37,7 +37,6 @@ sanitize-filename = "0.3.0"
 chrono = { version = "0.4.19", features = ["serde"] }
 jsonwebtoken = "7"
 lazy_static = "*"
-quote = "1.0.9"
 
 # crypto related
 sha2 = "0.9"
@@ -47,6 +46,10 @@ rust-argon2 = "0.8"
 base64 = "0.13.0"
 
 sopt-derive = { git = "https://github.com/NJUPT-NYR/SOPT-derive", branch = "master" }
+
+#[dependencies.rocksdb]
+#version = "0.15"
+#git = "https://github.com/hayesgm/rust-rocksdb"
 
 [[test]]
 name = "cucumber"

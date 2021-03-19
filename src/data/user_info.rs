@@ -33,7 +33,7 @@ impl TryFrom<i32> for Level {
 /// 5. upload count, in bytes
 /// 6. download count, in bytes
 /// 7. money
-/// 8. rank: an integer from 0
+/// 8. rank: an integer from 1
 /// 9. avatar: b64encoded picture
 /// 10. json values to store user defined columns
 /// 11. privacy: whether show info in public
@@ -47,8 +47,7 @@ pub struct UserInfo {
     pub upload: i64,
     pub download: i64,
     pub money: f64,
-    // use rank is for configurable name
-    pub rank: i32,
+    pub rank: String,
     // b64encode
     pub avatar: Option<String>,
     pub other: Option<serde_json::Value>,
@@ -60,7 +59,7 @@ pub struct UserInfo {
 pub struct SlimUserInfo {
     pub id: i64,
     pub username: String,
-    pub rank: i32,
+    pub rank: String,
     pub avatar: Option<String>,
 }
 
@@ -73,8 +72,8 @@ pub struct JoinedUser {
 /// Add a full user info when sign up
 pub async fn add_user_info(client: &sqlx::PgPool, id: i64, username: &str) -> Result<(), Error> {
     sqlx::query!(
-        "INSERT INTO user_info(id, username, register_time, last_activity) \
-        VALUES($1, $2, NOW(), NOW());",
+        "INSERT INTO user_info(id, username, register_time, last_activity, rank) \
+        SELECT $1, $2, NOW(), NOW(), name FROM rank WHERE rank.id = 1;",
         id,
         username
         )
@@ -225,4 +224,17 @@ pub async fn find_user_info_by_name_slim(client: &sqlx::PgPool, username: &str) 
         .await?
         .pop()
         .ok_or(Error::NotFound)
+}
+
+pub async fn update_rank_by_name(client: &sqlx::PgPool, username: &str, rank: &str) -> Result<(), Error> {
+    sqlx::query!(
+        "UPDATE user_info SET rank = $1 \
+        WHERE username = $2;",
+        rank,
+        username
+        )
+        .execute(client)
+        .await?;
+
+    Ok(())
 }

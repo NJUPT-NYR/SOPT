@@ -4,6 +4,7 @@ pub mod user;
 pub mod user_info;
 pub mod tag;
 pub mod torrent;
+pub mod rank;
 
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};

@@ -27,10 +27,4 @@ lazy_static! {
     pub(crate) static ref ALLOWED_DOMAIN: RwLock<HashSet<String>> = RwLock::new(HashSet::new());
 }
 
-pub(crate) static SETTING_LIST_I64: [&str;1] = [
-    "invite_consume",
-];
-
-pub(crate) static SETTING_LIST_BOOL: [&str;0] = [];
-
 pub(crate) static INVITE_CONSUME: AtomicI64 = AtomicI64::new(5000);

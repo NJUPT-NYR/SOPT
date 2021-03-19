@@ -2,8 +2,8 @@ use super::*;
 use crate::data::{torrent_info as torrent_info_model,
                   tag as tag_model,
                   user as user_model,
+                  rank as rank_model,
                   user_info as user_info_model};
-use std::collections::HashMap;
 
 /// list all invisible torrents
 #[get("/show_invisible_torrents")]
@@ -198,57 +198,69 @@ async fn update_email_whitelist(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
-use quote::{quote, format_ident};
-
-macro_rules! update_bool {
-    ($x:expr, $t:expr) => {
-        let name = format_ident!("{}", $x.to_ascii_uppercase());
-        quote! {
-           #name.store($t, std::sync::atomic::Ordering::Relaxed);
-        }
-    };
-}
-
-macro_rules! update_i64 {
-    ($x:expr, $t:expr) => {
-        let name = format_ident!("{}", $x.to_ascii_uppercase());
-        quote! {
-           #name.store($t, std::sync::atomic::Ordering::Relaxed);
-        }
-    };
-}
-
-#[derive(Deserialize, Debug)]
-struct SettingRequest {
-    switch: HashMap<String, bool>,
-    num: HashMap<String, i64>,
-}
-
-#[post("/update_site_setting")]
-async fn update_site_setting(
-    data: web::Json<SettingRequest>,
+#[get("/get_rank")]
+async fn get_rank(
     req: HttpRequest,
+    client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let claim = get_info_in_token(req)?;
-    let req: SettingRequest = data.into_inner();
     if is_no_permission_to_site(claim.role) {
         return Err(Error::NoPermission)
     }
-    for switch in req.switch {
-        if SETTING_LIST_BOOL.iter().find(|&&x| switch.0.eq(x)).is_none() {
-            return Ok(HttpResponse::BadRequest().json(GeneralResponse::from_err("no such settings")))
-        }
-        update_bool!(switch.0, switch.1);
-    }
-    for num in req.num {
-        if SETTING_LIST_I64.iter().find(|&&x| num.0.eq(x)).is_none() {
-            return Ok(HttpResponse::BadRequest().json(GeneralResponse::from_err("no such settings")))
-        }
-        update_i64!(num.0, num.1);
+
+    let ret = rank_model::find_all_ranks(&client).await?;
+    Ok(HttpResponse::Ok().json(ret.to_json()))
+}
+
+#[derive(Deserialize, Debug)]
+struct RankRequest {
+    ranks: Vec<rank_model::Rank>,
+}
+
+#[post("/update_rank")]
+async fn update_rank(
+    data: web::Json<RankRequest>,
+    req: HttpRequest,
+    client: web::Data<sqlx::PgPool>,
+) -> HttpResult {
+    let claim = get_info_in_token(req)?;
+    let ranks = data.into_inner().ranks;
+    if is_no_permission_to_site(claim.role) {
+        return Err(Error::NoPermission)
     }
 
+    for rank in ranks {
+        rank_model::update_or_add_rank(&client, rank).await?;
+    }
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
+
+// #[derive(Deserialize, Debug)]
+// struct Settings {
+//     pub switch: HashMap<String, bool>,
+//     pub num: HashMap<String, i64>,
+// }
+//
+// #[post("/update_site_setting")]
+// async fn update_site_setting(
+//     data: web::Json<Settings>,
+//     req: HttpRequest,
+// ) -> HttpResult {
+//     let claim = get_info_in_token(req)?;
+//     let req: Settings = data.into_inner();
+//     if is_no_permission_to_site(claim.role) {
+//         return Err(Error::NoPermission)
+//     }
+//
+//     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
+// }
+//
+// #[get("/get_site_setting")]
+// async fn get_site_setting(
+//     req: HttpRequest,
+// ) -> HttpResult {
+//
+// }
 
 pub(crate) fn admin_service() -> Scope {
     web::scope("/admin")
@@ -263,7 +275,10 @@ pub(crate) fn admin_service() -> Scope {
             .service(group_awards)
             .service(change_permission))
         .service(web::scope("/site")
+            // .service(update_site_setting)
+            // .service(get_site_setting))
             .service(get_email_whitelist)
             .service(update_email_whitelist)
-            .service(update_site_setting))
+            .service(get_rank)
+            .service(update_rank))
 }

@@ -24,6 +24,8 @@ pub(crate) struct SMTPAccount {
 /// for more information
 /// 4. tracker announce addr
 /// 5. smtp configuration
+/// 6. path for rocksdb, used to store
+/// site configs
 #[derive(Deserialize, Debug)]
 pub(crate) struct Config {
     pub server_addr: String,
@@ -31,6 +33,7 @@ pub(crate) struct Config {
     pub database_url: String,
     pub announce_addr: String,
     pub smtp: SMTPAccount,
+    // pub rocksdb_path: String,
 }
 
 impl Config {

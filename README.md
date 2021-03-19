@@ -60,12 +60,12 @@ Also, most of the codes are documented.
 
 ## Roadmap
 
-- [ ] User
+- [x] User
   - [x] Register
   - [x] Login
   - [x] Information update
   - [x] Invite
-  - [ ] Rank
+  - [x] Rank
 - [ ] Torrent
   - [x] Add a post
   - [x] Generate with passkey
