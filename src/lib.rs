@@ -8,6 +8,7 @@ use crate::config::*;
 use actix_web::{middleware, web::route, App, HttpResponse, HttpServer};
 use dotenv::dotenv;
 
+/// load email whitelist from file `filtered-email`
 fn load_email_whitelist() {
     use std::fs::File;
     use std::collections::HashSet;

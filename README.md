@@ -12,14 +12,17 @@ Next generation private tracker framework.
 
 ## How to run
 
-1. Rename `.env.example` to `.env` and set your postgres name and password.
+1. Rename `.env.example` to `.env` and set your own information.
 
-2. Run following commands in terminal:
+2. Edit `filtered-email` with your own email whitelist.
+
+3. Run following commands in terminal:
 
 ```bash
 createdb sopt
 cargo install sqlx-cli
 sqlx migrate run
+psql -U <yourname> -d sopt ./rank.sql
 cargo run
 ```
 

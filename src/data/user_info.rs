@@ -4,6 +4,9 @@ use super::*;
 type UserInfoRet = Result<UserInfo, Error>;
 type SlimUserInfoRet = Result<SlimUserInfo, Error>;
 
+/// privacy level, can be set by yourself
+/// but respectively, you must make it functional
+/// via updating some controllers
 #[repr(C)]
 #[derive(Deserialize, Debug)]
 pub enum Level {
@@ -35,7 +38,7 @@ impl TryFrom<i32> for Level {
 /// 7. money
 /// 8. rank: an integer from 1
 /// 9. avatar: b64encoded picture
-/// 10. json values to store user defined columns
+/// 10. other: json values to store user defined columns
 /// 11. privacy: whether show info in public
 #[derive(Serialize, Debug, ToResponse)]
 pub struct UserInfo {
@@ -48,7 +51,6 @@ pub struct UserInfo {
     pub download: i64,
     pub money: f64,
     pub rank: String,
-    // b64encode
     pub avatar: Option<String>,
     pub other: Option<serde_json::Value>,
     pub privacy: i32,
@@ -226,6 +228,7 @@ pub async fn find_user_info_by_name_slim(client: &sqlx::PgPool, username: &str) 
         .ok_or(Error::NotFound)
 }
 
+/// update someone's rank
 pub async fn update_rank_by_name(client: &sqlx::PgPool, username: &str, rank: &str) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE user_info SET rank = $1 \

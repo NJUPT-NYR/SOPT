@@ -107,6 +107,7 @@ pub async fn find_torrent_by_id(client: &sqlx::PgPool, id: i64) -> TorrentRet {
         .ok_or(Error::NotFound)
 }
 
+/// find the definite torrent by torrent id, return the slim one
 pub async fn find_slim_torrent_by_id(client: &sqlx::PgPool, id: i64) -> SlimTorrentTableRet {
     sqlx::query_as!(
         SlimTorrentTable,

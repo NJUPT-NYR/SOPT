@@ -115,6 +115,7 @@ struct GroupAward {
     amount: f64,
 }
 
+/// award money(can also be minus) to some users
 #[post("/group_awards")]
 async fn group_awards(
     mut data: web::Json<GroupAward>,
@@ -139,6 +140,8 @@ struct PermissionRequest {
     id: i64,
 }
 
+/// change someone's role
+/// only if you are super user
 #[post("/change_permission")]
 async fn change_permission(
     data: web::Json<PermissionRequest>,
@@ -159,6 +162,7 @@ async fn change_permission(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
+/// get current email whitelist
 #[get("/get_email_whitelist")]
 async fn get_email_whitelist(
     req: HttpRequest,
@@ -178,6 +182,9 @@ struct EmailRequest {
     delete: Vec<String>,
 }
 
+/// update current email list
+/// it is strongly discouraged since maybe block
+/// you can reload filtered email via reboot server
 #[post("/update_email_whitelist")]
 async fn update_email_whitelist(
     data: web::Json<EmailRequest>,
@@ -195,6 +202,7 @@ async fn update_email_whitelist(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
+/// get current rank information
 #[get("/get_rank")]
 async fn get_rank(
     req: HttpRequest,
@@ -214,6 +222,9 @@ struct RankRequest {
     ranks: Vec<rank_model::Rank>,
 }
 
+/// change current ranks
+/// you can update or make some rank unavailable
+/// instead of delete it.
 #[post("/update_rank")]
 async fn update_rank(
     data: web::Json<RankRequest>,

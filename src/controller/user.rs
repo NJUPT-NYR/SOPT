@@ -103,7 +103,7 @@ async fn login(
                 if info.upload > next_rank.upload && current - before > next_rank.age {
                     let roles = next_rank.role;
                     for role in roles {
-                        user_model::add_role_by_id(&client, val.id, role as i32).await?;
+                        user_model::add_role_by_id(&client, val.id, (role % 32) as i32).await?;
                     }
                     user_info_model::update_rank_by_name(&client, &user.username, &next_rank.name).await?;
                     val = user_model::find_user_by_username(&client, &user.username).await?.pop().unwrap();
@@ -181,6 +181,8 @@ struct PrivacyLevel {
     privacy: i32,
 }
 
+/// change privacy level, by default it is 0
+/// which means everyone can see your profile
 #[get("change_privacy")]
 async fn change_privacy(
     web::Query(data): web::Query<PrivacyLevel>,
@@ -201,6 +203,8 @@ struct UserRequest {
     username: String,
 }
 
+/// show detail of one user
+/// if login, you can see your account info too
 #[get("show_user")]
 async fn show_user(
     web::Query(data): web::Query<UserRequest>,
