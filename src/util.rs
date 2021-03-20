@@ -76,9 +76,9 @@ pub fn verify_password(password: &str, hash: &str) -> Result<bool, Error> {
 ///
 /// Default retry count: 5
 pub fn send_mail(
-    receiver: String,
-    address: String,
-    from: String,
+    receiver: &str,
+    address: &str,
+    from: &str,
     body: String,
 ) -> Result<(), Error> {
     use lettre::transport::smtp::authentication::Credentials;

@@ -157,7 +157,7 @@ pub async fn update_money_by_name(client: &sqlx::PgPool, username: &str, amount:
 }
 
 /// Update user define columns, replace all without any check
-pub async fn update_other_by_name(client: &sqlx::PgPool, username: &str, info: serde_json::Value) -> Result<(), Error> {
+pub async fn update_other_by_name(client: &sqlx::PgPool, username: &str, info: &serde_json::Value) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE user_info SET other = $1 \
         WHERE username = $2;",
@@ -185,11 +185,11 @@ pub async fn update_avatar_by_name(client: &sqlx::PgPool, username: &str, avatar
 }
 
 /// change privacy level
-pub async fn update_privacy_by_name(client: &sqlx::PgPool, username: &str, privacy: Level) -> Result<(), Error> {
+pub async fn update_privacy_by_name(client: &sqlx::PgPool, username: &str, level: Level) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE user_info SET privacy = $1 \
         WHERE username = $2;",
-        privacy as i32,
+        level as i32,
         username
         )
         .execute(client)

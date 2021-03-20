@@ -29,6 +29,11 @@ fn get_info_in_token(req: HttpRequest) -> Result<Claim, Error> {
     Ok(crate::util::decode_and_verify_jwt(token, secret)?)
 }
 
+/// since most of cases are the need of username
+fn get_name_in_token(req: HttpRequest) -> Result<String, Error> {
+    Ok(get_info_in_token(req)?.sub)
+}
+
 pub(crate) fn api_service() -> Scope {
     web::scope("/api")
         .service(user::user_service())

@@ -137,11 +137,8 @@ async fn personal_info_update(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let data: InfoWrapper = data.into_inner();
-    let claim = get_info_in_token(req)?;
-    let username = claim.sub;
-
-    user_info_model::update_other_by_name(&client, &username, data.info).await?;
+    let username = get_name_in_token(req)?;
+    user_info_model::update_other_by_name(&client, &username, &data.info).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
@@ -154,8 +151,7 @@ async fn upload_avatar(
 ) -> HttpResult {
     use futures::{StreamExt, TryStreamExt};
 
-    let claim = get_info_in_token(req)?;
-    let username = claim.sub;
+    let username = get_name_in_token(req)?;
 
     if let Ok(Some(mut file)) = payload.try_next().await {
         let content_type = file.content_disposition().ok_or(Error::OtherError("incomplete file".to_string()))?;
@@ -170,7 +166,7 @@ async fn upload_avatar(
 
         let mut buf: Vec<u8> = vec![];
         while let Some(chunk) = file.next().await {
-            let data = chunk.unwrap();
+            let data = chunk.map_err(error_string)?;
             buf.append(&mut data.to_vec());
         }
         let encoded_avatar = base64::encode(buf);
@@ -193,10 +189,9 @@ async fn change_privacy(
 ) -> HttpResult {
     use std::convert::TryInto;
 
-    let claim = get_info_in_token(req)?;
-    let username = claim.sub;
-
+    let username = get_name_in_token(req)?;
     let level: user_info_model::Level = data.privacy.try_into()?;
+
     user_info_model::update_privacy_by_name(&client, &username, level).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
@@ -248,11 +243,8 @@ async fn reset_password(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let new_pass = hash_password(&data.into_inner().password)?;
-    let claim = get_info_in_token(req)?;
-    let username = claim.sub;
-
-    user_model::update_password_by_username(&client, &username, &new_pass).await?;
+    let username = get_name_in_token(req)?;
+    user_model::update_password_by_username(&client, &username, &hash_password(&data.password)?).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
@@ -262,9 +254,7 @@ async fn reset_passkey(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
-    let username = claim.sub;
-
+    let username = get_name_in_token(req)?;
     user_model::update_passkey_by_username(&client, &username, &generate_passkey(&username)?).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
@@ -282,13 +272,12 @@ async fn transfer_money(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let data: Transfer = data.into_inner();
     let claim = get_info_in_token(req)?;
     let username = claim.sub;
-
     if is_not_ordinary_user(claim.role) {
         return Err(Error::NoPermission)
     }
+
     user_info_model::transfer_money_by_name(&client, &username, &data.to, data.amount).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }

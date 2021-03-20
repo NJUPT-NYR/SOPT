@@ -159,7 +159,6 @@ async fn change_permission(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
-#[cfg(feature = "email-restriction")]
 #[get("/get_email_whitelist")]
 async fn get_email_whitelist(
     req: HttpRequest,
@@ -173,14 +172,12 @@ async fn get_email_whitelist(
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
-#[cfg(feature = "email-restriction")]
 #[derive(Deserialize, Debug)]
 struct EmailRequest {
     add: Vec<String>,
     delete: Vec<String>,
 }
 
-#[cfg(feature = "email-restriction")]
 #[post("/update_email_whitelist")]
 async fn update_email_whitelist(
     data: web::Json<EmailRequest>,
@@ -235,33 +232,6 @@ async fn update_rank(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
-// #[derive(Deserialize, Debug)]
-// struct Settings {
-//     pub switch: HashMap<String, bool>,
-//     pub num: HashMap<String, i64>,
-// }
-//
-// #[post("/update_site_setting")]
-// async fn update_site_setting(
-//     data: web::Json<Settings>,
-//     req: HttpRequest,
-// ) -> HttpResult {
-//     let claim = get_info_in_token(req)?;
-//     let req: Settings = data.into_inner();
-//     if is_no_permission_to_site(claim.role) {
-//         return Err(Error::NoPermission)
-//     }
-//
-//     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
-// }
-//
-// #[get("/get_site_setting")]
-// async fn get_site_setting(
-//     req: HttpRequest,
-// ) -> HttpResult {
-//
-// }
-
 pub(crate) fn admin_service() -> Scope {
     web::scope("/admin")
         .service(web::scope("/torrent")
@@ -275,8 +245,6 @@ pub(crate) fn admin_service() -> Scope {
             .service(group_awards)
             .service(change_permission))
         .service(web::scope("/site")
-            // .service(update_site_setting)
-            // .service(get_site_setting))
             .service(get_email_whitelist)
             .service(update_email_whitelist)
             .service(get_rank)

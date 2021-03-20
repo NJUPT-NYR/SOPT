@@ -6,7 +6,6 @@ use crate::data::{user as user_model,
 
 #[derive(Deserialize, Debug)]
 struct TorrentPost {
-    id: Option<i64>,
     title: String,
     description: Option<String>,
     tags: Option<Vec<String>>,
@@ -20,70 +19,61 @@ async fn add_torrent(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let post: TorrentPost = data.into_inner();
     let claim = get_info_in_token(req)?;
     let username = claim.sub;
     if is_not_ordinary_user(claim.role) {
         return Err(Error::NoPermission)
     }
 
-    let ret = torrent_info_model::add_torrent_info(&client, &post.title,&username, post.description).await?;
-    if post.tags.is_some() {
-        let tags = post.tags.unwrap();
-        if tags.len() > 5 {
-            return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("tags max amount is 5")))
-        }
-        let new_ret = torrent_info_model::add_tag_for_torrent(&client, ret.id, &tags).await?;
-        Ok(HttpResponse::Ok().json(new_ret.to_json()))
-    } else {
-        Ok(HttpResponse::Ok().json(ret.to_json()))
+    let tags = data.tags.as_deref().unwrap_or(&[]);
+    if tags.len() > 5 {
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("tags max amount is 5")))
     }
+    let ret = torrent_info_model::add_torrent_info(&client, &data.title,&username, data.description.as_deref(), tags).await?;
+    Ok(HttpResponse::Ok().json(ret.to_json()))
+}
+
+#[derive(Deserialize, Debug)]
+struct TorrentUpdatePost {
+    id: i64,
+    title: String,
+    description: Option<String>,
+    tags: Option<Vec<String>>,
 }
 
 /// update a post, like setting tags and add descriptions
 #[post("/update_torrent")]
 async fn update_torrent(
-    data: web::Json<TorrentPost>,
+    data: web::Json<TorrentUpdatePost>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let post: TorrentPost = data.into_inner();
     let claim = get_info_in_token(req)?;
     let username = claim.sub;
-    if post.id.is_none() {
-        return Ok(HttpResponse::BadRequest().json(GeneralResponse::from_err("missing torrent id")))
-    }
 
-    let old_torrent = torrent_info_model::find_torrent_by_id(&client,post.id.unwrap()).await?;
-    let poster = old_torrent.poster;
-    if !username.eq(&poster) && is_no_permission_to_torrents(claim.role) {
+    let old_torrent = torrent_info_model::find_torrent_by_id(&client, data.id).await?;
+    if !username.eq(&old_torrent.poster) && is_no_permission_to_torrents(claim.role) {
         return Err(Error::NoPermission)
     }
 
-    let ret = torrent_info_model::update_torrent_info(&client,post.id.unwrap(), &post.title, post.description).await?;
-    if post.tags.is_some() {
-        let tags = post.tags.unwrap();
-        if tags.len() > 5 {
-            return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("tags max amount is 5")))
-        }
-        let new_ret = torrent_info_model::add_tag_for_torrent(&client, ret.id, &tags).await?;
-
-        // tag count will only be updated when it is open
-        if ret.visible {
-            let old_tags = old_torrent.tag.unwrap_or(vec![]);
-            let to_decrease: Vec<&String> = old_tags.iter().filter(|tag| !tags.contains(tag)).collect();
-            let to_increase: Vec<&String> = tags.iter().filter(|tag| !old_tags.contains(tag)).collect();
-            for tag in to_decrease {
-                tag_model::decrease_amount_by_name(&client, tag).await?;
-            }
-            for tag in to_increase {
-                tag_model::update_or_add_tag(&client, tag).await?;
-            }
-        }
-        Ok(HttpResponse::Ok().json(new_ret.to_json()))
-    } else {
-        Ok(HttpResponse::Ok().json(ret.to_json()))
+    let tags = data.tags.as_deref().unwrap_or(&[]);
+    if tags.len() > 5 {
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("tags max amount is 5")))
     }
+    let ret = torrent_info_model::update_torrent_info(&client, data.id, &data.title, data.description.as_deref(), tags).await?;
+    // tag count will only be updated when it is open
+    if ret.visible {
+        let old_tags = old_torrent.tag.unwrap_or_default();
+        let to_decrease: Vec<&String> = old_tags.iter().filter(|tag| !tags.contains(tag)).collect();
+        let to_increase: Vec<&String> = tags.iter().filter(|tag| !old_tags.contains(tag)).collect();
+        for tag in to_decrease {
+            tag_model::decrease_amount_by_name(&client, tag).await?;
+        }
+        for tag in to_increase {
+            tag_model::update_or_add_tag(&client, tag).await?;
+        }
+    }
+    Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
 #[derive(Deserialize, Debug)]
@@ -149,10 +139,8 @@ async fn list_posted_torrent(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
-    let username = claim.sub;
+    let username = get_name_in_token(req)?;
     let ret = torrent_info_model::find_torrent_by_poster(&client, &username).await?;
-
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
@@ -241,7 +229,6 @@ async fn get_torrent(
 ) -> HttpResult {
     let claim = get_info_in_token(req)?;
     let username = claim.sub;
-
     if is_not_ordinary_user(claim.role) {
         return Err(Error::NoPermission)
     }

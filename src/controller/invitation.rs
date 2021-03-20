@@ -17,33 +17,25 @@ async fn send_invitation(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let message: Message = data.into_inner();
     let claim = get_info_in_token(req)?;
     let username = claim.sub;
-
     if is_not_ordinary_user(claim.role) || cannot_invite(claim.role) {
         return Err(Error::NoPermission)
     }
 
     let code = generate_invitation_code();
-    let body = format!("{}\n\nYour Invitation Code is: {}\n", &message.body, &code);
-    // fuck u borrow checker
-    let from = username.clone();
-    let address = message.address.clone();
-    let receiver = message.to.clone();
+    let num = INVITE_CONSUME.load(std::sync::atomic::Ordering::Relaxed);
+    user_info_model::update_money_by_name(&client, &username, num as f64).await?;
+    let ret = invitation_model::add_invitation_code(&client, &username, &code, &data.address).await?;
     // we don't really care about the result of send mail
     std::thread::spawn(move || {
        send_mail(
-            receiver,
-            address,
-            from,
-            body,
+            &username,
+            &data.address,
+            &data.to,
+            format!("{}\n\nYour Invitation Code is: {}\n", &data.body, &code),
        ).expect("unable to send mail");
     });
-
-    let num = INVITE_CONSUME.load(std::sync::atomic::Ordering::Relaxed);
-    user_info_model::update_money_by_name(&client, &username, num as f64).await?;
-    let ret = invitation_model::add_invitation_code(&client, &username, &code, &message.address).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
@@ -53,9 +45,7 @@ async fn list_invitations(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
-    let username = claim.sub;
-
+    let username = get_name_in_token(req)?;
     let ret = invitation_model::find_invitation_by_user(&client, &username).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }

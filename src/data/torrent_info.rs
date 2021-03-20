@@ -58,42 +58,28 @@ pub struct JoinedTorrent {
 }
 
 /// Add torrent post into database and return the full struct
-pub async fn add_torrent_info(client: &sqlx::PgPool, title: &str, poster: &str, description: Option<String>) -> TorrentInfoRet {
+pub async fn add_torrent_info(client: &sqlx::PgPool, title: &str, poster: &str, description: Option<&str>, tags: &[String]) -> TorrentInfoRet {
     Ok(sqlx::query_as!(
         TorrentInfo,
-        "INSERT INTO torrent_info(title, poster, description, create_time, last_edit, last_activity) \
-        VALUES ($1, $2, $3, NOW(), NOW(), NOW()) RETURNING *;",
+        "INSERT INTO torrent_info(title, poster, description, create_time, last_edit, last_activity, tag) \
+        VALUES ($1, $2, $3, NOW(), NOW(), NOW(), $4) RETURNING *;",
         title,
         poster,
-        description
+        description,
+        tags
         )
         .fetch_one(client)
         .await?)
 }
 
 /// Update the information, will be replaced as a whole
-pub async fn update_torrent_info(client: &sqlx::PgPool, id: i64, title: &str, description: Option<String>) -> TorrentInfoRet {
+pub async fn update_torrent_info(client: &sqlx::PgPool, id: i64, title: &str, description: Option<&str>, tags: &[String]) -> TorrentInfoRet {
     sqlx::query_as!(
         TorrentInfo,
-        "UPDATE torrent_info SET title = $1, description = $2, last_edit = NOW() \
-        WHERE id = $3 RETURNING *;",
+        "UPDATE torrent_info SET title = $1, description = $2, last_edit = NOW(), tag = $3 \
+        WHERE id = $4 RETURNING *;",
         title,
         description,
-        id
-        )
-        .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::NotFound)
-}
-
-/// add tags as replaced(so front end needs to
-/// pass a whole including previous tags)
-pub async fn add_tag_for_torrent(client: &sqlx::PgPool, id: i64, tags: &Vec<String>) -> TorrentInfoRet {
-    sqlx::query_as!(
-        TorrentInfo,
-        "UPDATE torrent_info SET tag = $1, last_edit = NOW() \
-        WHERE id = $2 RETURNING *;",
         tags,
         id
         )

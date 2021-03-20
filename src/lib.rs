@@ -8,7 +8,6 @@ use crate::config::*;
 use actix_web::{middleware, web::route, App, HttpResponse, HttpServer};
 use dotenv::dotenv;
 
-#[cfg(feature = "email-restriction")]
 fn load_email_whitelist() {
     use std::fs::File;
     use std::collections::HashSet;
@@ -34,9 +33,8 @@ pub async fn sopt_main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=debug");
     env_logger::init();
     dotenv().ok();
-    #[cfg(feature = "email-restriction")]
-    load_email_whitelist();
 
+    load_email_whitelist();
     let pool = sqlx::PgPool::connect(&CONFIG.database_url)
         .await
         .expect("unable to connect to database");
