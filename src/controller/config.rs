@@ -28,3 +28,4 @@ lazy_static! {
 }
 
 pub(crate) static INVITE_CONSUME: AtomicI64 = AtomicI64::new(5000);
+pub(crate) static BAN_UPLOAD_RATIO: f64 = 0.3;

@@ -69,10 +69,10 @@ Also, most of the codes are documented.
   - [x] Information update
   - [x] Invite
   - [x] Rank
-- [ ] Torrent
+- [x] Torrent
   - [x] Add a post
   - [x] Generate with passkey
-  - [ ] Sync with tracker
+  - [x] Sync with tracker
   - [x] Tags filter
 - [x] Admin
   - [x] User management

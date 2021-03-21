@@ -28,6 +28,10 @@ pub struct TorrentInfo {
     pub last_edit: DateTime<Utc>,
     pub last_activity: DateTime<Utc>,
     pub stick: bool,
+    pub free: bool,
+    pub downloading: i32,
+    pub uploading: i32,
+    pub finished: i64,
 }
 
 /// Slim Version used for list purpose
@@ -42,6 +46,10 @@ pub struct SlimTorrent {
     pub tag: Option<Vec<String>>,
     pub last_activity: DateTime<Utc>,
     pub length: i64,
+    pub free: bool,
+    pub downloading: i32,
+    pub uploading: i32,
+    pub finished: i64,
 }
 
 /// for performance use
@@ -49,6 +57,7 @@ pub struct SlimTorrent {
 pub struct MinimalTorrent {
     pub poster: String,
     pub visible: bool,
+    pub free: bool,
 }
 
 #[derive(Serialize, Debug, ToResponse)]
@@ -107,7 +116,7 @@ pub async fn find_torrent_by_id(client: &sqlx::PgPool, id: i64) -> TorrentInfoRe
 pub async fn find_torrent_by_id_mini(client: &sqlx::PgPool, id: i64) -> Result<MinimalTorrent, Error> {
     sqlx::query_as!(
         MinimalTorrent,
-        "SELECT poster, visible FROM torrent_info \
+        "SELECT poster, visible, free FROM torrent_info \
         WHERE id = $1;",
         id
         )
@@ -121,7 +130,8 @@ pub async fn find_torrent_by_id_mini(client: &sqlx::PgPool, id: i64) -> Result<M
 pub async fn find_torrent_by_poster(client: &sqlx::PgPool, poster: &str) -> SlimTorrentVecRet {
     Ok(sqlx::query_as!(
         SlimTorrent,
-        "SELECT torrent_info.id, title, poster, downloaded, tag, last_activity, length \
+        "SELECT torrent_info.id, title, poster, downloaded, tag, last_activity, \
+        length, free, downloading, uploading, finished \
         FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
         WHERE poster = $1",
         poster
@@ -146,7 +156,7 @@ pub async fn query_torrent_counts(client: &sqlx::PgPool) -> CountRet {
 pub async fn find_visible_torrent(client: &sqlx::PgPool, page_offset: i64) -> SlimTorrentVecRet {
     Ok(sqlx::query_as!(
         SlimTorrent,
-        "SELECT id, title, poster, downloaded, tag, last_activity, length FROM( \
+        "SELECT id, title, poster, downloaded, tag, last_activity, length, free, downloading, uploading, finished FROM( \
             SELECT ROW_NUMBER() OVER ( ORDER BY last_activity DESC ) AS RowNum, torrent_info.*, torrent.length \
             FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
             WHERE visible = TRUE AND stick = FALSE \
@@ -178,7 +188,7 @@ pub async fn find_visible_torrent_by_tag(client: &sqlx::PgPool, tags: &Vec<Strin
     // due to sqlx not support type cast of postgres
     Ok(sqlx::query_as_unchecked!(
         SlimTorrent,
-        "SELECT id, title, poster, downloaded, tag, last_activity, length FROM( \
+        "SELECT id, title, poster, downloaded, tag, last_activity, length, free, downloading, uploading, finished FROM( \
             SELECT ROW_NUMBER() OVER ( ORDER BY last_activity DESC ) AS RowNum, torrent_info.*, torrent.length \
             FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
             WHERE visible = TRUE AND ($1::VARCHAR[] <@ tag) AND stick = FALSE \
@@ -196,7 +206,8 @@ pub async fn find_visible_torrent_by_tag(client: &sqlx::PgPool, tags: &Vec<Strin
 pub async fn find_stick_torrent(client: &sqlx::PgPool) -> SlimTorrentVecRet {
     Ok(sqlx::query_as!(
         SlimTorrent,
-        "SELECT torrent_info.id, title, poster, downloaded, tag, last_activity, length \
+        "SELECT torrent_info.id, title, poster, downloaded, tag, last_activity, length,\
+        free, downloading, uploading, finished \
         FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
         WHERE visible = TRUE AND stick = TRUE \
         ORDER BY last_activity DESC;",
@@ -209,7 +220,8 @@ pub async fn find_stick_torrent(client: &sqlx::PgPool) -> SlimTorrentVecRet {
 pub async fn find_invisible_torrent(client: &sqlx::PgPool) -> SlimTorrentVecRet {
     Ok(sqlx::query_as!(
         SlimTorrent,
-        "SELECT torrent_info.id, title, poster, downloaded, tag, last_activity, length \
+        "SELECT torrent_info.id, title, poster, downloaded, tag, last_activity, length, \
+        free, downloading, uploading, finished \
         FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
         WHERE visible = FALSE;"
         )
@@ -235,6 +247,35 @@ pub async fn make_torrent_stick(client: &sqlx::PgPool, ids: &Vec<i64>) -> Result
         "UPDATE torrent_info SET stick = TRUE \
         WHERE id = ANY($1);",
         ids
+        )
+        .execute(client)
+        .await?;
+
+    Ok(())
+}
+
+/// free some of the torrents
+pub async fn make_torrent_free(client: &sqlx::PgPool, ids: &Vec<i64>) -> Result<(), Error> {
+    sqlx::query!(
+        "UPDATE torrent_info SET free = TRUE \
+        WHERE id = ANY($1);",
+        ids
+        )
+        .execute(client)
+        .await?;
+
+    Ok(())
+}
+
+pub async fn update_torrent_status(client: &sqlx::PgPool, id: i64, downloading: i32, uploading: i32, finished: i64) -> Result<(), Error> {
+    sqlx::query!(
+        "UPDATE torrent_info SET downloading = downloading + $1, \
+        uploading = uploading + $2, finished = finished + $3 \
+        WHERE id = $4;",
+        downloading,
+        uploading,
+        finished,
+        id
         )
         .execute(client)
         .await?;

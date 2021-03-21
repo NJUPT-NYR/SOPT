@@ -3,6 +3,7 @@ mod invitation;
 mod torrent;
 mod admin;
 pub(crate) mod config;
+mod tracker;
 
 use actix_web::{HttpResponse, *};
 use serde::Deserialize;
@@ -26,7 +27,7 @@ fn get_info_in_token(req: HttpRequest) -> Result<Claim, Error> {
     let token = data[1].trim();
 
     let secret = CONFIG.secret_key.as_bytes();
-    Ok(crate::util::decode_and_verify_jwt(token, secret)?)
+    Ok(decode_and_verify_jwt(token, secret)?)
 }
 
 /// since most of cases are the need of username
@@ -40,4 +41,5 @@ pub(crate) fn api_service() -> Scope {
         .service(invitation::invitation_service())
         .service(torrent::torrent_service())
         .service(admin::admin_service())
+        .service(tracker::tracker_service())
 }

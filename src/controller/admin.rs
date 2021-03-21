@@ -41,6 +41,7 @@ async fn accept_torrents(
         for tag in torrent.tag.unwrap_or_default() {
             tag_model::update_or_add_tag(&client, &tag).await?;
         }
+        // TODO: Auto free torrents bigger than
     }
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
@@ -57,6 +58,21 @@ async fn stick_torrents(
         return Err(Error::NoPermission)
     }
     torrent_info_model::make_torrent_stick(&client, &data.ids).await?;
+    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
+}
+
+/// make a group of torrents free
+#[post("/free_torrents")]
+async fn free_torrents(
+    data: web::Json<TorrentList>,
+    req: HttpRequest,
+    client: web::Data<sqlx::PgPool>,
+) -> HttpResult {
+    let claim = get_info_in_token(req)?;
+    if is_no_permission_to_torrents(claim.role) {
+        return Err(Error::NoPermission)
+    }
+    torrent_info_model::make_torrent_free(&client, &data.ids).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
@@ -248,6 +264,7 @@ pub(crate) fn admin_service() -> Scope {
         .service(web::scope("/torrent")
             .service(accept_torrents)
             .service(stick_torrents)
+            .service(free_torrents)
             .service(show_invisible_torrents))
         .service(web::scope("/user")
             .service(ban_user)

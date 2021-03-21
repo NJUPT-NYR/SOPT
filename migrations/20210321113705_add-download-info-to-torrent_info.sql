@@ -1,0 +1,5 @@
+-- Add migration script here
+ALTER TABLE torrent_info ADD COLUMN free BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE torrent_info ADD COLUMN downloading INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE torrent_info ADD COLUMN uploading INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE torrent_info ADD COLUMN finished BIGINT NOT NULL DEFAULT 0;

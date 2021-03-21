@@ -241,3 +241,18 @@ pub async fn update_rank_by_name(client: &sqlx::PgPool, username: &str, rank: &s
 
     Ok(())
 }
+
+pub async fn update_io_by_id(client: &sqlx::PgPool, id: i64, upload: i64, download: i64) -> UserInfoRet {
+    sqlx::query_as!(
+        UserInfo,
+        "UPDATE user_info SET upload = upload + $1, download = download + $2 \
+        WHERE id = $3 RETURNING *;",
+        upload,
+        download,
+        id
+        )
+        .fetch_all(client)
+        .await?
+        .pop()
+        .ok_or(Error::NotFound)
+}
