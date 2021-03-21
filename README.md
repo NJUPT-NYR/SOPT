@@ -22,7 +22,7 @@ Next generation private tracker framework.
 createdb sopt
 cargo install sqlx-cli
 sqlx migrate run
-psql -U <yourname> -d sopt ./rank.sql
+psql -U <PG_USER_NAME> -d sopt -f ./rank.sql
 cargo run
 ```
 
