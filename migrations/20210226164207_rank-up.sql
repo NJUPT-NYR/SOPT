@@ -4,9 +4,8 @@ CREATE TABLE rank(
     id SERIAL PRIMARY KEY,
     name VARCHAR NOT NULL UNIQUE,
     role SMALLINT[] NOT NULL,
-    upload BIGINT,
-    age BIGINT,
-    available BOOLEAN NOT NULL,
-    next INT,
+    upload BIGINT NOT NULL,
+    age BIGINT NOT NULL,
+    next INTEGER,
     UNIQUE(name)
 );

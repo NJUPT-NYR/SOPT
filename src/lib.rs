@@ -21,7 +21,7 @@ fn load_email_whitelist() {
         .map(|l| String::from(l.unwrap()))
         .collect();
 
-    let mut w = crate::controller::config::ALLOWED_DOMAIN.write().unwrap();
+    let mut w = controller::ALLOWED_DOMAIN.write().unwrap();
     *w = HashSet::from_iter(lines);
 }
 

@@ -5,7 +5,6 @@ use crate::data::{torrent_info as torrent_info_model,
                   rank as rank_model,
                   user_info as user_info_model};
 
-/// list all invisible torrents
 #[get("/show_invisible_torrents")]
 async fn show_invisible_torrents(
     req: HttpRequest,
@@ -24,7 +23,6 @@ struct TorrentList {
     ids: Vec<i64>,
 }
 
-/// make a group of torrents visible
 #[post("/accept_torrents")]
 async fn accept_torrents(
     data: web::Json<TorrentList>,
@@ -46,7 +44,6 @@ async fn accept_torrents(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
-/// make a group of torrents stick
 #[post("/stick_torrents")]
 async fn stick_torrents(
     data: web::Json<TorrentList>,
@@ -61,7 +58,6 @@ async fn stick_torrents(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
-/// make a group of torrents free
 #[post("/free_torrents")]
 async fn free_torrents(
     data: web::Json<TorrentList>,
@@ -96,7 +92,6 @@ async fn ban_user(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
-/// unban one user
 #[get("/unban_user")]
 async fn unban_user(
     data: web::Json<IdWrapper>,
@@ -111,7 +106,6 @@ async fn unban_user(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
-/// list all banned user
 #[get("/list_banned_user")]
 async fn list_banned_user(
     req: HttpRequest,
@@ -178,7 +172,6 @@ async fn change_permission(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
-/// get current email whitelist
 #[get("/get_email_whitelist")]
 async fn get_email_whitelist(
     req: HttpRequest,
@@ -218,7 +211,6 @@ async fn update_email_whitelist(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
-/// get current rank information
 #[get("/get_rank")]
 async fn get_rank(
     req: HttpRequest,
@@ -233,29 +225,18 @@ async fn get_rank(
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
-#[derive(Deserialize, Debug)]
-struct RankRequest {
-    ranks: Vec<rank_model::Rank>,
-}
-
-/// change current ranks
-/// you can update or make some rank unavailable
-/// instead of delete it.
 #[post("/update_rank")]
 async fn update_rank(
-    data: web::Json<RankRequest>,
+    data: web::Json<Rank>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let claim = get_info_in_token(req)?;
-    let ranks = data.into_inner().ranks;
     if is_no_permission_to_site(claim.role) {
         return Err(Error::NoPermission)
     }
 
-    for rank in ranks {
-        rank_model::update_or_add_rank(&client, rank).await?;
-    }
+    rank_model::update_or_add_rank(&client, data.into_inner()).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 

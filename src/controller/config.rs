@@ -24,8 +24,8 @@ pub fn is_not_ordinary_user(role: i64) -> bool {
 
 #[cfg(feature = "email-restriction")]
 lazy_static! {
-    pub(crate) static ref ALLOWED_DOMAIN: RwLock<HashSet<String>> = RwLock::new(HashSet::new());
+    pub static ref ALLOWED_DOMAIN: RwLock<HashSet<String>> = RwLock::new(HashSet::new());
 }
 
-pub(crate) static INVITE_CONSUME: AtomicI64 = AtomicI64::new(5000);
-pub(crate) static BAN_UPLOAD_RATIO: f64 = 0.3;
+pub static INVITE_CONSUME: AtomicI64 = AtomicI64::new(5000);
+pub static BAN_UPLOAD_RATIO: f64 = 0.3;

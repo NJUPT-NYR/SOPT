@@ -39,7 +39,6 @@ async fn send_invitation(
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
-/// list all invitations sent by current user
 #[get("/list_invitations")]
 async fn list_invitations(
     req: HttpRequest,

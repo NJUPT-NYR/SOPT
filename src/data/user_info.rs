@@ -1,9 +1,6 @@
 use std::convert::TryFrom;
 use super::*;
 
-type UserInfoRet = Result<UserInfo, Error>;
-type SlimUserInfoRet = Result<SlimUserInfo, Error>;
-
 /// privacy level, can be set by yourself
 /// but respectively, you must make it functional
 /// via updating some controllers
@@ -28,53 +25,51 @@ impl TryFrom<i32> for Level {
     }
 }
 
-/// A full user info struct contains
-/// 1. username: for performant issue
-/// 2. register_time
-/// 3. last_activity: updated when login
-/// 4. invitor
-/// 5. upload count, in bytes
-/// 6. download count, in bytes
-/// 7. money
-/// 8. rank: an integer from 1
-/// 9. avatar: b64encoded picture
-/// 10. other: json values to store user defined columns
-/// 11. privacy: whether show info in public
-#[derive(Serialize, Debug, ToResponse)]
-pub struct UserInfo {
-    pub id: i64,
-    pub username: String,
-    pub register_time: DateTime<Utc>,
-    pub last_activity: DateTime<Utc>,
-    pub invitor: Option<String>,
-    pub upload: i64,
-    pub download: i64,
-    pub money: f64,
-    pub rank: String,
-    pub avatar: Option<String>,
-    pub other: Option<serde_json::Value>,
-    pub privacy: i32,
+pub async fn find_user_info_by_name_mini(client: &sqlx::PgPool, username: &str) -> MiniUserRet {
+    sqlx::query_as!(
+        MiniUser,
+        "SELECT upload, download, registerTime FROM user_info \
+        WHERE username = $1",
+        username
+        )
+        .fetch_all(client)
+        .await?
+        .pop()
+        .ok_or(Error::NotFound)
 }
 
-/// Slim version user, mainly for privacy and performance.
-#[derive(Serialize, Debug, ToResponse)]
-pub struct SlimUserInfo {
-    pub id: i64,
-    pub username: String,
-    pub rank: String,
-    pub avatar: Option<String>,
+pub async fn update_io_by_id(client: &sqlx::PgPool, id: i64, upload: i64, download: i64) -> MiniUserRet {
+    sqlx::query_as!(
+        MiniUser,
+        "UPDATE user_info SET upload = upload + $1, download = download + $2 \
+        WHERE id = $3 RETURNING upload, download, registerTime;",
+        upload,
+        download,
+        id
+        )
+        .fetch_all(client)
+        .await?
+        .pop()
+        .ok_or(Error::NotFound)
 }
 
-#[derive(Serialize, Debug, ToResponse)]
-pub struct JoinedUser {
-    pub info: UserInfo,
-    pub account: Option<super::user::SlimUser>,
+pub async fn find_user_info_by_name(client: &sqlx::PgPool, username: &str) -> UserRet {
+    sqlx::query_as!(
+        User,
+        "SELECT users.id, users.username, registerTime, lastActivity, invitor, upload, download, user_info.money, \
+        rank, avatar, other, privacy, email, passkey FROM user_info INNER JOIN users ON user_info.id = users.id \
+        WHERE user_info.username = $1",
+        username
+        )
+        .fetch_all(client)
+        .await?
+        .pop()
+        .ok_or(Error::NotFound)
 }
 
-/// Add a full user info when sign up
 pub async fn add_user_info(client: &sqlx::PgPool, id: i64, username: &str) -> Result<(), Error> {
     sqlx::query!(
-        "INSERT INTO user_info(id, username, register_time, last_activity, rank) \
+        "INSERT INTO user_info(id, username, registerTime, lastActivity, rank) \
         SELECT $1, $2, NOW(), NOW(), name FROM rank WHERE rank.id = 1;",
         id,
         username
@@ -85,10 +80,9 @@ pub async fn add_user_info(client: &sqlx::PgPool, id: i64, username: &str) -> Re
     Ok(())
 }
 
-/// Update last activity when login
 pub async fn update_activity_by_name(client: &sqlx::PgPool, username: &str) -> Result<(), Error> {
     sqlx::query!(
-        "UPDATE user_info SET last_activity = now() \
+        "UPDATE user_info SET lastActivity = now() \
         WHERE username = $1;",
         username
         )
@@ -98,7 +92,6 @@ pub async fn update_activity_by_name(client: &sqlx::PgPool, username: &str) -> R
     Ok(())
 }
 
-/// add invitor when sign up
 pub async fn add_invitor_by_name(client: &sqlx::PgPool, username: &str, invitor: Option<String>) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE user_info SET invitor = $1 \
@@ -112,7 +105,6 @@ pub async fn add_invitor_by_name(client: &sqlx::PgPool, username: &str, invitor:
     Ok(())
 }
 
-/// transfer money with one sql
 pub async fn transfer_money_by_name(client: &sqlx::PgPool, from: &str, to: &str, amount: f64) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE user_info SET money = CASE \
@@ -130,7 +122,6 @@ pub async fn transfer_money_by_name(client: &sqlx::PgPool, from: &str, to: &str,
     Ok(())
 }
 
-/// award money to some users
 pub async fn award_money_by_id(client: &sqlx::PgPool, ids: &Vec<i64>, amount: f64) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE user_info SET money = money + $1 \
@@ -144,7 +135,6 @@ pub async fn award_money_by_id(client: &sqlx::PgPool, ids: &Vec<i64>, amount: f6
     Ok(())
 }
 
-/// update money of a user
 pub async fn update_money_by_name(client: &sqlx::PgPool, username: &str, amount: f64) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE user_info SET money = money + $1 \
@@ -158,7 +148,7 @@ pub async fn update_money_by_name(client: &sqlx::PgPool, username: &str, amount:
     Ok(())
 }
 
-/// Update user define columns, replace all without any check
+/// update user define columns, replace all without any check
 pub async fn update_other_by_name(client: &sqlx::PgPool, username: &str, info: &serde_json::Value) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE user_info SET other = $1 \
@@ -172,7 +162,6 @@ pub async fn update_other_by_name(client: &sqlx::PgPool, username: &str, info: &
     Ok(())
 }
 
-/// Insert user uploaded avatar
 pub async fn update_avatar_by_name(client: &sqlx::PgPool, username: &str, avatar: &str) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE user_info SET avatar = $1 \
@@ -186,7 +175,6 @@ pub async fn update_avatar_by_name(client: &sqlx::PgPool, username: &str, avatar
     Ok(())
 }
 
-/// change privacy level
 pub async fn update_privacy_by_name(client: &sqlx::PgPool, username: &str, level: Level) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE user_info SET privacy = $1 \
@@ -200,35 +188,6 @@ pub async fn update_privacy_by_name(client: &sqlx::PgPool, username: &str, level
     Ok(())
 }
 
-/// find user_info with username
-pub async fn find_user_info_by_name(client: &sqlx::PgPool, username: &str) -> UserInfoRet {
-    sqlx::query_as!(
-        UserInfo,
-        "SELECT * FROM user_info \
-        WHERE username = $1",
-        username
-        )
-        .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::NotFound)
-}
-
-/// find user info with username, return the slim one
-pub async fn find_user_info_by_name_slim(client: &sqlx::PgPool, username: &str) -> SlimUserInfoRet {
-    sqlx::query_as!(
-        SlimUserInfo,
-        "SELECT id, username, rank, avatar FROM user_info \
-        WHERE username = $1",
-        username
-        )
-        .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::NotFound)
-}
-
-/// update someone's rank
 pub async fn update_rank_by_name(client: &sqlx::PgPool, username: &str, rank: &str) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE user_info SET rank = $1 \
@@ -240,19 +199,4 @@ pub async fn update_rank_by_name(client: &sqlx::PgPool, username: &str, rank: &s
         .await?;
 
     Ok(())
-}
-
-pub async fn update_io_by_id(client: &sqlx::PgPool, id: i64, upload: i64, download: i64) -> UserInfoRet {
-    sqlx::query_as!(
-        UserInfo,
-        "UPDATE user_info SET upload = upload + $1, download = download + $2 \
-        WHERE id = $3 RETURNING *;",
-        upload,
-        download,
-        id
-        )
-        .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::NotFound)
 }

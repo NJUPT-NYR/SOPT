@@ -19,7 +19,6 @@ struct Registry {
     invite_code: Option<String>,
 }
 
-/// sign up controller
 #[post("/add_user")]
 async fn add_user(
     data: web::Json<Registry>,
@@ -43,7 +42,7 @@ async fn add_user(
     if let Some(str) = user.invite_code {
         let mut ret = invitation_model::find_invitation_by_code(&client, &str).await?;
         if !ret.is_empty() {
-            if ret[0].is_used {
+            if ret[0].usage {
                 return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("invitation code already taken")))
             }
             code = Some(ret.pop().unwrap());
@@ -75,7 +74,6 @@ struct Login {
     password: String,
 }
 
-/// use `username` and `password` to login
 #[post("/login")]
 async fn login(
     data: web::Json<Login>,
@@ -87,41 +85,41 @@ async fn login(
     let user = data.into_inner();
     let secret = CONFIG.secret_key.as_bytes();
 
-    let validation = user_model::find_user_by_username(&client, &user.username).await?.pop();
-    match validation {
-        Some(mut val) => {
-            if !verify_password(&user.password, &val.password)? {
-                return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("password not match")))
-            }
-            user_info_model::update_activity_by_name(&client, &user.username).await?;
-            let current_rank = rank_model::find_rank_by_username(&client, &user.username).await?;
-            if current_rank.next.is_some() {
-                let next_rank = rank_model::find_rank_by_id(&client, current_rank.next.unwrap()).await?;
-                let info = user_info_model::find_user_info_by_name(&client, &user.username).await?;
-                let current = Utc::now().timestamp();
-                let before = info.register_time.timestamp();
-                if info.upload > next_rank.upload && current - before > next_rank.age {
-                    let roles = next_rank.role;
-                    for role in roles {
-                        user_model::add_role_by_id(&client, val.id, (role % 32) as i32).await?;
-                    }
-                    user_info_model::update_rank_by_name(&client, &user.username, &next_rank.name).await?;
-                    val = user_model::find_user_by_username(&client, &user.username).await?.pop().unwrap();
-                }
-            }
-            let claim = Claim {
-                sub: val.username,
-                role: val.role,
-                exp: (Utc::now() + Duration::days(3)).timestamp(),
-            };
-            let tokens = encode(
-                &Header::default(),
-                &claim,
-                &EncodingKey::from_secret(secret)).unwrap();
-            Ok(HttpResponse::Ok().json(tokens.to_json()))
-        },
-        None => Ok(HttpResponse::Ok().json(GeneralResponse::from_err("password not match"))),
+    let validation = user_model::find_validation_by_name(&client, &user.username).await?.pop();
+    if validation.is_none() {
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("password not match")))
     }
+    let mut val = validation.unwrap();
+    if !verify_password(&user.password, &val.password)? {
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("password not match")))
+    }
+
+    user_info_model::update_activity_by_name(&client, &user.username).await?;
+    let current_rank = rank_model::find_rank_by_username(&client, &user.username).await?;
+    if current_rank.next.is_some() {
+        let next_rank = rank_model::find_rank_by_id(&client, current_rank.next.unwrap()).await?;
+        let info = user_info_model::find_user_info_by_name_mini(&client, &user.username).await?;
+        let current = Utc::now().timestamp();
+        let before = info.registertime.timestamp();
+        if info.upload > next_rank.upload && current - before > next_rank.age {
+            let roles = next_rank.role;
+            for role in roles {
+                user_model::add_role_by_id(&client, val.id, (role % 32) as i32).await?;
+            }
+            user_info_model::update_rank_by_name(&client, &user.username, &next_rank.name).await?;
+            val = user_model::find_validation_by_name(&client, &user.username).await?.pop().unwrap();
+        }
+    }
+    let claim = Claim {
+        sub: val.username,
+        role: val.role,
+        exp: (Utc::now() + Duration::days(3)).timestamp(),
+    };
+    let tokens = encode(
+        &Header::default(),
+        &claim,
+        &EncodingKey::from_secret(secret)).unwrap();
+    Ok(HttpResponse::Ok().json(tokens.to_json()))
 }
 
 #[derive(Deserialize, Debug)]
@@ -214,22 +212,15 @@ async fn show_user(
     let claim = get_info_in_token(req)?;
     let username = claim.sub;
 
-    let info = user_info_model::find_user_info_by_name(&client, &data.username).await?;
-    if username.eq(&data.username) {
-        let account = user_model::find_user_by_username_slim(&client, &username).await?;
-        let ret = user_info_model::JoinedUser {
-            info,
-            account: Some(account),
-        };
+    let mut ret = user_info_model::find_user_info_by_name(&client, &data.username).await?;
+    if username == data.username {
         Ok(HttpResponse::Ok().json(ret.to_json()))
     } else {
-        if info.privacy > 0 && is_no_permission_to_users(claim.role) {
+        if ret.privacy > 0 && is_no_permission_to_users(claim.role) {
             Err(Error::NoPermission)
         } else {
-            let ret = user_info_model::JoinedUser {
-                info,
-                account: None,
-            };
+            ret.email = "".to_string();
+            ret.passkey = "".to_string();
             Ok(HttpResponse::Ok().json(ret.to_json()))
         }
     }
@@ -240,7 +231,6 @@ struct PassWrapper {
     password: String,
 }
 
-/// reset user password
 #[post("/reset_password")]
 async fn reset_password(
     data: web::Json<PassWrapper>,
@@ -252,7 +242,6 @@ async fn reset_password(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
-/// reset user passkey
 #[get("/reset_passkey")]
 async fn reset_passkey(
     req: HttpRequest,
@@ -269,7 +258,6 @@ struct Transfer {
     amount: f64,
 }
 
-/// transfer certain money to user
 #[post("/transfer_money")]
 async fn transfer_money(
     data: web::Json<Transfer>,

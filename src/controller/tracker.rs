@@ -36,7 +36,7 @@ async fn get_announce(
     // TODO: add money and warn user about ratio
     let ret = user_info_model::update_io_by_id(&client, data.uid, data.upload, data.download).await?;
     if (ret.upload as f64 / ret.download as f64) < BAN_UPLOAD_RATIO &&
-        (Utc::now() - Duration::days(14)).timestamp() > ret.register_time.timestamp() {
+        (Utc::now() - Duration::days(14)).timestamp() > ret.registertime.timestamp() {
         user_model::delete_role_by_id(&client, data.uid, 0).await?;
     }
 

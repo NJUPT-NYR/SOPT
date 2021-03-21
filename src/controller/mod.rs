@@ -2,7 +2,7 @@ mod user;
 mod invitation;
 mod torrent;
 mod admin;
-pub(crate) mod config;
+mod config;
 mod tracker;
 
 use actix_web::{HttpResponse, *};
@@ -10,8 +10,9 @@ use serde::Deserialize;
 use crate::error::{Error, error_string};
 use crate::config::CONFIG;
 use crate::util::*;
-use crate::data::{Claim, ToResponse, GeneralResponse, DataWithCount};
+use crate::data::*;
 use crate::controller::config::*;
+pub use crate::controller::config::ALLOWED_DOMAIN;
 
 /// A wrapper of Error so to reduce panic
 /// and make HttpError more smooth
@@ -35,7 +36,7 @@ fn get_name_in_token(req: HttpRequest) -> Result<String, Error> {
     Ok(get_info_in_token(req)?.sub)
 }
 
-pub(crate) fn api_service() -> Scope {
+pub fn api_service() -> Scope {
     web::scope("/api")
         .service(user::user_service())
         .service(invitation::invitation_service())

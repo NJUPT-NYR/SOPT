@@ -41,7 +41,6 @@ struct TorrentUpdatePost {
     tags: Option<Vec<String>>,
 }
 
-/// update a post, like setting tags and add descriptions
 #[post("/update_torrent")]
 async fn update_torrent(
     data: web::Json<TorrentUpdatePost>,
@@ -51,8 +50,8 @@ async fn update_torrent(
     let claim = get_info_in_token(req)?;
     let username = claim.sub;
 
-    let old_torrent = torrent_info_model::find_torrent_by_id(&client, data.id).await?;
-    if !username.eq(&old_torrent.poster) && is_no_permission_to_torrents(claim.role) {
+    let old_torrent = torrent_info_model::find_torrent_by_id_mini(&client, data.id).await?;
+    if username != old_torrent.poster && is_no_permission_to_torrents(claim.role) {
         return Err(Error::NoPermission)
     }
 
@@ -133,7 +132,6 @@ async fn list_torrents(
     }
 }
 
-/// list all torrents current user posted
 #[get("list_posted_torrent")]
 async fn list_posted_torrent(
     req: HttpRequest,
@@ -144,7 +142,6 @@ async fn list_posted_torrent(
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
-/// upload torrent file and parse to database column
 #[post("/upload_torrent")]
 async fn upload_torrent(
     mut payload: actix_multipart::Multipart,
@@ -195,32 +192,24 @@ struct IdWrapper {
     id: i64,
 }
 
-/// show definite torrent with an id
 #[get("/show_torrent")]
 async fn show_torrent(
     web::Query(data): web::Query<IdWrapper>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let info = torrent_info_model::find_torrent_by_id(&client, data.id).await?;
-    let torrent = torrent_model::find_slim_torrent_by_id(&client, data.id).await?;
-
-    if !info.visible {
+    let ret = torrent_info_model::find_torrent_by_id(&client, data.id).await?;
+    if !ret.visible {
         let claim = get_info_in_token(req)?;
         let username = claim.sub;
-        if !info.poster.eq(&username) && is_no_permission_to_torrents(claim.role) {
+        if !ret.poster.eq(&username) && is_no_permission_to_torrents(claim.role) {
             return Err(Error::NoPermission)
         }
     }
 
-    let ret = torrent_info_model::JoinedTorrent {
-        info,
-        torrent,
-    };
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
-/// download torrent with passkey in it
 #[get("/get_torrent")]
 async fn get_torrent(
     web::Query(data): web::Query<IdWrapper>,
@@ -233,7 +222,7 @@ async fn get_torrent(
         return Err(Error::NoPermission)
     }
 
-    let user = user_model::find_user_by_username(&client, &username).await?.pop().unwrap();
+    let user = user_model::find_user_by_username(&client, &username).await?;
     let torrent_info = torrent_info_model::find_torrent_by_id_mini(&client, data.id).await?;
     if !torrent_info.visible &&
         !username.eq(&torrent_info.poster) &&

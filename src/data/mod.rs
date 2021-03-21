@@ -5,12 +5,14 @@ pub mod user_info;
 pub mod tag;
 pub mod torrent;
 pub mod rank;
+mod response;
 
 use serde::{Serialize, Deserialize};
 use chrono::{DateTime, Utc};
-use crate::error::Error;
-use sopt_derive::ToResponse;
 use std::collections::HashSet;
+use crate::error::Error;
+use response::*;
+pub use response::Rank;
 
 /// General Response structure used to
 /// communicate with frontends.
