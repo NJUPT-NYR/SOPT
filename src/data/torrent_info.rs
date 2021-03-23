@@ -86,18 +86,18 @@ pub async fn find_visible_torrent_by_tag(client: &sqlx::PgPool, tags: &Vec<Strin
         .await?)
 }
 
-/// find all visible torrents that are not stick
-pub async fn find_visible_torrent(client: &sqlx::PgPool, page_offset: i64) -> SlimTorrentVecRet {
+pub async fn find_visible_torrent_by_ids(client: &sqlx::PgPool, ids: &Vec<i64>, page_offset: i64) -> SlimTorrentVecRet {
     Ok(sqlx::query_as!(
         SlimTorrent,
         "SELECT id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished FROM( \
             SELECT ROW_NUMBER() OVER ( ORDER BY lastEdit DESC ) AS RowNum, torrent_info.*, torrent.length \
             FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
-            WHERE visible = TRUE AND stick = FALSE \
+            WHERE visible = TRUE AND stick = FALSE AND torrent_info.id = ANY($2) \
         ) AS RowConstrainedResult \
         WHERE RowNum > $1 AND RowNum <= $1 + 20 \
         ORDER BY RowNum;",
-        page_offset
+        page_offset,
+        ids
         )
         .fetch_all(client)
         .await?)
@@ -141,18 +141,6 @@ pub async fn find_torrent_by_id(client: &sqlx::PgPool, id: i64) -> FullTorrentRe
         .await?
         .pop()
         .ok_or(Error::NotFound)
-}
-
-/// get counts of total torrents that are not stick
-pub async fn query_torrent_counts(client: &sqlx::PgPool) -> CountRet {
-    Ok(sqlx::query!(
-        "SELECT COUNT(*) FROM torrent_info \
-        WHERE visible = TRUE AND stick = FALSE;"
-        )
-        .fetch_one(client)
-        .await?
-        .count
-        .expect("sql function not right"))
 }
 
 /// get counts of torrents definite tags that are not stick

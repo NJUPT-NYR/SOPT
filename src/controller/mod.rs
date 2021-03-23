@@ -12,6 +12,7 @@ use crate::config::CONFIG;
 use crate::util::*;
 use crate::data::*;
 use crate::controller::config::*;
+use crate::search::TORRENT_SEARCH_ENGINE;
 pub use crate::controller::config::ALLOWED_DOMAIN;
 
 /// A wrapper of Error so to reduce panic

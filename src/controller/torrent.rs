@@ -30,6 +30,9 @@ async fn add_torrent(
         return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("tags max amount is 5")))
     }
     let ret = torrent_info_model::add_torrent_info(&client, &data.title,&username, data.description.as_deref(), tags).await?;
+    let mut tokens = vec![data.title.clone(), username];
+    tokens.append(&mut data.tags.clone().unwrap_or_default());
+    TORRENT_SEARCH_ENGINE.write().unwrap().insert(ret.id, tokens);
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
@@ -60,6 +63,9 @@ async fn update_torrent(
         return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("tags max amount is 5")))
     }
     let ret = torrent_info_model::update_torrent_info(&client, data.id, &data.title, data.description.as_deref(), tags).await?;
+    let mut tokens = vec![data.title.clone(), username];
+    tokens.append(&mut data.tags.clone().unwrap_or_default());
+    TORRENT_SEARCH_ENGINE.write().unwrap().insert(ret.id, tokens);
     // tag count will only be updated when it is open
     if ret.visible {
         let old_tags = old_torrent.tag.unwrap_or_default();
@@ -98,6 +104,7 @@ async fn hot_tags(
 struct ListRequest {
     tags: Option<Vec<String>>,
     page: Option<usize>,
+    freeonly: bool,
 }
 
 /// list torrent with tags and pages
@@ -108,7 +115,7 @@ async fn list_torrents(
 ) -> HttpResult {
     let query = req.uri().query().unwrap_or_default();
     let data: ListRequest = serde_qs::from_str(query).map_err(error_string)?;
-    let tags = data.tags;
+    let tags = data.tags.unwrap_or_default();
     let page = data.page.unwrap_or(0);
 
     // by default you can add infinite number of stick torrents
@@ -116,20 +123,41 @@ async fn list_torrents(
     let mut all_torrents = torrent_info_model::find_stick_torrent(&client).await?;
     let len = all_torrents.len();
 
-    if tags.is_none() {
-        let count = torrent_info_model::query_torrent_counts(&client).await? + len as i64;
-        let mut ret = torrent_info_model::find_visible_torrent(&client, (page * 20 - len) as i64).await?;
-        all_torrents.append(&mut ret);
-        let resp = DataWithCount::new(serde_json::to_value(all_torrents).unwrap(), count / 20 + 1);
-        Ok(HttpResponse::Ok().json(resp.to_json()))
-    } else {
-        let tags = tags.unwrap();
-        let count = torrent_info_model::query_torrent_counts_by_tag(&client, &tags).await? + len as i64;
-        let mut ret = torrent_info_model::find_visible_torrent_by_tag(&client, &tags, (page * 20 - len) as i64).await?;
-        all_torrents.append(&mut ret);
-        let resp = DataWithCount::new(serde_json::to_value(all_torrents).unwrap(), count / 20 + 1);
-        Ok(HttpResponse::Ok().json(resp.to_json()))
+    let count = torrent_info_model::query_torrent_counts_by_tag(&client, &tags).await? + len as i64;
+    let mut ret = torrent_info_model::find_visible_torrent_by_tag(&client, &tags, (page * 20 - len) as i64).await?;
+    if data.freeonly {
+        ret.retain(|t| t.free == true);
     }
+
+    all_torrents.append(&mut ret);
+    let resp = DataWithCount::new(serde_json::to_value(all_torrents).unwrap(), count / 20 + 1);
+    Ok(HttpResponse::Ok().json(resp.to_json()))
+}
+
+#[derive(Deserialize, Debug)]
+struct SearchRequest {
+    keywords: Vec<String>,
+    page: Option<usize>,
+    freeonly: bool,
+}
+
+#[get("/search_torrents")]
+async fn search_torrents(
+    req: HttpRequest,
+    client: web::Data<sqlx::PgPool>,
+) -> HttpResult {
+    let query = req.uri().query().unwrap_or_default();
+    let data: SearchRequest = serde_qs::from_str(query).map_err(error_string)?;
+    let page = data.page.unwrap_or(0);
+
+    let ids = TORRENT_SEARCH_ENGINE.read().unwrap()
+        .search(data.keywords);
+    let mut ret = torrent_info_model::find_visible_torrent_by_ids(&client, &ids, (page * 20) as i64).await?;
+    if data.freeonly {
+        ret.retain(|t| t.free == true);
+    }
+
+    Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
 #[get("list_posted_torrent")]
@@ -253,6 +281,7 @@ pub(crate) fn torrent_service() -> Scope {
         .service(update_torrent)
         .service(hot_tags)
         .service(list_torrents)
+        .service(search_torrents)
         .service(show_torrent)
         .service(list_posted_torrent)
         .service(upload_torrent)

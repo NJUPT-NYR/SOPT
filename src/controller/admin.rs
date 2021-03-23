@@ -39,7 +39,6 @@ async fn accept_torrents(
         for tag in torrent.tag.unwrap_or_default() {
             tag_model::update_or_add_tag(&client, &tag).await?;
         }
-        // TODO: Auto free torrents bigger than
     }
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }

@@ -28,5 +28,5 @@ jobs:
       - run: cp .env.example .env
       - run: cargo install sqlx-cli
       - run: sqlx migrate run
-      - run: psql -U postgres -d sopt -f rank.sql
+      - run: psql -h postgres -U postgres -d sopt -f rank.sql
       - run: cargo test

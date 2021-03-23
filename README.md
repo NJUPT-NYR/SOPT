@@ -81,7 +81,7 @@ Also, most of the codes are documented.
 - [ ] Anti-Cheating
   - [ ] IP limitation
   - [ ] Monitor
-- [ ] Search  
+- [x] Search  
 
 ## Contribution
 SOPT is now under active development. Any contribution is welcomed.

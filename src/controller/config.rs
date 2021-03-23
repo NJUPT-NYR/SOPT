@@ -22,7 +22,6 @@ pub fn is_not_ordinary_user(role: i64) -> bool {
     role & 1 == 0
 }
 
-#[cfg(feature = "email-restriction")]
 lazy_static! {
     pub static ref ALLOWED_DOMAIN: RwLock<HashSet<String>> = RwLock::new(HashSet::new());
 }

@@ -3,6 +3,7 @@ mod controller;
 pub mod data;
 mod error;
 mod util;
+mod search;
 
 use crate::config::*;
 use actix_web::{middleware, web::route, App, HttpResponse, HttpServer};
@@ -25,6 +26,18 @@ fn load_email_whitelist() {
     *w = HashSet::from_iter(lines);
 }
 
+async fn initializing_search(client: &sqlx::PgPool) {
+    let rets = sqlx::query!(
+        "SELECT id, title, poster, tag FROM torrent_info;"
+    ).fetch_all(client).await.unwrap();
+    let mut w = search::TORRENT_SEARCH_ENGINE.write().unwrap();
+    for ret in rets {
+        let mut tokens = vec![ret.title, ret.poster];
+        tokens.append(&mut ret.tag.unwrap_or_default());
+        w.insert(ret.id, tokens);
+    }
+}
+
 // fn init_settings(db: &rocksdb::DB) {
 //     db.put("INVITE_CONSUME", 5000).unwrap();
 // }
@@ -34,15 +47,17 @@ pub async fn sopt_main() -> std::io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=debug");
     env_logger::init();
     dotenv().ok();
-
+    println!("==========Initializing configurations==========");
     load_email_whitelist();
-    let pool = sqlx::PgPool::connect(&CONFIG.database_url)
-        .await
-        .expect("unable to connect to database");
     // let rocksdb = rocksdb::DB::open_default(&CONFIG.rocksdb_path)
     //     .expect("unable to connect to rocksdb");
     // init_settings(&rocksdb);
-    println!("==========SOPT is running==========");
+    println!("==========Initializing search engines==========");
+    let pool = sqlx::PgPool::connect(&CONFIG.database_url)
+        .await
+        .expect("unable to connect to database");
+    initializing_search(&pool).await;
+    println!("================SOPT is running================");
 
     HttpServer::new(move || {
         App::new()
