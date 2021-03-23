@@ -101,10 +101,36 @@ async fn hot_tags(
 }
 
 #[derive(Deserialize, Debug)]
+enum Sort {
+    Title,
+    Poster,
+    LastEdit,
+    Length,
+    Downloading,
+    Uploading,
+    Finished,
+}
+
+#[derive(Deserialize, Debug, PartialEq)]
+enum SortType {
+    ASC,
+    DESC,
+}
+
+impl std::fmt::Display for Sort {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[derive(Deserialize, Debug)]
 struct ListRequest {
     tags: Option<Vec<String>>,
     page: Option<usize>,
     freeonly: bool,
+    sort: Option<Sort>,
+    #[serde(rename = "type")]
+    sort_type: Option<SortType>,
 }
 
 /// list torrent with tags and pages
@@ -117,6 +143,9 @@ async fn list_torrents(
     let data: ListRequest = serde_qs::from_str(query).map_err(error_string)?;
     let tags = data.tags.unwrap_or_default();
     let page = data.page.unwrap_or(0);
+    let sort = data.sort.unwrap_or(Sort::LastEdit);
+    let sort_type = data.sort_type.unwrap_or(SortType::DESC);
+    let sort_string = format!("{}", sort).to_ascii_lowercase();
 
     // by default you can add infinite number of stick torrents
     // but we recommend the number is less than 20
@@ -124,7 +153,11 @@ async fn list_torrents(
     let len = all_torrents.len();
 
     let count = torrent_info_model::query_torrent_counts_by_tag(&client, &tags).await? + len as i64;
-    let mut ret = torrent_info_model::find_visible_torrent_by_tag(&client, &tags, (page * 20 - len) as i64).await?;
+    let mut ret = if sort_type == SortType::DESC {
+        torrent_info_model::find_visible_torrent_by_tag_desc(&client, &tags, (page * 20 - len) as i64, &sort_string).await?
+    } else {
+        torrent_info_model::find_visible_torrent_by_tag_asc(&client, &tags, (page * 20 - len) as i64, &sort_string).await?
+    };
     if data.freeonly {
         ret.retain(|t| t.free == true);
     }
@@ -139,6 +172,9 @@ struct SearchRequest {
     keywords: Vec<String>,
     page: Option<usize>,
     freeonly: bool,
+    sort: Option<Sort>,
+    #[serde(rename = "type")]
+    sort_type: Option<SortType>,
 }
 
 #[get("/search_torrents")]
@@ -149,10 +185,17 @@ async fn search_torrents(
     let query = req.uri().query().unwrap_or_default();
     let data: SearchRequest = serde_qs::from_str(query).map_err(error_string)?;
     let page = data.page.unwrap_or(0);
+    let sort = data.sort.unwrap_or(Sort::LastEdit);
+    let sort_type = data.sort_type.unwrap_or(SortType::DESC);
+    let sort_string = format!("{}", sort).to_ascii_lowercase();
 
     let ids = TORRENT_SEARCH_ENGINE.read().unwrap()
         .search(data.keywords);
-    let mut ret = torrent_info_model::find_visible_torrent_by_ids(&client, &ids, (page * 20) as i64).await?;
+    let mut ret = if sort_type == SortType::DESC {
+        torrent_info_model::find_visible_torrent_by_ids_desc(&client, &ids, (page * 20) as i64, &sort_string).await?
+    } else {
+        torrent_info_model::find_visible_torrent_by_ids_asc(&client, &ids, (page * 20) as i64, &sort_string).await?
+    };
     if data.freeonly {
         ret.retain(|t| t.free == true);
     }

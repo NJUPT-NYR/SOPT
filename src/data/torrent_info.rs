@@ -70,36 +70,98 @@ pub async fn find_stick_torrent(client: &sqlx::PgPool) -> SlimTorrentVecRet {
 }
 
 /// find visible torrent with definite tags that are not stick
-pub async fn find_visible_torrent_by_tag(client: &sqlx::PgPool, tags: &Vec<String>, page_offset: i64) -> SlimTorrentVecRet {
+pub async fn find_visible_torrent_by_tag_desc(client: &sqlx::PgPool, tags: &Vec<String>, page_offset: i64, sort_string: &str) -> SlimTorrentVecRet {
     // due to sqlx not support type cast of postgres
     Ok(sqlx::query_as_unchecked!(
         SlimTorrent,
-        "SELECT id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished FROM( \
-            SELECT ROW_NUMBER() OVER ( ORDER BY lastEdit DESC ) AS RowNum, torrent_info.*, torrent.length \
-            FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
-            WHERE visible = TRUE AND ($1::VARCHAR[] <@ tag) AND stick = FALSE \
-        ) AS RowConstrainedResult \
-        WHERE RowNum > $2 AND RowNum <= $2 + 20 \
-        ORDER BY RowNum;",
+        "SELECT torrent_info.id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished \
+        FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
+        WHERE visible = TRUE AND ($1::VARCHAR[] <@ tag) AND stick = FALSE \
+        ORDER BY CASE \
+                    WHEN $3 = 'title' THEN 2 \
+                    WHEN $3 = 'poster' THEN 3 \
+                    WHEN $3 = 'lastedit' THEN 5 \
+                    WHEN $3 = 'length' THEN 6 \
+                    WHEN $3 = 'downloading' THEN 8 \
+                    WHEN $3 = 'uploading' THEN 9 \
+                    WHEN $3 = 'finished' THEN 10 \
+                END DESC \
+        LIMIT 20 OFFSET $2;",
         tags,
-        page_offset
+        page_offset,
+        sort_string
         )
         .fetch_all(client)
         .await?)
 }
 
-pub async fn find_visible_torrent_by_ids(client: &sqlx::PgPool, ids: &Vec<i64>, page_offset: i64) -> SlimTorrentVecRet {
+pub async fn find_visible_torrent_by_tag_asc(client: &sqlx::PgPool, tags: &Vec<String>, page_offset: i64, sort_string: &str) -> SlimTorrentVecRet {
+    Ok(sqlx::query_as_unchecked!(
+        SlimTorrent,
+        "SELECT torrent_info.id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished \
+        FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
+        WHERE visible = TRUE AND ($1::VARCHAR[] <@ tag) AND stick = FALSE \
+        ORDER BY CASE \
+                    WHEN $3 = 'title' THEN 2 \
+                    WHEN $3 = 'poster' THEN 3 \
+                    WHEN $3 = 'lastedit' THEN 5 \
+                    WHEN $3 = 'length' THEN 6 \
+                    WHEN $3 = 'downloading' THEN 8 \
+                    WHEN $3 = 'uploading' THEN 9 \
+                    WHEN $3 = 'finished' THEN 10 \
+                END ASC \
+        LIMIT 20 OFFSET $2;",
+        tags,
+        page_offset,
+        sort_string
+        )
+        .fetch_all(client)
+        .await?)
+}
+
+pub async fn find_visible_torrent_by_ids_desc(client: &sqlx::PgPool, ids: &Vec<i64>, page_offset: i64, sort_string: &str) -> SlimTorrentVecRet {
     Ok(sqlx::query_as!(
         SlimTorrent,
-        "SELECT id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished FROM( \
-            SELECT ROW_NUMBER() OVER ( ORDER BY lastEdit DESC ) AS RowNum, torrent_info.*, torrent.length \
-            FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
-            WHERE visible = TRUE AND torrent_info.id = ANY($2) \
-        ) AS RowConstrainedResult \
-        WHERE RowNum > $1 AND RowNum <= $1 + 20 \
-        ORDER BY RowNum;",
+        "SELECT torrent_info.id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished \
+        FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
+        WHERE visible = TRUE AND torrent_info.id = ANY($1) \
+        ORDER BY CASE \
+                    WHEN $3 = 'title' THEN 2 \
+                    WHEN $3 = 'poster' THEN 3 \
+                    WHEN $3 = 'lastedit' THEN 5 \
+                    WHEN $3 = 'length' THEN 6 \
+                    WHEN $3 = 'downloading' THEN 8 \
+                    WHEN $3 = 'uploading' THEN 9 \
+                    WHEN $3 = 'finished' THEN 10 \
+                END DESC \
+        LIMIT 20 OFFSET $2;",
+        ids,
         page_offset,
-        ids
+        sort_string
+        )
+        .fetch_all(client)
+        .await?)
+}
+
+pub async fn find_visible_torrent_by_ids_asc(client: &sqlx::PgPool, ids: &Vec<i64>, page_offset: i64, sort_string: &str) -> SlimTorrentVecRet {
+    Ok(sqlx::query_as!(
+        SlimTorrent,
+        "SELECT torrent_info.id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished \
+        FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
+        WHERE visible = TRUE AND torrent_info.id = ANY($1) \
+        ORDER BY CASE \
+                    WHEN $3 = 'title' THEN 2 \
+                    WHEN $3 = 'poster' THEN 3 \
+                    WHEN $3 = 'lastedit' THEN 5 \
+                    WHEN $3 = 'length' THEN 6 \
+                    WHEN $3 = 'downloading' THEN 8 \
+                    WHEN $3 = 'uploading' THEN 9 \
+                    WHEN $3 = 'finished' THEN 10 \
+                END ASC \
+        LIMIT 20 OFFSET $2;",
+        ids,
+        page_offset,
+        sort_string
         )
         .fetch_all(client)
         .await?)
