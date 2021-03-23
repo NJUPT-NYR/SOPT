@@ -38,9 +38,13 @@ async fn initializing_search(client: &sqlx::PgPool) {
     }
 }
 
-// fn init_settings(db: &rocksdb::DB) {
-//     db.put("INVITE_CONSUME", 5000).unwrap();
-// }
+fn init_settings() {
+    use controller::ROCKSDB;
+
+    ROCKSDB.put("INVITE_CONSUME", 5000_f64.to_ne_bytes()).unwrap();
+    ROCKSDB.put("BAN_UPLOAD_RATIO", 0.3_f64.to_ne_bytes()).unwrap();
+    ROCKSDB.put("NEWBIE_TERM", 14_i64.to_ne_bytes()).unwrap();
+}
 
 #[actix_web::main]
 pub async fn sopt_main() -> std::io::Result<()> {
@@ -49,9 +53,7 @@ pub async fn sopt_main() -> std::io::Result<()> {
     dotenv().ok();
     println!("==========Initializing configurations==========");
     load_email_whitelist();
-    // let rocksdb = rocksdb::DB::open_default(&CONFIG.rocksdb_path)
-    //     .expect("unable to connect to rocksdb");
-    // init_settings(&rocksdb);
+    init_settings();
     println!("==========Initializing search engines==========");
     let pool = sqlx::PgPool::connect(&CONFIG.database_url)
         .await
@@ -63,7 +65,6 @@ pub async fn sopt_main() -> std::io::Result<()> {
         App::new()
             .wrap(middleware::Logger::default())
             .data(pool.clone())
-            // .data(rocksdb)
             .service(controller::api_service())
             .default_service(route().to(|| HttpResponse::NotFound().body("Not Found")))
     })

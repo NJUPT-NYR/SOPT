@@ -33,8 +33,9 @@ pub async fn update_torrent_info(client: &sqlx::PgPool, id: i64, title: &str, de
 pub async fn find_torrent_by_id_mini(client: &sqlx::PgPool, id: i64) -> MiniTorrentRet {
     sqlx::query_as!(
         MiniTorrent,
-        "SELECT poster, visible, free, tag FROM torrent_info \
-        WHERE id = $1;",
+        "SELECT poster, visible, free, tag, length \
+        FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
+        WHERE torrent_info.id = $1;",
         id
         )
         .fetch_all(client)
@@ -46,8 +47,9 @@ pub async fn find_torrent_by_id_mini(client: &sqlx::PgPool, id: i64) -> MiniTorr
 pub async fn make_torrent_visible(client: &sqlx::PgPool, ids: &Vec<i64>) -> MiniTorrentVecRet {
     Ok(sqlx::query_as!(
         MiniTorrent,
-        "UPDATE torrent_info SET visible = TRUE \
-        WHERE id = ANY($1) RETURNING poster, visible, free, tag;",
+        "UPDATE torrent_info SET visible = TRUE FROM torrent \
+        WHERE torrent_info.id = torrent.id AND torrent_info.id = ANY($1) \
+        RETURNING poster, visible, free, tag, length;",
         ids
         )
         .fetch_all(client)
@@ -92,7 +94,7 @@ pub async fn find_visible_torrent_by_ids(client: &sqlx::PgPool, ids: &Vec<i64>, 
         "SELECT id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished FROM( \
             SELECT ROW_NUMBER() OVER ( ORDER BY lastEdit DESC ) AS RowNum, torrent_info.*, torrent.length \
             FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
-            WHERE visible = TRUE AND stick = FALSE AND torrent_info.id = ANY($2) \
+            WHERE visible = TRUE AND torrent_info.id = ANY($2) \
         ) AS RowConstrainedResult \
         WHERE RowNum > $1 AND RowNum <= $1 + 20 \
         ORDER BY RowNum;",

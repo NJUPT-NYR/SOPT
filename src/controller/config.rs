@@ -1,7 +1,7 @@
-use std::sync::atomic::AtomicI64;
 use std::collections::HashSet;
 use lazy_static::lazy_static;
 use std::sync::RwLock;
+use crate::config::CONFIG;
 
 pub fn is_not_su(role: i64) -> bool {
     role & (1 << 63) == 0
@@ -26,5 +26,7 @@ lazy_static! {
     pub static ref ALLOWED_DOMAIN: RwLock<HashSet<String>> = RwLock::new(HashSet::new());
 }
 
-pub static INVITE_CONSUME: AtomicI64 = AtomicI64::new(5000);
-pub static BAN_UPLOAD_RATIO: f64 = 0.3;
+lazy_static! {
+    pub static ref ROCKSDB: rocksdb::DB = rocksdb::DB::open_default(&CONFIG.rocksdb_path)
+        .expect("unable to connect to rocksdb");
+}

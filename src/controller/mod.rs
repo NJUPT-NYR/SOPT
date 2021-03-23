@@ -7,13 +7,31 @@ mod tracker;
 
 use actix_web::{HttpResponse, *};
 use serde::Deserialize;
+use std::convert::TryInto;
 use crate::error::{Error, error_string};
 use crate::config::CONFIG;
 use crate::util::*;
 use crate::data::*;
 use crate::controller::config::*;
 use crate::search::TORRENT_SEARCH_ENGINE;
-pub use crate::controller::config::ALLOWED_DOMAIN;
+use crate::get_from_rocksdb;
+pub use crate::controller::config::{ALLOWED_DOMAIN, ROCKSDB};
+
+#[macro_export]
+macro_rules! get_from_rocksdb {
+    ($s:literal, $t:ty) => {
+        <$t>::from_ne_bytes(
+            ROCKSDB.get($s)
+                .map_err(error_string)?
+                .unwrap()
+                .as_slice()
+                .split_at(std::mem::size_of::<$t>())
+                .0
+                .try_into()
+                .unwrap()
+        )
+    };
+}
 
 /// A wrapper of Error so to reduce panic
 /// and make HttpError more smooth

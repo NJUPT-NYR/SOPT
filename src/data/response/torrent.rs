@@ -8,6 +8,9 @@ pub(crate) type FullTorrentRet = Result<FullTorrent, Error>;
 
 pub(crate) type TagVecRet = Result<Vec<Tag>, Error>;
 
+pub(crate) type TorrentStatusVecRet = Result<Vec<TorrentStatus>, Error>;
+pub(crate) type PersonalTorrentVecRet = Result<Vec<PersonalTorrent>, Error>;
+
 #[derive(Serialize, Debug, ToResponse)]
 pub struct TorrentId {
     pub id: i64,
@@ -20,6 +23,7 @@ pub struct MiniTorrent {
     pub visible: bool,
     pub free: bool,
     pub tag: Option<Vec<String>>,
+    pub length: i64,
 }
 
 #[derive(Serialize, Debug, ToResponse)]
@@ -62,4 +66,31 @@ pub struct FullTorrent {
 pub struct Tag {
     pub name: String,
     pub amount: i32,
+}
+
+#[derive(Serialize, Debug, ToResponse)]
+pub struct TorrentStatus {
+    pub tid: i64,
+    pub uid: i64,
+    pub status: i32,
+    pub upload: i64,
+    pub download: i64,
+    pub finished: bool,
+}
+
+#[derive(Serialize, Debug, ToResponse)]
+pub struct PersonalTorrent {
+    pub id: i64,
+    pub title: String,
+    pub length: i64,
+    pub upload: i64,
+    pub download: i64
+}
+
+#[derive(Serialize, Debug, ToResponse)]
+pub struct TorrentStatusByUser {
+    pub uploading: Vec<PersonalTorrent>,
+    pub downloading: Vec<PersonalTorrent>,
+    pub finished: Vec<PersonalTorrent>,
+    pub unfinished: Vec<PersonalTorrent>,
 }

@@ -32,6 +32,7 @@ pub struct Validation {
 
 #[derive(Debug)]
 pub struct MiniUser {
+    pub id: i64,
     pub registertime: DateTime<Utc>,
     pub upload: i64,
     pub download: i64,

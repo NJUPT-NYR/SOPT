@@ -2,7 +2,8 @@ use super::*;
 use crate::data::{user as user_model,
                   invitation as invitation_model,
                   user_info as user_info_model,
-                  rank as rank_model};
+                  rank as rank_model,
+                  torrent_status as torrent_status_model};
 
 static ALLOWED_AVATAR_EXTENSION: [&str; 4] = [
     "jpg",
@@ -187,8 +188,6 @@ async fn change_privacy(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    use std::convert::TryInto;
-
     let username = get_name_in_token(req)?;
     let level: user_info_model::Level = data.privacy.try_into()?;
 
@@ -216,7 +215,7 @@ async fn show_user(
     if username == data.username {
         Ok(HttpResponse::Ok().json(ret.to_json()))
     } else {
-        if ret.privacy > 0 && is_no_permission_to_users(claim.role) {
+        if ret.privacy == 1 && is_no_permission_to_users(claim.role) {
             Err(Error::NoPermission)
         } else {
             ret.email = "".to_string();
@@ -224,6 +223,29 @@ async fn show_user(
             Ok(HttpResponse::Ok().json(ret.to_json()))
         }
     }
+}
+
+#[get("/show_torrent_status")]
+async fn show_torrent_status(
+    web::Query(data): web::Query<UserRequest>,
+    req: HttpRequest,
+    client: web::Data<sqlx::PgPool>,
+) -> HttpResult {
+    let _claim = get_info_in_token(req)?;
+    let user = user_info_model::find_user_info_by_name_mini(&client, &data.username).await?;
+
+    let downloading = torrent_status_model::find_downloading_torrent(&client, user.id).await?;
+    let uploading = torrent_status_model::find_uploading_torrent(&client, user.id).await?;
+    let finished = torrent_status_model::find_finished_torrent(&client, user.id).await?;
+    let unfinished = torrent_status_model::find_unfinished_torrent(&client, user.id).await?;
+    let ret = TorrentStatusByUser {
+        uploading,
+        downloading,
+        finished,
+        unfinished,
+    };
+
+    Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
 #[derive(Deserialize, Debug)]
@@ -282,6 +304,7 @@ pub(crate) fn user_service() -> Scope {
         .service(upload_avatar)
         .service(change_privacy)
         .service(show_user)
+        .service(show_torrent_status)
         .service(web::scope("/auth")
             .service(reset_password)
             .service(reset_passkey)

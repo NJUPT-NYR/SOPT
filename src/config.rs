@@ -33,7 +33,7 @@ pub(crate) struct Config {
     pub database_url: String,
     pub announce_addr: String,
     pub smtp: SMTPAccount,
-    // pub rocksdb_path: String,
+    pub rocksdb_path: String,
 }
 
 impl Config {

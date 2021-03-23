@@ -48,9 +48,9 @@ base64 = "0.13.0"
 
 sopt-derive = { git = "https://github.com/NJUPT-NYR/SOPT-derive", branch = "master" }
 
-#[dependencies.rocksdb]
-#version = "0.15"
-#git = "https://github.com/hayesgm/rust-rocksdb"
+[dependencies.rocksdb]
+version = "0.15"
+git = "https://github.com/rust-rocksdb/rust-rocksdb"
 
 [[test]]
 name = "cucumber"

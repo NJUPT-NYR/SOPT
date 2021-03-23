@@ -8,7 +8,6 @@ use super::*;
 #[derive(Deserialize, Debug)]
 pub enum Level {
     Public = 0,
-    OnlyFriend,
     Hidden,
 }
 
@@ -18,7 +17,6 @@ impl TryFrom<i32> for Level {
     fn try_from(v: i32) -> Result<Self, Self::Error> {
         match v {
             x if x == Level::Public as i32 => Ok(Level::Public),
-            x if x == Level::OnlyFriend as i32 => Ok(Level::OnlyFriend),
             x if x == Level::Hidden as i32 => Ok(Level::Hidden),
             _ => Err(Error::OtherError("unknown privacy level".to_string())),
         }
@@ -28,7 +26,7 @@ impl TryFrom<i32> for Level {
 pub async fn find_user_info_by_name_mini(client: &sqlx::PgPool, username: &str) -> MiniUserRet {
     sqlx::query_as!(
         MiniUser,
-        "SELECT upload, download, registerTime FROM user_info \
+        "SELECT id, upload, download, registerTime FROM user_info \
         WHERE username = $1",
         username
         )
@@ -42,7 +40,7 @@ pub async fn update_io_by_id(client: &sqlx::PgPool, id: i64, upload: i64, downlo
     sqlx::query_as!(
         MiniUser,
         "UPDATE user_info SET upload = upload + $1, download = download + $2 \
-        WHERE id = $3 RETURNING upload, download, registerTime;",
+        WHERE id = $3 RETURNING id, upload, download, registerTime;",
         upload,
         download,
         id
@@ -141,6 +139,19 @@ pub async fn update_money_by_name(client: &sqlx::PgPool, username: &str, amount:
         WHERE username = $2;",
         amount,
         username
+        )
+        .execute(client)
+        .await?;
+
+    Ok(())
+}
+
+pub async fn update_money_by_id(client: &sqlx::PgPool, id: i64, amount: f64) -> Result<(), Error> {
+    sqlx::query!(
+        "UPDATE user_info SET money = money + $1 \
+        WHERE id = $2;",
+        amount,
+        id
         )
         .execute(client)
         .await?;

@@ -5,6 +5,7 @@ pub mod user_info;
 pub mod tag;
 pub mod torrent;
 pub mod rank;
+pub mod torrent_status;
 mod response;
 
 use serde::{Serialize, Deserialize};
@@ -13,7 +14,7 @@ use sopt_derive::ToResponse;
 use std::collections::HashSet;
 use crate::error::Error;
 use response::*;
-pub use response::Rank;
+pub use response::{Rank, TorrentStatusByUser};
 
 /// General Response structure used to
 /// communicate with frontends.

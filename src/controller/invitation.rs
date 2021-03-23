@@ -24,8 +24,8 @@ async fn send_invitation(
     }
 
     let code = generate_invitation_code();
-    let num = INVITE_CONSUME.load(std::sync::atomic::Ordering::Relaxed);
-    user_info_model::update_money_by_name(&client, &username, num as f64).await?;
+    let num = get_from_rocksdb!("INVITE_CONSUME", f64);
+    user_info_model::update_money_by_name(&client, &username, num).await?;
     let ret = invitation_model::add_invitation_code(&client, &username, &code, &data.address).await?;
     // we don't really care about the result of send mail
     std::thread::spawn(move || {
