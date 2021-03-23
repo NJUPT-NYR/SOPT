@@ -32,7 +32,6 @@ impl SearchEngine {
     }
 
     pub fn search(&self, patterns: Vec<String>) -> Vec<i64> {
-        // TODO: show suggestions on typo
         let patterns = Self::tokenize(patterns);
         let mut scores: HashMap<&str, f64> = HashMap::new();
         for pattern in patterns {

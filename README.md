@@ -16,7 +16,10 @@ Next generation private tracker framework.
 
 2. Edit `filtered-email` with your own email whitelist.
 
-3. Run following commands in terminal:
+3. Edit `rank.sql` to set your own ranks
+   (you can also update later via control panel)
+
+4. Run following commands in terminal:
 
 ```bash
 createdb sopt
@@ -60,28 +63,6 @@ Also, most of the codes are documented.
 ## API
 
 [API Docs](https://github.com/NJUPT-NYR/SOPT/blob/master/API.md)
-
-## Roadmap
-
-- [x] User
-  - [x] Register
-  - [x] Login
-  - [x] Information update
-  - [x] Invite
-  - [x] Rank
-- [x] Torrent
-  - [x] Add a post
-  - [x] Generate with passkey
-  - [x] Sync with tracker
-  - [x] Tags filter
-- [x] Admin
-  - [x] User management
-  - [x] Site general setting
-  - [x] Torrent review
-- [ ] Anti-Cheating
-  - [ ] IP limitation
-  - [ ] Monitor
-- [x] Search  
 
 ## Contribution
 SOPT is now under active development. Any contribution is welcomed.
