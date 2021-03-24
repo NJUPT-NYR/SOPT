@@ -2,6 +2,7 @@ name: CI
 on: [push]
 jobs:
   testing:
+    name: Testing and Clippy
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -31,16 +32,4 @@ jobs:
       - run: sqlx migrate run
       - run: PGPASSWORD=password psql -h localhost -U postgres -d sopt -f rank.sql
       - run: cargo test
-
-  clippy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-
-      - run: cp .env.example .env
-      - run: cargo install sqlx-cli
-      - run: sqlx migrate run
       - run: cargo clippy -- -D clippy::all
