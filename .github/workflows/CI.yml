@@ -12,6 +12,7 @@ jobs:
           POSTGRES_PASSWORD: password
         ports:
           - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
       redis:
         image: redis:buster
@@ -28,5 +29,5 @@ jobs:
       - run: cp .env.example .env
       - run: cargo install sqlx-cli
       - run: sqlx migrate run
-      - run: psql -h postgres -U postgres -d sopt -f rank.sql
+      - run: psql -h localhost -U postgres -d sopt -f rank.sql
       - run: cargo test

@@ -68,7 +68,7 @@ pub struct Tag {
     pub amount: i32,
 }
 
-#[derive(Serialize, Debug, ToResponse)]
+#[derive(Debug)]
 pub struct TorrentStatus {
     pub tid: i64,
     pub uid: i64,

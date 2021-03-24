@@ -18,17 +18,15 @@ struct AnnouncePacket {
     tid: i64,
     download: i64,
     upload: i64,
-    action: Action,
+    action: Option<Action>,
 }
 
 #[get("/get_announce")]
 async fn get_announce(
     web::Query(mut data): web::Query<AnnouncePacket>,
-    // req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     use chrono::{Utc, Duration};
-    // TODO: identity check
 
     let torrent = torrent_info_model::find_torrent_by_id_mini(&client, data.tid).await?;
     if torrent.free {
@@ -53,14 +51,17 @@ async fn get_announce(
         user_model::delete_role_by_id(&client, data.uid, 0).await?;
     }
 
-    torrent_status_model::update_or_add_status(&client, data.tid, data.uid, data.action.clone() as i32, data.upload, data.download).await?;
-    match data.action {
-        Action::Start => torrent_info_model::update_torrent_status(&client, data.tid, 1, 1, 0).await?,
-        Action::Complete => {
-            torrent_info_model::update_torrent_status(&client, data.tid, -1, 0, 1).await?;
-            torrent_status_model::update_finished_by_tid_uid(&client, data.tid, data.uid).await?;
-        },
-        Action::Stop => torrent_info_model::update_torrent_status(&client, data.tid, -1, -1, 0).await?,
+    let status = data.action.clone().unwrap_or(Action::Start) as i32;
+    torrent_status_model::update_or_add_status(&client, data.tid, data.uid, status, data.upload, data.download).await?;
+    if data.action.is_some() {
+        match data.action.unwrap() {
+            Action::Start => torrent_info_model::update_torrent_status(&client, data.tid, 1, 1, 0).await?,
+            Action::Complete => {
+                torrent_info_model::update_torrent_status(&client, data.tid, -1, 0, 1).await?;
+                torrent_status_model::update_finished_by_tid_uid(&client, data.tid, data.uid).await?;
+            },
+            Action::Stop => torrent_info_model::update_torrent_status(&client, data.tid, -1, -1, 0).await?,
+        }
     }
 
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))

@@ -126,10 +126,9 @@ async fn login(
 #[derive(Deserialize, Debug)]
 struct InfoWrapper {
     info: serde_json::Value,
+    privacy: i32,
 }
 
-/// update user defined json fields
-/// replace all without any check
 #[post("/personal_info_update")]
 async fn personal_info_update(
     data: web::Json<InfoWrapper>,
@@ -137,11 +136,13 @@ async fn personal_info_update(
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let username = get_name_in_token(req)?;
+    let level: user_info_model::Level = data.privacy.try_into()?;
+
+    user_info_model::update_privacy_by_name(&client, &username, level).await?;
     user_info_model::update_other_by_name(&client, &username, &data.info).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
-/// upload avatar and b64encode it into database
 #[post("/upload_avatar")]
 async fn upload_avatar(
     mut payload: actix_multipart::Multipart,
@@ -158,7 +159,7 @@ async fn upload_avatar(
         let cleaned_name = sanitize_filename::sanitize(&filename);
 
         let suffix = cleaned_name.rfind('.').ok_or(Error::OtherError("missing filename extension".to_string()))?;
-        let ext = cleaned_name[suffix+1..].to_ascii_lowercase();
+        let ext = cleaned_name[suffix + 1..].to_ascii_lowercase();
         if ALLOWED_AVATAR_EXTENSION.iter().find(|x| x == &&ext.as_str()).is_none() {
             return Ok(HttpResponse::UnsupportedMediaType().json(GeneralResponse::from_err("must be jpg or png or webp")))
         }
@@ -176,32 +177,10 @@ async fn upload_avatar(
 }
 
 #[derive(Deserialize, Debug)]
-struct PrivacyLevel {
-    privacy: i32,
-}
-
-/// change privacy level, by default it is 0
-/// which means everyone can see your profile
-#[get("change_privacy")]
-async fn change_privacy(
-    web::Query(data): web::Query<PrivacyLevel>,
-    req: HttpRequest,
-    client: web::Data<sqlx::PgPool>,
-) -> HttpResult {
-    let username = get_name_in_token(req)?;
-    let level: user_info_model::Level = data.privacy.try_into()?;
-
-    user_info_model::update_privacy_by_name(&client, &username, level).await?;
-    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
-}
-
-#[derive(Deserialize, Debug)]
 struct UserRequest {
     username: String,
 }
 
-/// show detail of one user
-/// if login, you can see your account info too
 #[get("show_user")]
 async fn show_user(
     web::Query(data): web::Query<UserRequest>,
@@ -218,7 +197,6 @@ async fn show_user(
         if ret.privacy == 1 && is_no_permission_to_users(claim.role) {
             Err(Error::NoPermission)
         } else {
-            ret.email = "".to_string();
             ret.passkey = "".to_string();
             Ok(HttpResponse::Ok().json(ret.to_json()))
         }
@@ -302,7 +280,6 @@ pub(crate) fn user_service() -> Scope {
         .service(login)
         .service(personal_info_update)
         .service(upload_avatar)
-        .service(change_privacy)
         .service(show_user)
         .service(show_torrent_status)
         .service(web::scope("/auth")

@@ -53,7 +53,7 @@ pub async fn check_existence(client: &sqlx::PgPool, email: &str, username: &str)
     let ret: Vec<Account> = sqlx::query_as!(
         Account,
         "SELECT id, email, username, passkey, role FROM users \
-        WHERE email = $1 OR username = $2;",
+        WHERE email = $1 OR upper(username) = upper($2);",
         email,
         username
         )

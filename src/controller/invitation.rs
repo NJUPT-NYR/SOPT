@@ -9,8 +9,6 @@ struct Message {
     body: String,
 }
 
-/// consume money and send a mail
-/// with another thread.
 #[post("/send_invitation")]
 async fn send_invitation(
     data: web::Json<Message>,

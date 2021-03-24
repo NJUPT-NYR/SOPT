@@ -124,7 +124,6 @@ struct GroupAward {
     amount: f64,
 }
 
-/// award money(can also be minus) to some users
 #[post("/group_awards")]
 async fn group_awards(
     mut data: web::Json<GroupAward>,
@@ -149,8 +148,6 @@ struct PermissionRequest {
     id: i64,
 }
 
-/// change someone's role
-/// only if you are super user
 #[post("/change_permission")]
 async fn change_permission(
     data: web::Json<PermissionRequest>,
@@ -190,9 +187,6 @@ struct EmailRequest {
     delete: Vec<String>,
 }
 
-/// update current email list
-/// it is strongly discouraged since maybe block
-/// you can reload filtered email via reboot server
 #[post("/update_email_whitelist")]
 async fn update_email_whitelist(
     data: web::Json<EmailRequest>,
@@ -203,7 +197,6 @@ async fn update_email_whitelist(
         return Err(Error::NoPermission)
     }
 
-    // FIXME: maybe block
     let mut w = ALLOWED_DOMAIN.write().unwrap();
     data.add.iter().for_each(|s| { w.insert(String::from(s)); });
     data.delete.iter().for_each(|s| { w.take(s); });

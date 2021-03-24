@@ -11,8 +11,6 @@ struct TorrentPost {
     tags: Option<Vec<String>>,
 }
 
-/// add a post for definite torrent
-/// by default this post is invisible
 #[post("/add_torrent")]
 async fn add_torrent(
     data: web::Json<TorrentPost>,
@@ -86,7 +84,6 @@ struct TagRequest {
     num: Option<usize>,
 }
 
-/// Get hottest tags by amount, default number is 10
 #[get("/hot_tags")]
 async fn hot_tags(
     req: HttpRequest,
@@ -133,7 +130,6 @@ struct ListRequest {
     sort_type: Option<SortType>,
 }
 
-/// list torrent with tags and pages
 #[get("/list_torrents")]
 async fn list_torrents(
     req: HttpRequest,
@@ -147,8 +143,6 @@ async fn list_torrents(
     let sort_type = data.sort_type.unwrap_or(SortType::DESC);
     let sort_string = format!("{}", sort).to_ascii_lowercase();
 
-    // by default you can add infinite number of stick torrents
-    // but we recommend the number is less than 20
     let mut all_torrents = torrent_info_model::find_stick_torrent(&client).await?;
     let len = all_torrents.len();
 
