@@ -31,11 +31,9 @@ async fn add_user(
 
     match parse_email(&user.email) {
         Some(_email) => {
-            if user.invite_code.is_none() {
-                #[cfg(feature = "email-restriction")]
-                if ALLOWED_DOMAIN.read().unwrap().get(&_email.domain).is_some() {
-                    allowed = true;
-                }
+            #[cfg(feature = "email-restriction")]
+            if user.invite_code.is_none() && ALLOWED_DOMAIN.read().unwrap().get(&_email.domain).is_some() {
+                allowed = true;
             }
         },
         None => return Ok(HttpResponse::BadRequest().json(GeneralResponse::from_err("invalid email address"))),

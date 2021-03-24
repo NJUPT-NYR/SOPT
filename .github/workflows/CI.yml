@@ -33,7 +33,6 @@ jobs:
       - run: cargo test
 
   clippy:
-    name: Clippy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -41,4 +40,7 @@ jobs:
         with:
           toolchain: stable
 
+      - run: cp .env.example .env
+      - run: cargo install sqlx-cli
+      - run: sqlx migrate run
       - run: cargo clippy -- -D clippy::all
