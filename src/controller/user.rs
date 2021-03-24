@@ -31,7 +31,7 @@ async fn add_user(
 
     match parse_email(&user.email) {
         Some(_email) => {
-            if let None = user.invite_code {
+            if user.invite_code.is_none() {
                 #[cfg(feature = "email-restriction")]
                 if ALLOWED_DOMAIN.read().unwrap().get(&_email.domain).is_some() {
                     allowed = true;
@@ -154,11 +154,11 @@ async fn upload_avatar(
     let username = get_name_in_token(req)?;
 
     if let Ok(Some(mut file)) = payload.try_next().await {
-        let content_type = file.content_disposition().ok_or(Error::OtherError("incomplete file".to_string()))?;
-        let filename = content_type.get_filename().ok_or("incomplete file".to_string())?;
+        let content_type = file.content_disposition().ok_or_else(|| Error::OtherError("incomplete file".to_string()))?;
+        let filename = content_type.get_filename().ok_or_else(|| "incomplete file".to_string())?;
         let cleaned_name = sanitize_filename::sanitize(&filename);
 
-        let suffix = cleaned_name.rfind('.').ok_or(Error::OtherError("missing filename extension".to_string()))?;
+        let suffix = cleaned_name.rfind('.').ok_or_else(|| Error::OtherError("missing filename extension".to_string()))?;
         let ext = cleaned_name[suffix + 1..].to_ascii_lowercase();
         if ALLOWED_AVATAR_EXTENSION.iter().find(|x| x == &&ext.as_str()).is_none() {
             return Ok(HttpResponse::UnsupportedMediaType().json(GeneralResponse::from_err("must be jpg or png or webp")))
@@ -187,19 +187,17 @@ async fn show_user(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
+    let claim = get_info_in_token(&req)?;
     let username = claim.sub;
 
     let mut ret = user_info_model::find_user_info_by_name(&client, &data.username).await?;
     if username == data.username {
         Ok(HttpResponse::Ok().json(ret.to_json()))
+    } else if ret.privacy == 1 && is_no_permission_to_users(claim.role) {
+        Err(Error::NoPermission)
     } else {
-        if ret.privacy == 1 && is_no_permission_to_users(claim.role) {
-            Err(Error::NoPermission)
-        } else {
-            ret.passkey = "".to_string();
-            Ok(HttpResponse::Ok().json(ret.to_json()))
-        }
+        ret.passkey = "".to_string();
+        Ok(HttpResponse::Ok().json(ret.to_json()))
     }
 }
 
@@ -209,7 +207,7 @@ async fn show_torrent_status(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let _claim = get_info_in_token(req)?;
+    let _claim = get_info_in_token(&req)?;
     let user = user_info_model::find_user_info_by_name_mini(&client, &data.username).await?;
 
     let downloading = torrent_status_model::find_downloading_torrent(&client, user.id).await?;
@@ -264,7 +262,7 @@ async fn transfer_money(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
+    let claim = get_info_in_token(&req)?;
     let username = claim.sub;
     if is_not_ordinary_user(claim.role) {
         return Err(Error::NoPermission)

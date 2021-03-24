@@ -120,7 +120,7 @@ pub async fn transfer_money_by_name(client: &sqlx::PgPool, from: &str, to: &str,
     Ok(())
 }
 
-pub async fn award_money_by_id(client: &sqlx::PgPool, ids: &Vec<i64>, amount: f64) -> Result<(), Error> {
+pub async fn award_money_by_id(client: &sqlx::PgPool, ids: &[i64], amount: f64) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE user_info SET money = money + $1 \
         WHERE id = ANY($2);",

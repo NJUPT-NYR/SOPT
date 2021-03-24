@@ -15,7 +15,7 @@ async fn send_invitation(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
+    let claim = get_info_in_token(&req)?;
     let username = claim.sub;
     if is_not_ordinary_user(claim.role) || cannot_invite(claim.role) {
         return Err(Error::NoPermission)

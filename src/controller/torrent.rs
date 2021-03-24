@@ -17,7 +17,7 @@ async fn add_torrent(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
+    let claim = get_info_in_token(&req)?;
     let username = claim.sub;
     if is_not_ordinary_user(claim.role) {
         return Err(Error::NoPermission)
@@ -48,7 +48,7 @@ async fn update_torrent(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
+    let claim = get_info_in_token(&req)?;
     let username = claim.sub;
 
     let old_torrent = torrent_info_model::find_torrent_by_id_mini(&client, data.id).await?;
@@ -110,8 +110,8 @@ enum Sort {
 
 #[derive(Deserialize, Debug, PartialEq)]
 enum SortType {
-    ASC,
-    DESC,
+    Asc,
+    Desc,
 }
 
 impl std::fmt::Display for Sort {
@@ -140,20 +140,20 @@ async fn list_torrents(
     let tags = data.tags.unwrap_or_default();
     let page = data.page.unwrap_or(0);
     let sort = data.sort.unwrap_or(Sort::LastEdit);
-    let sort_type = data.sort_type.unwrap_or(SortType::DESC);
+    let sort_type = data.sort_type.unwrap_or(SortType::Desc);
     let sort_string = format!("{}", sort).to_ascii_lowercase();
 
     let mut all_torrents = torrent_info_model::find_stick_torrent(&client).await?;
     let len = all_torrents.len();
 
     let count = torrent_info_model::query_torrent_counts_by_tag(&client, &tags).await? + len as i64;
-    let mut ret = if sort_type == SortType::DESC {
+    let mut ret = if sort_type == SortType::Desc {
         torrent_info_model::find_visible_torrent_by_tag_desc(&client, &tags, (page * 20 - len) as i64, &sort_string).await?
     } else {
         torrent_info_model::find_visible_torrent_by_tag_asc(&client, &tags, (page * 20 - len) as i64, &sort_string).await?
     };
     if data.freeonly {
-        ret.retain(|t| t.free == true);
+        ret.retain(|t| t.free);
     }
 
     all_torrents.append(&mut ret);
@@ -180,18 +180,18 @@ async fn search_torrents(
     let data: SearchRequest = serde_qs::from_str(query).map_err(error_string)?;
     let page = data.page.unwrap_or(0);
     let sort = data.sort.unwrap_or(Sort::LastEdit);
-    let sort_type = data.sort_type.unwrap_or(SortType::DESC);
+    let sort_type = data.sort_type.unwrap_or(SortType::Desc);
     let sort_string = format!("{}", sort).to_ascii_lowercase();
 
     let ids = TORRENT_SEARCH_ENGINE.read().unwrap()
         .search(data.keywords);
-    let mut ret = if sort_type == SortType::DESC {
+    let mut ret = if sort_type == SortType::Desc {
         torrent_info_model::find_visible_torrent_by_ids_desc(&client, &ids, (page * 20) as i64, &sort_string).await?
     } else {
         torrent_info_model::find_visible_torrent_by_ids_asc(&client, &ids, (page * 20) as i64, &sort_string).await?
     };
     if data.freeonly {
-        ret.retain(|t| t.free == true);
+        ret.retain(|t| t.free);
     }
 
     Ok(HttpResponse::Ok().json(ret.to_json()))
@@ -217,14 +217,14 @@ async fn upload_torrent(
     use std::str::FromStr;
     use std::collections::HashMap;
 
-    let claim = get_info_in_token(req)?;
+    let claim = get_info_in_token(&req)?;
     let username = claim.sub;
     let mut parsed = None;
     let mut hash_map = HashMap::new();
 
     while let Ok(Some(mut file)) = payload.try_next().await {
-        let content_type = file.content_disposition().ok_or(Error::OtherError("incomplete file".to_string()))?;
-        let name = content_type.get_name().ok_or("incomplete file".to_string())?;
+        let content_type = file.content_disposition().ok_or_else(|| Error::OtherError("incomplete file".to_string()))?;
+        let name = content_type.get_name().ok_or_else(|| "incomplete file".to_string())?;
         let mut buf: Vec<u8> = vec![];
         while let Some(chunk) = file.next().await {
             let data = chunk.unwrap();
@@ -240,7 +240,7 @@ async fn upload_torrent(
     if parsed.is_none() {
         return Ok(HttpResponse::BadRequest().json(GeneralResponse::from_err("missing torrent file")))
     }
-    let id_string = hash_map.get("id").ok_or(Error::OtherError("missing id field".to_string()))?;
+    let id_string = hash_map.get("id").ok_or_else(||Error::OtherError("missing id field".to_string()))?;
     let id = i64::from_str(id_string).map_err(error_string)?;
     let poster = torrent_info_model::find_torrent_by_id_mini(&client, id).await?.poster;
     if poster != username && is_no_permission_to_torrents(claim.role) {
@@ -265,7 +265,7 @@ async fn show_torrent(
 ) -> HttpResult {
     let ret = torrent_info_model::find_torrent_by_id(&client, data.id).await?;
     if !ret.visible {
-        let claim = get_info_in_token(req)?;
+        let claim = get_info_in_token(&req)?;
         let username = claim.sub;
         if !ret.poster.eq(&username) && is_no_permission_to_torrents(claim.role) {
             return Err(Error::NoPermission)
@@ -281,7 +281,7 @@ async fn get_torrent(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
+    let claim = get_info_in_token(&req)?;
     let username = claim.sub;
     if is_not_ordinary_user(claim.role) {
         return Err(Error::NoPermission)

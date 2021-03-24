@@ -1,11 +1,22 @@
 [package]
 name = "sopt"
 version = "0.1.0"
-authors = ["Brethland Yang <brethland@gmail.com>"]
+authors = [
+            "Brethland Yang <brethland@gmail.com>",
+            "CattChen",
+            "Five Qin"
+          ]
+description = "Next generation private tracker framework"
 edition = "2018"
+repository = "https://github.com/njupt-nyr/sopt/"
+license = "MIT OR Apache-2.0"
 
 [lib]
 name = "sopt"
+
+[[test]]
+name = "cucumber"
+harness = false
 
 [features]
 default = ["email-restriction"]
@@ -16,45 +27,37 @@ email-restriction = []
 actix-web = "3.3.2"
 actix-multipart = "0.3.0"
 sqlx = { version = "0.4.1", features = [ "postgres", "runtime-actix-native-tls", "chrono", "json" ] }
+rocksdb = { git = "https://github.com/rust-rocksdb/rust-rocksdb" }
 
 #serde related
-serde = { version = "^1.0", features = ["derive"] }
+serde = { version = "*", features = [ "derive" ] }
 serde_bencode = "*"
 serde_json = "*"
 serde_bytes = "*"
-serde_qs = "0.8.2"
+serde_qs = "*"
 
 # utils
 futures = "0.3.13"
-dotenv = "0.15.0"
-config = "0.10.1"
+dotenv = "*"
+config = "*"
 env_logger = "*"
-pest = "^2.1.3"
-pest_derive = "^2.1.0"
+pest = "*"
+pest_derive = "*"
 lettre = "0.10.0-alpha.4"
-hex = "0.4.2"
-sanitize-filename = "0.3.0"
-chrono = { version = "0.4.19", features = ["serde"] }
+hex = "*"
+sanitize-filename = "*"
+chrono = { version = "0.4.19", features = [ "serde" ] }
 jsonwebtoken = "7"
 lazy_static = "*"
-strsim = "0.10.0"
+strsim = "*"
+sopt-derive = { git = "https://github.com/NJUPT-NYR/SOPT-derive", branch = "master" }
 
 # crypto related
 sha2 = "0.9"
 sha-1 = "0.9"
 rand = "0.8.3"
 rust-argon2 = "0.8"
-base64 = "0.13.0"
-
-sopt-derive = { git = "https://github.com/NJUPT-NYR/SOPT-derive", branch = "master" }
-
-[dependencies.rocksdb]
-version = "0.15"
-git = "https://github.com/rust-rocksdb/rust-rocksdb"
-
-[[test]]
-name = "cucumber"
-harness = false
+base64 = "*"
 
 [dev-dependencies]
 reqwest = { version = "^0.10", features = [ "json" ] }

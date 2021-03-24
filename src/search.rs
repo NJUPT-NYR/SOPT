@@ -24,7 +24,7 @@ impl SearchEngine {
 
     pub fn insert(&mut self, id: i64, tokens: Vec<String>) {
         self.delete(id);
-        let tokens = Self::tokenize(tokens);
+        let tokens = Self::tokenize(&tokens);
         for token in tokens.clone() {
             self.reverse.entry(token).or_insert_with(|| Vec::with_capacity(1)).push(id);
         }
@@ -32,7 +32,7 @@ impl SearchEngine {
     }
 
     pub fn search(&self, patterns: Vec<String>) -> Vec<i64> {
-        let patterns = Self::tokenize(patterns);
+        let patterns = Self::tokenize(&patterns);
         let mut scores: HashMap<&str, f64> = HashMap::new();
         for pattern in patterns {
             for token in self.reverse.keys() {
@@ -66,14 +66,14 @@ impl SearchEngine {
         self.forward.remove(&id);
     }
 
-    fn tokenize(tokens: Vec<String>) -> Vec<String> {
+    fn tokenize(tokens: &[String]) -> Vec<String> {
         let mut ret: Vec<String> = tokens.iter()
             .flat_map(|token| token.split_ascii_whitespace())
             .map(|token| token.to_string()).collect();
 
         ret = ret.iter()
-            .flat_map(|token| token.split_terminator("["))
-            .flat_map(|token| token.split_terminator("]"))
+            .flat_map(|token| token.split_terminator('['))
+            .flat_map(|token| token.split_terminator(']'))
             .map(|token| token.to_string())
             .collect();
 

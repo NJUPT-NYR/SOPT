@@ -111,7 +111,7 @@ pub fn send_mail(
     let mut retry_count = 5;
 
     while let Err(err) = client.send(&mail) {
-        retry_count = retry_count - 1;
+        retry_count -= 1;
         // retry after 1 seconds
         sleep(std::time::Duration::from_secs(1));
         if retry_count == 0 {
@@ -136,7 +136,7 @@ pub fn generate_invitation_code() -> String {
 
     // is it proper to add a timestamp
     // maybe easier to check expiration
-    format!("{}_{}", rand_string, Utc::now().timestamp()).to_string()
+    format!("{}_{}", rand_string, Utc::now().timestamp())
 }
 
 use crate::data::Claim;

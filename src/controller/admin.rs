@@ -10,7 +10,7 @@ async fn show_invisible_torrents(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
+    let claim = get_info_in_token(&req)?;
     if is_no_permission_to_torrents(claim.role) {
         return Err(Error::NoPermission)
     }
@@ -29,7 +29,7 @@ async fn accept_torrents(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
+    let claim = get_info_in_token(&req)?;
     if is_no_permission_to_torrents(claim.role) {
         return Err(Error::NoPermission)
     }
@@ -49,7 +49,7 @@ async fn stick_torrents(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
+    let claim = get_info_in_token(&req)?;
     if is_no_permission_to_torrents(claim.role) {
         return Err(Error::NoPermission)
     }
@@ -63,7 +63,7 @@ async fn free_torrents(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
+    let claim = get_info_in_token(&req)?;
     if is_no_permission_to_torrents(claim.role) {
         return Err(Error::NoPermission)
     }
@@ -83,7 +83,7 @@ async fn ban_user(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
+    let claim = get_info_in_token(&req)?;
     if is_no_permission_to_users(claim.role) {
         return Err(Error::NoPermission)
     }
@@ -97,7 +97,7 @@ async fn unban_user(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
+    let claim = get_info_in_token(&req)?;
     if is_no_permission_to_users(claim.role) {
         return Err(Error::NoPermission)
     }
@@ -110,7 +110,7 @@ async fn list_banned_user(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
+    let claim = get_info_in_token(&req)?;
     if is_no_permission_to_users(claim.role) {
         return Err(Error::NoPermission)
     }
@@ -130,11 +130,11 @@ async fn group_awards(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
+    let claim = get_info_in_token(&req)?;
     if is_no_permission_to_users(claim.role) {
         return Err(Error::NoPermission)
     }
-    data.ids.sort();
+    data.ids.sort_unstable();
     data.ids.dedup();
 
     user_info_model::award_money_by_id(&client, &data.ids, data.amount).await?;
@@ -154,7 +154,7 @@ async fn change_permission(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
+    let claim = get_info_in_token(&req)?;
     if is_not_su(claim.role) {
         return Err(Error::NoPermission)
     }
@@ -172,7 +172,7 @@ async fn change_permission(
 async fn get_email_whitelist(
     req: HttpRequest,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
+    let claim = get_info_in_token(&req)?;
     if is_no_permission_to_site(claim.role) {
         return Err(Error::NoPermission)
     }
@@ -192,7 +192,7 @@ async fn update_email_whitelist(
     data: web::Json<EmailRequest>,
     req: HttpRequest,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
+    let claim = get_info_in_token(&req)?;
     if is_no_permission_to_site(claim.role) {
         return Err(Error::NoPermission)
     }
@@ -208,7 +208,7 @@ async fn get_rank(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
+    let claim = get_info_in_token(&req)?;
     if is_no_permission_to_site(claim.role) {
         return Err(Error::NoPermission)
     }
@@ -223,7 +223,7 @@ async fn update_rank(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let claim = get_info_in_token(req)?;
+    let claim = get_info_in_token(&req)?;
     if is_no_permission_to_site(claim.role) {
         return Err(Error::NoPermission)
     }

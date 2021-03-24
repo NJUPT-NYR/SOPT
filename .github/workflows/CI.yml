@@ -29,5 +29,16 @@ jobs:
       - run: cp .env.example .env
       - run: cargo install sqlx-cli
       - run: sqlx migrate run
-      - run: psql -h localhost -U postgres -d sopt -f rank.sql
+      - run: PGPASSWORD=password psql -h localhost -U postgres -d sopt -f rank.sql
       - run: cargo test
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - run: cargo clippy -- -D clippy::all

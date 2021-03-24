@@ -38,7 +38,7 @@ macro_rules! get_from_rocksdb {
 type HttpResult = Result<HttpResponse, Error>;
 
 /// get username in jwt token
-fn get_info_in_token(req: HttpRequest) -> Result<Claim, Error> {
+fn get_info_in_token(req: &HttpRequest) -> Result<Claim, Error> {
     let auth = req.headers().get("Authorization");
     if auth.is_none() {
         return Err(Error::AuthError)
@@ -47,12 +47,12 @@ fn get_info_in_token(req: HttpRequest) -> Result<Claim, Error> {
     let token = data[1].trim();
 
     let secret = CONFIG.secret_key.as_bytes();
-    Ok(decode_and_verify_jwt(token, secret)?)
+    decode_and_verify_jwt(token, secret)
 }
 
 /// since most of cases are the need of username
 fn get_name_in_token(req: HttpRequest) -> Result<String, Error> {
-    Ok(get_info_in_token(req)?.sub)
+    Ok(get_info_in_token(&req)?.sub)
 }
 
 pub fn api_service() -> Scope {

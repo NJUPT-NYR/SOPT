@@ -493,8 +493,8 @@ enum Sort {
 }
 
 enum SortType {
-    ASC,
-    DESC,
+    Asc,
+    Desc,
 }
 ```
 
@@ -509,7 +509,7 @@ enum SortType {
 **Example**
 
 ```
-https://localhost:8000/torrent/list_torrents?page=0&tags[]=电影&tags[]=新浪潮&freeonly=false&sort=Uploading&type=DESC
+https://localhost:8000/torrent/list_torrents?page=0&tags[]=电影&tags[]=新浪潮&freeonly=false&sort=Uploading&type=Desc
 ```
 
 **Response**
@@ -522,8 +522,8 @@ List torrents with options.
 1. `page` : control the pagination, we can now display 20 torrents in a page.
 2. `tags` : arbitrary tags filtering the torrents
 3. `freeonly`: only show free torrents
-4. `sort`: Sort torrents with fields supplied
-5. `type`: increment or decrement
+4. `sort`: Sort torrents with fields supplied, default LastEdit
+5. `type`: increment or decrement, default Desc
 
 Stick torrents will always appear at first.
 
@@ -543,8 +543,8 @@ enum Sort {
 }
 
 enum SortType {
-    ASC,
-    DESC,
+    Asc,
+    Desc,
 }
 ```
 
@@ -559,7 +559,7 @@ enum SortType {
 **Example**
 
 ```
-https://localhost:8000/torrent/search_torrents?page=0&keywords[]=回转企鹅罐&freeonly=false&sort=Uploading&type=DESC
+https://localhost:8000/torrent/search_torrents?page=0&keywords[]=回转企鹅罐&freeonly=false&sort=Uploading&type=Desc
 ```
 
 **Response**
@@ -572,8 +572,8 @@ Search torrents with options.
 1. `page` : control the pagination, we can now display 20 torrents in a page.
 2. `keywords` : arbitrary keywords, just do what you do on Google.
 3. `freeonly`: only show free torrents
-4. `sort`: Sort torrents with fields supplied
-5. `type`: increment or decrement
+4. `sort`: Sort torrents with fields supplied, default LastEdit
+5. `type`: increment or decrement, default Desc
 
 ### /api/torrent/show_torrent
 **Type**: GET

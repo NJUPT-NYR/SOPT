@@ -44,7 +44,7 @@ pub async fn find_torrent_by_id_mini(client: &sqlx::PgPool, id: i64) -> MiniTorr
         .ok_or(Error::NotFound)
 }
 
-pub async fn make_torrent_visible(client: &sqlx::PgPool, ids: &Vec<i64>) -> MiniTorrentVecRet {
+pub async fn make_torrent_visible(client: &sqlx::PgPool, ids: &[i64]) -> MiniTorrentVecRet {
     Ok(sqlx::query_as!(
         MiniTorrent,
         "UPDATE torrent_info SET visible = TRUE FROM torrent \
@@ -70,7 +70,7 @@ pub async fn find_stick_torrent(client: &sqlx::PgPool) -> SlimTorrentVecRet {
 }
 
 /// find visible torrent with definite tags that are not stick
-pub async fn find_visible_torrent_by_tag_desc(client: &sqlx::PgPool, tags: &Vec<String>, page_offset: i64, sort_string: &str) -> SlimTorrentVecRet {
+pub async fn find_visible_torrent_by_tag_desc(client: &sqlx::PgPool, tags: &[String], page_offset: i64, sort_string: &str) -> SlimTorrentVecRet {
     // due to sqlx not support type cast of postgres
     Ok(sqlx::query_as_unchecked!(
         SlimTorrent,
@@ -95,7 +95,7 @@ pub async fn find_visible_torrent_by_tag_desc(client: &sqlx::PgPool, tags: &Vec<
         .await?)
 }
 
-pub async fn find_visible_torrent_by_tag_asc(client: &sqlx::PgPool, tags: &Vec<String>, page_offset: i64, sort_string: &str) -> SlimTorrentVecRet {
+pub async fn find_visible_torrent_by_tag_asc(client: &sqlx::PgPool, tags: &[String], page_offset: i64, sort_string: &str) -> SlimTorrentVecRet {
     Ok(sqlx::query_as_unchecked!(
         SlimTorrent,
         "SELECT torrent_info.id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished \
@@ -119,7 +119,7 @@ pub async fn find_visible_torrent_by_tag_asc(client: &sqlx::PgPool, tags: &Vec<S
         .await?)
 }
 
-pub async fn find_visible_torrent_by_ids_desc(client: &sqlx::PgPool, ids: &Vec<i64>, page_offset: i64, sort_string: &str) -> SlimTorrentVecRet {
+pub async fn find_visible_torrent_by_ids_desc(client: &sqlx::PgPool, ids: &[i64], page_offset: i64, sort_string: &str) -> SlimTorrentVecRet {
     Ok(sqlx::query_as!(
         SlimTorrent,
         "SELECT torrent_info.id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished \
@@ -143,7 +143,7 @@ pub async fn find_visible_torrent_by_ids_desc(client: &sqlx::PgPool, ids: &Vec<i
         .await?)
 }
 
-pub async fn find_visible_torrent_by_ids_asc(client: &sqlx::PgPool, ids: &Vec<i64>, page_offset: i64, sort_string: &str) -> SlimTorrentVecRet {
+pub async fn find_visible_torrent_by_ids_asc(client: &sqlx::PgPool, ids: &[i64], page_offset: i64, sort_string: &str) -> SlimTorrentVecRet {
     Ok(sqlx::query_as!(
         SlimTorrent,
         "SELECT torrent_info.id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished \
@@ -208,7 +208,7 @@ pub async fn find_torrent_by_id(client: &sqlx::PgPool, id: i64) -> FullTorrentRe
 }
 
 /// get counts of torrents definite tags that are not stick
-pub async fn query_torrent_counts_by_tag(client: &sqlx::PgPool, tags: &Vec<String>) -> CountRet {
+pub async fn query_torrent_counts_by_tag(client: &sqlx::PgPool, tags: &[String]) -> CountRet {
     // due to sqlx not support type cast of postgres
     Ok(sqlx::query_unchecked!(
         "SELECT COUNT(*) FROM torrent_info \
@@ -221,7 +221,7 @@ pub async fn query_torrent_counts_by_tag(client: &sqlx::PgPool, tags: &Vec<Strin
         .expect("sql function not right"))
 }
 
-pub async fn make_torrent_stick(client: &sqlx::PgPool, ids: &Vec<i64>) -> Result<(), Error> {
+pub async fn make_torrent_stick(client: &sqlx::PgPool, ids: &[i64]) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE torrent_info SET stick = TRUE \
         WHERE id = ANY($1);",
@@ -233,7 +233,7 @@ pub async fn make_torrent_stick(client: &sqlx::PgPool, ids: &Vec<i64>) -> Result
     Ok(())
 }
 
-pub async fn make_torrent_free(client: &sqlx::PgPool, ids: &Vec<i64>) -> Result<(), Error> {
+pub async fn make_torrent_free(client: &sqlx::PgPool, ids: &[i64]) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE torrent_info SET free = TRUE \
         WHERE id = ANY($1);",

@@ -1,3 +1,5 @@
+#![allow(clippy::upper_case_acronyms)]
+
 mod config;
 mod controller;
 pub mod data;
@@ -19,7 +21,7 @@ fn load_email_whitelist() {
     let file = File::open("filtered-email")
         .expect("email whitelist not exist");
     let lines: Vec<String> = BufReader::new(file).lines()
-        .map(|l| String::from(l.unwrap()))
+        .map(|l| l.unwrap())
         .collect();
 
     let mut w = controller::ALLOWED_DOMAIN.write().unwrap();
