@@ -1,5 +1,3 @@
-#![allow(clippy::upper_case_acronyms)]
-
 mod config;
 mod controller;
 pub mod data;
