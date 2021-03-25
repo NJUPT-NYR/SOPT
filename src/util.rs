@@ -34,7 +34,7 @@ pub fn parse_email(input: &str) -> Option<EmailAddress> {
 }
 
 /// Generate passkey used for torrents with sha256 and will be encoded with
-/// hex, stripped into 24bytes（append uid when generating torrents).
+/// hex, stripped into 32 bytes.
 ///
 /// The format: {username}{timestamp}{random u64}
 pub fn generate_passkey(username: &str) -> Result<String, Error> {
@@ -51,7 +51,7 @@ pub fn generate_passkey(username: &str) -> Result<String, Error> {
         .try_into()
         .map_err(error_string)?;
     let string = hex::encode(res);
-    Ok(String::from(&string[..24]))
+    Ok(String::from(&string[..32]))
 }
 
 /// Hash password for database.
@@ -195,13 +195,11 @@ pub fn parse_torrent_file(buf: &[u8]) -> Result<TorrentTable, Error> {
 
 /// Generate torrent file buf with custom announce and passkey
 ///
-/// Announce format: {announce_addr}?passkey={{passkey}{user id}}&tid={torrent id}
+/// Announce format: {announce_addr}?passkey={passkey}&tid={torrent id}&uid={user id}
 pub fn generate_torrent_file(mut info: Vec<u8>, passkey: &str, tid: i64, uid: i64, comment: &str) -> Vec<u8> {
     use serde_bencode::to_string;
 
-    // now passkey is 40 bytes long
-    let ext_passkey = format!("{}{}", passkey, hex::encode(uid.to_ne_bytes()));
-    let announce_address = to_string(&format!("{}?passkey={}&tid={}", CONFIG.announce_addr, ext_passkey, tid)).unwrap();
+    let announce_address = to_string(&format!("{}?passkey={}&tid={}&uid={}", CONFIG.announce_addr, passkey, tid, uid)).unwrap();
     let comment = to_string(&comment).unwrap();
 
     let mut hand_ser = "d4:info".to_string().into_bytes();
