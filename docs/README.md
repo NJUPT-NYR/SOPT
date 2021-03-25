@@ -13,11 +13,13 @@ cp .env.example .env
 ```
 
 在开始前，您需要安装以下依赖：
+
 1. PostgreSQL >= 9.5
 2. Rust >= 1.5
 3. GCC >= 8.0 or Clang >= 11.0
 
 修改 `.env` 文件如下示例：
+
 ```
 # 服务地址，一般请保持默认
 SERVER_ADDR=127.0.0.1:8000
@@ -62,11 +64,49 @@ cargo build --release
 一起复制到你喜欢的任何地方。
 
 ### Tracker
+
 todo!
+
 ### 前端
-todo!
+
+```shell
+git clone https://github.com/NJUPT-NYR/SOPT-Frontend.git
+cd SOPT-Frontend
+cp .env.example .env.development
+cp .env.example .env.production
+```
+
+在开始前，您需要安装以下依赖：
+
+1. node >= 14.15.4
+2. yarn >= 1.22.4
+
+修改 `.env.*` 文件如下示例
+
+```
+# 启用mock server，一般用于开发环境
+NEXT_PUBLIC_ENABLE_MOCK=true
+# 服务端请求的接口的API地址
+API_GATEWAY_URL=https://tracker.sopt.rs/api
+# 客户端请求的接口的API地址
+NEXT_PUBLIC_CLIENT_API_GATEWAY_URL=/api
+```
+
+```shell
+# 开发环境
+yarn install
+yanr dev
+
+# 生产环境
+yarn install
+yarn build
+yarn start
+```
+
 ### 后续升级
+
 todo!
+
 ## English
 
 SOPT is a modern private tracker framework, it supports basic functions like
@@ -82,18 +122,19 @@ cp .env.example .env
 ```
 
 You need to install following dependencies:
+
 1. PostgreSQL >= 9.5
 2. Rust >= 1.5
 3. GCC >= 8.0 or Clang >= 11.0
 
-Edit `env`:
+Edit `.env`:
 
 ```
 # server address, keep default if nothing wrong.
 SERVER_ADDR=127.0.0.1:8000
 # key for JWT Auth, you can generate some random strings
 SECRET_KEY=secret
-# database configuration, make sure you have DB already, 
+# database configuration, make sure you have DB already,
 # or use createdb command
 DATABASE_URL=postgres://postgres:password@127.0.0.1:5432/sopt
 # tracker's public address
@@ -135,8 +176,45 @@ Copy compiled binary(path `./target/release/sopt`) and `.env`, `filtered-email`
 to any path you like。
 
 ### Tracker
+
 todo!
+
 ### Frontend
-todo!
+
+```shell
+git clone https://github.com/NJUPT-NYR/SOPT-Frontend.git
+cd SOPT-Frontend
+cp .env.example .env.development
+cp .env.example .env.production
+```
+
+You need to install following dependencies:
+
+1. node >= 14.15.4
+2. yarn >= 1.22.4
+
+Edit `.env.*`:
+
+```
+# enable mock server, for development mode
+NEXT_PUBLIC_ENABLE_MOCK=true
+# api gateway url for server side
+API_GATEWAY_URL=https://tracker.sopt.rs/api
+# api gateway url for client side
+NEXT_PUBLIC_CLIENT_API_GATEWAY_URL=/api
+```
+
+```shell
+# development mode
+yarn install
+yanr dev
+
+# production mode
+yarn install
+yarn build
+yarn start
+```
+
 ### Updating
+
 todo!
