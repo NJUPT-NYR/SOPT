@@ -58,7 +58,6 @@ async fn add_user(
 
     let passkey = generate_passkey(&user.username)?;
     let new_user = user_model::add_user(&client, &user.email, &user.username, &hash_password(&user.password)?, &passkey).await?;
-    user_info_model::add_user_info(&client, new_user.id, &new_user.username).await?;
     if code.is_some() {
         let true_code = code.unwrap();
         user_info_model::add_invitor_by_name(&client, &new_user.username, true_code.sender).await?;
@@ -95,6 +94,7 @@ async fn login(
 
     user_info_model::update_activity_by_name(&client, &user.username).await?;
     let current_rank = rank_model::find_rank_by_username(&client, &user.username).await?;
+    // TODO: Auto update role in jwt
     if current_rank.next.is_some() {
         let next_rank = rank_model::find_rank_by_id(&client, current_rank.next.unwrap()).await?;
         let info = user_info_model::find_user_info_by_name_mini(&client, &user.username).await?;

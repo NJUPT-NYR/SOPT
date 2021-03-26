@@ -3,8 +3,14 @@ use super::*;
 pub async fn add_user(client: &sqlx::PgPool, email: &str, username: &str, password: &str, passkey: &str) -> AccountRet {
     Ok(sqlx::query_as!(
         Account,
-        "INSERT INTO users(email, username, password, passkey) \
-        VALUES ($1, $2, $3, $4) RETURNING id, email, username, passkey, role;",
+        "WITH ret1 AS ( \
+        INSERT INTO users(email, username, password, passkey) \
+        VALUES ($1, $2, $3, $4) \
+        RETURNING id, email, username, passkey, role),\
+        ret2 AS ( \
+        INSERT INTO user_info(id, username, registerTime, lastActivity, rank) \
+        SELECT (SELECT id FROM ret1), $2, NOW(), NOW(), name FROM rank WHERE rank.id = 1) \
+        SELECT id, email, username, passkey, role FROM ret1;",
         email,
         username,
         password,

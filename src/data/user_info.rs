@@ -65,19 +65,6 @@ pub async fn find_user_info_by_name(client: &sqlx::PgPool, username: &str) -> Us
         .ok_or(Error::NotFound)
 }
 
-pub async fn add_user_info(client: &sqlx::PgPool, id: i64, username: &str) -> Result<(), Error> {
-    sqlx::query!(
-        "INSERT INTO user_info(id, username, registerTime, lastActivity, rank) \
-        SELECT $1, $2, NOW(), NOW(), name FROM rank WHERE rank.id = 1;",
-        id,
-        username
-        )
-        .execute(client)
-        .await?;
-
-    Ok(())
-}
-
 pub async fn update_activity_by_name(client: &sqlx::PgPool, username: &str) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE user_info SET lastActivity = now() \
