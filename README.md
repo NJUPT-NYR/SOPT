@@ -1,6 +1,8 @@
 # SOPT
 
 [![CI](https://github.com/NJUPT-NYR/SOPT/actions/workflows/CI.yml/badge.svg)](https://github.com/NJUPT-NYR/SOPT/actions/workflows/CI.yml)
+[![TOKEI](https://tokei.rs/b1/github//NJUPT-NYR/SOPT?category=code)](https://github.com/NJUPT-NYR/SOPT)
+[![QUALITY](https://img.shields.io/codefactor/grade/github/njupt-nyr/sopt)](https://github.com/NJUPT-NYR/SOPT)
 
 Next generation private tracker framework.
 
