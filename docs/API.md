@@ -947,9 +947,9 @@ This is a map from bit to bool(or 01 string). 0 is unset and 1 is set.
     - downloading: i32
     - uploading: i32
     - finished: i64
-    - length: i64(in byte)
-    - files: Vec<String>
-    - infohash: String
+    - length: Option<i64>(in byte)
+    - files: Option<Vec<String>>
+    - infohash: Option<String>
 
 ### Tag
 

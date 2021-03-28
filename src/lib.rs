@@ -10,7 +10,7 @@ use actix_web::{middleware, web::route, App, HttpResponse, HttpServer};
 use dotenv::dotenv;
 
 /// load email whitelist from file `filtered-email`
-fn load_email_whitelist() {
+async fn load_email_whitelist() {
     use std::fs::File;
     use std::collections::HashSet;
     use std::iter::FromIterator;
@@ -22,7 +22,7 @@ fn load_email_whitelist() {
         .map(|l| l.unwrap())
         .collect();
 
-    let mut w = controller::ALLOWED_DOMAIN.write().unwrap();
+    let mut w = controller::ALLOWED_DOMAIN.write().await;
     *w = HashSet::from_iter(lines);
 }
 
@@ -30,7 +30,7 @@ async fn initializing_search(client: &sqlx::PgPool) {
     let rets = sqlx::query!(
         "SELECT id, title, poster, tag FROM torrent_info;"
     ).fetch_all(client).await.unwrap();
-    let mut w = search::TORRENT_SEARCH_ENGINE.write().unwrap();
+    let mut w = search::TORRENT_SEARCH_ENGINE.write().await;
     for ret in rets {
         let mut tokens = vec![ret.title, ret.poster];
         tokens.append(&mut ret.tag.unwrap_or_default());
@@ -52,7 +52,7 @@ pub async fn sopt_main() -> std::io::Result<()> {
     env_logger::init();
     dotenv().ok();
     println!("==========Initializing configurations==========");
-    load_email_whitelist();
+    load_email_whitelist().await;
     init_settings();
     println!("==========Initializing search engines==========");
     let pool = sqlx::PgPool::connect(&CONFIG.database_url)

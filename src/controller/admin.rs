@@ -177,7 +177,7 @@ async fn get_email_whitelist(
         return Err(Error::NoPermission)
     }
 
-    let ret = ALLOWED_DOMAIN.read().unwrap();
+    let ret = ALLOWED_DOMAIN.read().await;
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
@@ -197,7 +197,7 @@ async fn update_email_whitelist(
         return Err(Error::NoPermission)
     }
 
-    let mut w = ALLOWED_DOMAIN.write().unwrap();
+    let mut w = ALLOWED_DOMAIN.write().await;
     data.add.iter().for_each(|s| { w.insert(String::from(s)); });
     data.delete.iter().for_each(|s| { w.take(s); });
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))

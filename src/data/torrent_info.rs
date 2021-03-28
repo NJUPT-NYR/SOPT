@@ -193,11 +193,12 @@ pub async fn find_torrent_by_poster(client: &sqlx::PgPool, poster: &str) -> Slim
 }
 
 pub async fn find_torrent_by_id(client: &sqlx::PgPool, id: i64) -> FullTorrentRet {
-    sqlx::query_as!(
+    // left join cannot check
+    sqlx::query_as_unchecked!(
         FullTorrent,
         "SELECT torrent_info.id, title, poster, description, tag, visible, createTime, lastEdit, free, downloading, \
         uploading, finished, length, files, infohash \
-        FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
+        FROM torrent_info LEFT JOIN torrent ON torrent_info.id = torrent.id \
         WHERE torrent_info.id = $1;",
         id
         )

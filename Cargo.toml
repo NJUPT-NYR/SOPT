@@ -26,6 +26,7 @@ email-restriction = []
 # actix and sql stuff
 actix-web = "3.3.2"
 actix-multipart = "0.3.0"
+tokio = { version = "^0.2", features = [ "macros", "time" ] }
 sqlx = { version = "0.4.1", features = [ "postgres", "runtime-actix-native-tls", "chrono", "json" ] }
 rocksdb = { git = "https://github.com/rust-rocksdb/rust-rocksdb" }
 
@@ -62,4 +63,3 @@ base64 = "*"
 [dev-dependencies]
 reqwest = { version = "^0.10", features = [ "json" ] }
 cucumber_rust = { git = "https://github.com/bbqsrc/cucumber-rust", branch = "main" }
-tokio = { version = "^0.2", features = [ "macros", "time" ] }

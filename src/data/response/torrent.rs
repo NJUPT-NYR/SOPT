@@ -57,9 +57,9 @@ pub struct FullTorrent {
     pub downloading: i32,
     pub uploading: i32,
     pub finished: i64,
-    pub length: i64,
-    pub files: Vec<String>,
-    pub infohash: String,
+    pub length: Option<i64>,
+    pub files: Option<Vec<String>>,
+    pub infohash: Option<String>,
 }
 
 #[derive(Serialize, Debug, ToResponse)]

@@ -1,6 +1,6 @@
+use tokio::sync::RwLock;
 use std::collections::HashSet;
 use lazy_static::lazy_static;
-use std::sync::RwLock;
 use crate::config::CONFIG;
 
 pub fn is_not_su(role: i64) -> bool {

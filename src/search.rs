@@ -1,7 +1,7 @@
 use strsim::jaro_winkler;
+use tokio::sync::RwLock;
 use std::collections::HashMap;
 use lazy_static::lazy_static;
-use std::sync::RwLock;
 
 lazy_static! {
     pub static ref TORRENT_SEARCH_ENGINE: RwLock<SearchEngine> = RwLock::new(SearchEngine::new(0.8));

@@ -30,7 +30,7 @@ async fn add_torrent(
     let ret = torrent_info_model::add_torrent_info(&client, &data.title,&username, data.description.as_deref(), tags).await?;
     let mut tokens = vec![data.title.clone(), username];
     tokens.append(&mut data.tags.clone().unwrap_or_default());
-    TORRENT_SEARCH_ENGINE.write().unwrap().insert(ret.id, tokens);
+    TORRENT_SEARCH_ENGINE.write().await.insert(ret.id, tokens);
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
@@ -63,7 +63,9 @@ async fn update_torrent(
     let ret = torrent_info_model::update_torrent_info(&client, data.id, &data.title, data.description.as_deref(), tags).await?;
     let mut tokens = vec![data.title.clone(), username];
     tokens.append(&mut data.tags.clone().unwrap_or_default());
-    TORRENT_SEARCH_ENGINE.write().unwrap().insert(ret.id, tokens);
+    let mut w = TORRENT_SEARCH_ENGINE.write().await;
+    w.insert(ret.id, tokens);
+    drop(w);
     // tag count will only be updated when it is open
     if ret.visible {
         let old_tags = old_torrent.tag.unwrap_or_default();
@@ -183,8 +185,7 @@ async fn search_torrents(
     let sort_type = data.sort_type.unwrap_or(SortType::Desc);
     let sort_string = format!("{}", sort).to_ascii_lowercase();
 
-    let ids = TORRENT_SEARCH_ENGINE.read().unwrap()
-        .search(data.keywords);
+    let ids = TORRENT_SEARCH_ENGINE.read().await.search(data.keywords);
     let mut ret = if sort_type == SortType::Desc {
         torrent_info_model::find_visible_torrent_by_ids_desc(&client, &ids, (page * 20) as i64, &sort_string).await?
     } else {
