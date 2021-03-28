@@ -1,7 +1,8 @@
 use super::*;
+use crate::rocksdb::put_cf;
 
 pub async fn add_user(client: &sqlx::PgPool, email: &str, username: &str, password: &str, passkey: &str) -> AccountRet {
-    Ok(sqlx::query_as!(
+    let tmp = sqlx::query_as!(
         Account,
         "WITH ret1 AS ( \
         INSERT INTO users(email, username, password, passkey) \
@@ -17,7 +18,9 @@ pub async fn add_user(client: &sqlx::PgPool, email: &str, username: &str, passwo
         passkey
         )
         .fetch_one(client)
-        .await?)
+        .await?;
+    put_cf("passkey", tmp.id.to_le_bytes(), passkey)?;
+    Ok(tmp)
 }
 
 pub async fn find_user_by_username(client: &sqlx::PgPool, username: &str) -> AccountRet {
@@ -89,15 +92,16 @@ pub async fn update_password_by_username(client: &sqlx::PgPool, username: &str, 
 }
 
 pub async fn update_passkey_by_username(client: &sqlx::PgPool, username: &str, new_key: &str) -> Result<(), Error> {
-    sqlx::query!(
+    let id: i64 = sqlx::query!(
         "UPDATE users SET passkey = $1 \
-         WHERE username = $2;",
+         WHERE username = $2 RETURNING id;",
         new_key,
         username
         )
-        .execute(client)
-        .await?;
-
+        .fetch_one(client)
+        .await?
+        .id;
+    put_cf("passkey", id.to_le_bytes(), new_key)?;
     Ok(())
 }
 

@@ -1,7 +1,6 @@
-use tokio::sync::RwLock;
-use std::collections::HashSet;
 use lazy_static::lazy_static;
-use crate::config::CONFIG;
+use std::collections::HashSet;
+use tokio::sync::RwLock;
 
 pub fn is_not_su(role: i64) -> bool {
     role & (1 << 63) == 0
@@ -24,9 +23,4 @@ pub fn is_not_ordinary_user(role: i64) -> bool {
 
 lazy_static! {
     pub static ref ALLOWED_DOMAIN: RwLock<HashSet<String>> = RwLock::new(HashSet::new());
-}
-
-lazy_static! {
-    pub static ref ROCKSDB: rocksdb::DB = rocksdb::DB::open_default(&CONFIG.rocksdb_path)
-        .expect("unable to connect to rocksdb");
 }

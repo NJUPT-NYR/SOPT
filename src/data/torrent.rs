@@ -1,5 +1,6 @@
 use super::*;
 use serde_bytes::ByteBuf;
+use crate::rocksdb::put_cf;
 
 type TorrentRet = Result<TorrentTable, Error>;
 
@@ -66,7 +67,7 @@ pub async fn update_or_add_torrent(client: &sqlx::PgPool, torrent: &TorrentTable
         )
         .execute(client)
         .await?;
-
+    put_cf("info_hash", &torrent.infohash, torrent.id.to_le_bytes())?;
     Ok(())
 }
 

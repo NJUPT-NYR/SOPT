@@ -1,34 +1,36 @@
-mod user;
-mod invitation;
-mod torrent;
 mod admin;
 mod config;
+mod invitation;
+mod torrent;
 mod tracker;
+mod user;
 
+use crate::config::CONFIG;
+pub use crate::controller::config::ALLOWED_DOMAIN;
+use crate::controller::config::*;
+use crate::data::*;
+use crate::error::{error_string, Error};
+use crate::get_from_config_cf;
+use crate::rocksdb::ROCKSDB;
+use crate::search::TORRENT_SEARCH_ENGINE;
+use crate::util::*;
 use actix_web::{HttpResponse, *};
 use serde::Deserialize;
 use std::convert::TryInto;
-use crate::error::{Error, error_string};
-use crate::config::CONFIG;
-use crate::util::*;
-use crate::data::*;
-use crate::controller::config::*;
-use crate::search::TORRENT_SEARCH_ENGINE;
-use crate::get_from_rocksdb;
-pub use crate::controller::config::{ALLOWED_DOMAIN, ROCKSDB};
 
 #[macro_export]
-macro_rules! get_from_rocksdb {
+macro_rules! get_from_config_cf {
     ($s:literal, $t:ty) => {
         <$t>::from_ne_bytes(
-            ROCKSDB.get($s)
+            ROCKSDB
+                .get_cf(ROCKSDB.cf_handle("config").unwrap(), $s)
                 .map_err(error_string)?
                 .unwrap()
                 .as_slice()
                 .split_at(std::mem::size_of::<$t>())
                 .0
                 .try_into()
-                .unwrap()
+                .unwrap(),
         )
     };
 }
@@ -41,9 +43,14 @@ type HttpResult = Result<HttpResponse, Error>;
 fn get_info_in_token(req: &HttpRequest) -> Result<Claim, Error> {
     let auth = req.headers().get("Authorization");
     if auth.is_none() {
-        return Err(Error::AuthError)
+        return Err(Error::AuthError);
     }
-    let data: Vec<&str> = auth.unwrap().to_str().map_err(error_string)?.split("Bearer").collect();
+    let data: Vec<&str> = auth
+        .unwrap()
+        .to_str()
+        .map_err(error_string)?
+        .split("Bearer")
+        .collect();
     let token = data[1].trim();
 
     let secret = CONFIG.secret_key.as_bytes();

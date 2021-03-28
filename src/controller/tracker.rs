@@ -44,8 +44,8 @@ async fn get_announce(
         }
     }
     let ret = user_info_model::update_io_by_id(&client, data.uid, data.upload, data.download).await?;
-    let ratio = get_from_rocksdb!("BAN_USER_RATIO", f64);
-    let days = get_from_rocksdb!("NEWBIE_TERM", i64);
+    let ratio = get_from_config_cf!("BAN_USER_RATIO", f64);
+    let days = get_from_config_cf!("NEWBIE_TERM", i64);
     if (ret.upload as f64 / ret.download as f64) < ratio &&
         (Utc::now() - Duration::days(days)).timestamp() > ret.registertime.timestamp() {
         user_model::delete_role_by_id(&client, data.uid, 0).await?;

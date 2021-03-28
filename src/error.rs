@@ -17,6 +17,7 @@ pub enum Error {
     AuthError,
     OtherError(String),
     DBError(DBError),
+    RocksDBError(rocksdb::Error),
     NotFound,
     NoPermission,
 }
@@ -30,6 +31,12 @@ impl From<sqlx::Error> for Error {
 impl From<String> for Error {
     fn from(err: String) -> Self {
         Error::OtherError(err)
+    }
+}
+
+impl From<rocksdb::Error> for Error {
+    fn from(err: rocksdb::Error) -> Self {
+        Error::RocksDBError(err)
     }
 }
 
@@ -47,6 +54,9 @@ impl ResponseError for Error {
         match *self {
             Error::OtherError(ref err) => HttpResponse::InternalServerError().body(err),
             Error::DBError(ref err) => HttpResponse::InternalServerError().body(err.to_string()),
+            Error::RocksDBError(ref err) => {
+                HttpResponse::InternalServerError().body(err.to_string())
+            }
             Error::AuthError => {
                 HttpResponse::Unauthorized().json(GeneralResponse::from_err("not login yet"))
             },
