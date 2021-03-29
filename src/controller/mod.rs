@@ -23,8 +23,7 @@ macro_rules! get_from_config_cf {
     ($s:literal, $t:ty) => {
         <$t>::from_ne_bytes(
             ROCKSDB
-                .get_cf(ROCKSDB.cf_handle("config").unwrap(), $s)
-                .map_err(error_string)?
+                .get_cf(ROCKSDB.cf_handle("config").unwrap(), $s)?
                 .unwrap()
                 .as_slice()
                 .split_at(std::mem::size_of::<$t>())
