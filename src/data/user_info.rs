@@ -77,12 +77,13 @@ pub async fn update_activity_by_name(client: &sqlx::PgPool, username: &str) -> R
     Ok(())
 }
 
-pub async fn add_invitor_by_name(client: &sqlx::PgPool, username: &str, invitor: Option<String>) -> Result<(), Error> {
+pub async fn add_invitor_by_name(client: &sqlx::PgPool, id: i64, invitor: Option<String>, code: &str) -> Result<(), Error> {
     sqlx::query!(
-        "UPDATE user_info SET invitor = $1 \
-        WHERE username = $2;",
+        "WITH rt AS (UPDATE user_info SET invitor = $1 WHERE id = $2) \
+        UPDATE invitations SET usage = TRUE WHERE code = $3;",
         invitor,
-        username
+        id,
+        code
         )
         .execute(client)
         .await?;

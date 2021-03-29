@@ -60,8 +60,7 @@ async fn add_user(
     let new_user = user_model::add_user(&client, &user.email, &user.username, &hash_password(&user.password)?, &passkey).await?;
     if code.is_some() {
         let true_code = code.unwrap();
-        user_info_model::add_invitor_by_name(&client, &new_user.username, true_code.sender).await?;
-        invitation_model::update_invitation_usage(&client, &true_code.code).await?;
+        user_info_model::add_invitor_by_name(&client, new_user.id, true_code.sender, &true_code.code).await?;
     }
     Ok(HttpResponse::Ok().json(new_user.to_json()))
 }

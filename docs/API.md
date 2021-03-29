@@ -978,7 +978,7 @@ This is a map from bit to bool(or 01 string). 0 is unset and 1 is set.
     - username: String
     - registerTime: String(DateTime)
     - lastActivity: String(DateTime)
-    - inviter: Option<String>
+    - invitor: Option<String>
     - upload: i64(in byte)
     - download: i64(in byte)
     - money: f64

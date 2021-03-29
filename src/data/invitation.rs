@@ -34,15 +34,3 @@ pub async fn find_invitation_by_code(client: &sqlx::PgPool, code: &str) -> Invit
         .fetch_all(client)
         .await?)
 }
-
-pub async fn update_invitation_usage(client: &sqlx::PgPool, code: &str) -> Result<(), Error> {
-    sqlx::query!(
-        "UPDATE invitations SET usage = TRUE \
-         WHERE code = $1;",
-        code,
-        )
-        .execute(client)
-        .await?;
-
-    Ok(())
-}
