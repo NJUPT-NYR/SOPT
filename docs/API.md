@@ -4,46 +4,52 @@
   * [GeneralResponse](#generalresponse)
   * [DataWithCount](#datawithcount)
 * [Admin](#admin-api)
-  * [/api/admin/torrent/accept_torrents](#apiadmintorrentaccept_torrents)
-  * [/api/admin/torrent/stick_torrents](#apiadmintorrentstick_torrents)
-  * [/api/admin/torrent/unstick_torrents](#apiadmintorrentunstick_torrents)
-  * [/api/admin/torrent/free_torrents](#apiadmintorrentfree_torrents)
-  * [/api/admin/torrent/unfree_torrents](#apiadmintorrentunfree_torrents)
-  * [/api/admin/torrent/show_invisible_torrents](#apiadmintorrentshow_invisible_torrents)
-  * [/api/admin/user/ban_user](#apiadminuserban_user)
-  * [/api/admin/user/unban_user](#apiadminuserunban_user)
-  * [/api/admin/user/list_banned_user](#apiadminuserlist_banned_user)
-  * [/api/admin/user/group_awards](#apiadminusergroup_awards)
-  * [/api/admin/user/change_permission](#apiadminuserchange_permission)
-  * [/api/admin/site/get_email_whitelist](#apiadminsiteget_email_whitelist)
-  * [/api/admin/site/update_email_whitelist](#apiadminsiteupdate_email_whitelist)
-  * [/api/admin/site/get_rank](#apiadminsiteget_rank)
-  * [/api/admin/site/update_rank](#apiadminsiteupdate_rank)
+  * [/torrent/accept_torrents](#apiadmintorrentaccept_torrents)
+  * [/torrent/stick_torrents](#apiadmintorrentstick_torrents)
+  * [/torrent/unstick_torrents](#apiadmintorrentunstick_torrents)
+  * [/torrent/free_torrents](#apiadmintorrentfree_torrents)
+  * [/torrent/unfree_torrents](#apiadmintorrentunfree_torrents)
+  * [/torrent/show_invisible_torrents](#apiadmintorrentshow_invisible_torrents)
+  * [/user/ban_user](#apiadminuserban_user)
+  * [/user/unban_user](#apiadminuserunban_user)
+  * [/user/list_banned_user](#apiadminuserlist_banned_user)
+  * [/user/group_awards](#apiadminusergroup_awards)
+  * [/user/change_permission](#apiadminuserchange_permission)
+  * [/site/get_email_whitelist](#apiadminsiteget_email_whitelist)
+  * [/site/update_email_whitelist](#apiadminsiteupdate_email_whitelist)
+  * [/site/get_rank](#apiadminsiteget_rank)
+  * [/site/update_rank](#apiadminsiteupdate_rank)
 * [Invitation](#invitation-api)
-  * [/api/invitation/send_invitation](#apiinvitationsend_invitation)
-  * [/api/invitation/list_invitations](#apiinvitationlist_invitations)
+  * [/send_invitation](#apiinvitationsend_invitation)
+  * [/list_invitations](#apiinvitationlist_invitations)
+* [Message](#message-api)
+  * [/send_message](#apimessagesend_message)
+  * [/read_message](#apimessageread_message)
+  * [/delete_message](#apimessagedelete_message)
+  * [/list_sent](#apimessagelist_sent)
+  * [/list_received](#apimessagelist_received)
 * [Torrent](#torrent-api)
-  * [/api/torrent/add_torrent](#apitorrentadd_torrent)
-  * [/api/torrent/update_torrent](#apitorrentupdate_torrent)
-  * [/api/torrent/hot_tags](#apitorrenthot_tags)
-  * [/api/torrent/list_torrents](#apitorrentlist_torrents)
-  * [/api/torrent/search_torrents](#apitorrentsearch_torrents)
-  * [/api/torrent/show_torrent](#apitorrentshow_torrent)
-  * [/api/torrent/list_posted_torrent](#apitorrentlist_posted_torrent)
-  * [/api/torrent/upload_torrent](#apitorrentupload_torrent)
-  * [/api/torrent/get_torrent](#apitorrentget_torrent)
+  * [/add_torrent](#apitorrentadd_torrent)
+  * [/update_torrent](#apitorrentupdate_torrent)
+  * [/hot_tags](#apitorrenthot_tags)
+  * [/list_torrents](#apitorrentlist_torrents)
+  * [/search_torrents](#apitorrentsearch_torrents)
+  * [/show_torrent](#apitorrentshow_torrent)
+  * [/list_posted_torrent](#apitorrentlist_posted_torrent)
+  * [/upload_torrent](#apitorrentupload_torrent)
+  * [/get_torrent](#apitorrentget_torrent)
 * [Tracker](#tracker-api)
-  * [/api/tracker/get_announce](#apitrackerget_announce)
+  * [/get_announce](#apitrackerget_announce)
 * [User](#user-api)
-  * [/api/user/add_user](#apiuseradd_user)
-  * [/api/user/login](#apiuserlogin)
-  * [/api/user/personal_info_update](#apiuserpersonal_info_update)
-  * [/api/user/upload_avatar](#apiuserupload_avatar)
-  * [/api/user/show_user](#apiusershow_user)
-  * [/api/user/show_torrent_status](#apiusershow_torrent_status)
-  * [/api/user/auth/reset_password](#apiuserauthreset_password)
-  * [/api/user/auth/reset_passkey](#apiuserauthreset_passkey)
-  * [/api/user/auth/transfer_money](#apiuserauthtransfer_money)
+  * [/add_user](#apiuseradd_user)
+  * [/login](#apiuserlogin)
+  * [/personal_info_update](#apiuserpersonal_info_update)
+  * [/upload_avatar](#apiuserupload_avatar)
+  * [/show_user](#apiusershow_user)
+  * [/show_torrent_status](#apiusershow_torrent_status)
+  * [/auth/reset_password](#apiuserauthreset_password)
+  * [/auth/reset_passkey](#apiuserauthreset_passkey)
+  * [/auth/transfer_money](#apiuserauthtransfer_money)
 * [Role Design](#role-design)
 * [Response Data](#response-data)
   * [TorrentId](#torrentid)
@@ -55,6 +61,7 @@
   * [User](#user)
   * [Invitation](#invitation)
   * [Rank](#rank)
+  # [Message](#message)
 
 ## General Data
 
@@ -444,6 +451,110 @@ Banned user or user without invitation permission role cannot access.
 **Comment**
 
 List all invitations and usage current user sent before.
+
+## Message API
+
+### /api/message/send_message
+**Type**: POST
+
+**Request**
+
+    - receiver: String
+    - title: String
+    - body: Option<String>
+
+**Example**
+
+```json
+{
+  "receiver": "Tadokoro",
+  "title": "Your torrent cannot be accepted",
+  "body": "Your recently posted torrent with id 1919 is too stink to be accepted"
+}
+```
+
+**Response**
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: Empty `GeneralResponse`
+
+**Comment**
+
+Send a new message to someone.
+
+Banned user and user without send msg role cannot access.
+
+### /api/message/read_message
+**Type**: POST
+
+**Request**
+
+    - ids: Vec<i64>
+
+**Example**
+
+```json
+{
+  "ids": [114, 514, 1919]
+}
+```
+
+**Response**
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: Empty `GeneralResponse`
+
+**Comment**
+
+read multiple messages from some.
+
+### /api/message/delete_message
+**Type**: POST
+
+**Request**
+
+    - ids: Vec<i64>
+    - sender: bool
+
+**Example**
+
+```json
+{
+  "ids": [114, 514, 1919],
+  "sender": true
+}
+```
+
+**Response**
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: Empty `GeneralResponse`
+
+**Comment**
+
+delete messages from outbox or inbox.
+
+if sender is true, it will disappear from your outbox, other way, it will
+disappear from your inbox.
+
+### /api/message/list_sent
+**Type**: GET
+
+**Response**
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: `GeneralResponse` with a list of `Message`
+
+**Comment**
+
+list all message not deleted yet in your outbox.
+
+### /api/message/list_received
+**Type**: GET
+
+**Response**
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: `GeneralResponse` with a list of `Message`
+
+**Comment**
+
+list all message not deleted yet in your inbox.
 
 ## Torrent API
 
@@ -955,6 +1066,8 @@ This is a map from bit to bool(or 01 string). 0 is unset and 1 is set.
 
 1: can invite
 
+2: can send message
+
 ...
 
 60: site admin
@@ -1056,3 +1169,13 @@ This is a map from bit to bool(or 01 string). 0 is unset and 1 is set.
     - upload: i64(in byte)
     - age: i64(in second)
     - next: Option<i32>
+
+### Message
+  
+    - id: i64
+    - sender: String
+    - receiver: String
+    - title: String
+    - body: Option<String>
+    - read: bool
+    - sendTime: String(DateTime)

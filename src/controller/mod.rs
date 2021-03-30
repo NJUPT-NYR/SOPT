@@ -4,6 +4,8 @@ mod invitation;
 mod torrent;
 mod tracker;
 mod user;
+#[cfg(feature = "message")]
+mod message;
 
 use crate::config::CONFIG;
 pub use crate::controller::config::ALLOWED_DOMAIN;
@@ -62,10 +64,16 @@ fn get_name_in_token(req: HttpRequest) -> Result<String, Error> {
 }
 
 pub fn api_service() -> Scope {
-    web::scope("/api")
+    let mut scope = web::scope("/api")
         .service(user::user_service())
         .service(invitation::invitation_service())
         .service(torrent::torrent_service())
         .service(admin::admin_service())
-        .service(tracker::tracker_service())
+        .service(tracker::tracker_service());
+
+    #[cfg(feature = "message")] {
+        scope = scope.service(message::message_service());
+    }
+
+    scope
 }

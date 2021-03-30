@@ -19,8 +19,9 @@ name = "cucumber"
 harness = false
 
 [features]
-default = ["email-restriction"]
+default = ["email-restriction", "message"]
 email-restriction = []
+message = []
 
 [dependencies]
 # actix and sql stuff

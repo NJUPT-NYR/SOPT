@@ -13,6 +13,8 @@ pub type InvitationVecRet = Result<Vec<Invitation>, Error>;
 pub type RankRet = Result<Rank, Error>;
 pub type RankVecRet = Result<Vec<Rank>, Error>;
 
+pub type MessageVecRet = Result<Vec<Message>, Error>;
+
 #[derive(Serialize, Debug, ToResponse)]
 pub struct Account {
     pub id: i64,
@@ -74,4 +76,16 @@ pub struct Rank {
     pub upload: i64,
     pub age: i64,
     pub next: Option<i32>,
+}
+
+#[derive(Serialize, Debug, ToResponse)]
+pub struct Message {
+    pub id: i64,
+    pub sender: String,
+    pub receiver: String,
+    pub title: String,
+    pub body: Option<String>,
+    pub read: bool,
+    #[serde(rename = "sendTime")]
+    pub sendtime: DateTime<Utc>,
 }

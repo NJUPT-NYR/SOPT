@@ -14,6 +14,9 @@ pub fn is_no_permission_to_users(role: i64) -> bool {
 pub fn is_no_permission_to_site(role: i64) -> bool {
     role & (1 << 60) == 0
 }
+pub fn cannot_send_msg(role: i64) -> bool {
+    role & (1 << 2) == 0
+}
 pub fn cannot_invite(role: i64) -> bool {
     role & (1 << 1) == 0
 }

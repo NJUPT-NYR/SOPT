@@ -42,9 +42,11 @@ ROCKSDB_PATH=./rocksdb
 ```toml
 [features]
 # 将需要的功能填入该数组，以半角分号分隔
-default = ["email-restriction"]
+default = ["email-restriction", "message"]
 # 使用邮箱注册白名单（无需邀请码）
 email-restriction = []
+# 私信功能
+message = []
 ```
 
 编辑 `filtered-email`，加入邮箱白名单，一行一个，全小写，可以为空。
@@ -152,9 +154,11 @@ Edit `Cargo.toml` with selected features：
 ```toml
 [features]
 # load features seperated by ','
-default = ["email-restriction"]
+default = ["email-restriction", "message"]
 # email whitlelist(so no invitation code is needed)
 email-restriction = []
+# private message
+message = []
 ```
 
 Edit `filtered-email`，add your own whitelist. one for a line, with
