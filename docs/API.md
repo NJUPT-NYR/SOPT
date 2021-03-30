@@ -6,7 +6,9 @@
 * [Admin](#admin-api)
   * [/api/admin/torrent/accept_torrents](#apiadmintorrentaccept_torrents)
   * [/api/admin/torrent/stick_torrents](#apiadmintorrentstick_torrents)
+  * [/api/admin/torrent/unstick_torrents](#apiadmintorrentunstick_torrents)
   * [/api/admin/torrent/free_torrents](#apiadmintorrentfree_torrents)
+  * [/api/admin/torrent/unfree_torrents](#apiadmintorrentunfree_torrents)
   * [/api/admin/torrent/show_invisible_torrents](#apiadmintorrentshow_invisible_torrents)
   * [/api/admin/user/ban_user](#apiadminuserban_user)
   * [/api/admin/user/unban_user](#apiadminuserunban_user)
@@ -124,6 +126,31 @@ but we recommend the number is less than 20.
 
 Only user with torrent admin role can access.
 
+### /api/admin/torrent/unstick_torrents
+**Type**: POST
+
+**Request**
+
+    - ids: Vec<i64>
+
+**Example**
+
+```json
+{
+  "ids": [114, 514, 1919810]
+}
+```
+
+**Response**
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: Empty `GeneralResponse`
+
+**Comment**
+
+Make a list of torrents unstick.
+
+Only user with torrent admin role can access.
+
 ### /api/admin/torrent/free_torrents
 **Type**: POST
 
@@ -146,6 +173,31 @@ Only user with torrent admin role can access.
 **Comment**
 
 Make a list of torrents free.
+
+Only user with torrent admin role can access.
+
+### /api/admin/torrent/unfree_torrents
+**Type**: POST
+
+**Request**
+
+    - ids: Vec<i64>
+
+**Example**
+
+```json
+{
+  "ids": [114, 514, 1919810]
+}
+```
+
+**Response**
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: Empty `GeneralResponse`
+
+**Comment**
+
+Make a list of torrents unfree.
 
 Only user with torrent admin role can access.
 

@@ -57,6 +57,20 @@ async fn stick_torrents(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
+#[post("/unstick_torrents")]
+async fn unstick_torrents(
+    data: web::Json<TorrentList>,
+    req: HttpRequest,
+    client: web::Data<sqlx::PgPool>,
+) -> HttpResult {
+    let claim = get_info_in_token(&req)?;
+    if is_no_permission_to_torrents(claim.role) {
+        return Err(Error::NoPermission)
+    }
+    torrent_info_model::make_torrent_unstick(&client, &data.ids).await?;
+    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
+}
+
 #[post("/free_torrents")]
 async fn free_torrents(
     data: web::Json<TorrentList>,
@@ -68,6 +82,20 @@ async fn free_torrents(
         return Err(Error::NoPermission)
     }
     torrent_info_model::make_torrent_free(&client, &data.ids).await?;
+    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
+}
+
+#[post("/unfree_torrents")]
+async fn unfree_torrents(
+    data: web::Json<TorrentList>,
+    req: HttpRequest,
+    client: web::Data<sqlx::PgPool>,
+) -> HttpResult {
+    let claim = get_info_in_token(&req)?;
+    if is_no_permission_to_torrents(claim.role) {
+        return Err(Error::NoPermission)
+    }
+    torrent_info_model::make_torrent_unfree(&client, &data.ids).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
@@ -237,7 +265,9 @@ pub(crate) fn admin_service() -> Scope {
         .service(web::scope("/torrent")
             .service(accept_torrents)
             .service(stick_torrents)
+            .service(unstick_torrents)
             .service(free_torrents)
+            .service(unfree_torrents)
             .service(show_invisible_torrents))
         .service(web::scope("/user")
             .service(ban_user)

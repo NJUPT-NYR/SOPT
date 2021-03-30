@@ -234,9 +234,33 @@ pub async fn make_torrent_stick(client: &sqlx::PgPool, ids: &[i64]) -> Result<()
     Ok(())
 }
 
+pub async fn make_torrent_unstick(client: &sqlx::PgPool, ids: &[i64]) -> Result<(), Error> {
+    sqlx::query!(
+        "UPDATE torrent_info SET stick = FALSE \
+        WHERE id = ANY($1);",
+        ids
+        )
+        .execute(client)
+        .await?;
+
+    Ok(())
+}
+
 pub async fn make_torrent_free(client: &sqlx::PgPool, ids: &[i64]) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE torrent_info SET free = TRUE \
+        WHERE id = ANY($1);",
+        ids
+        )
+        .execute(client)
+        .await?;
+
+    Ok(())
+}
+
+pub async fn make_torrent_unfree(client: &sqlx::PgPool, ids: &[i64]) -> Result<(), Error> {
+    sqlx::query!(
+        "UPDATE torrent_info SET free = FALSE \
         WHERE id = ANY($1);",
         ids
         )
