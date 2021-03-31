@@ -23,11 +23,13 @@ struct AnnouncePacket {
 
 #[get("/get_announce")]
 async fn get_announce(
-    web::Query(mut data): web::Query<AnnouncePacket>,
+    req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     use chrono::{Utc, Duration};
 
+    let query = req.uri().query().unwrap_or_default();
+    let mut data: AnnouncePacket = serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
     let torrent = torrent_info_model::find_torrent_by_id_mini(&client, data.tid).await?;
     if torrent.free {
         data.download = 0;

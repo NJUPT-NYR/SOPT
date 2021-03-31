@@ -93,7 +93,7 @@ async fn hot_tags(
 ) -> HttpResult {
     let query = req.uri().query().unwrap_or_default();
     let num_want = serde_qs::from_str::<TagRequest>(query)
-        .map_err(error_string)?.num.unwrap_or(10);
+        .map_err(|e| Error::RequestError(e.to_string()))?.num.unwrap_or(10);
 
     let ret = tag_model::find_hot_tag_by_amount(&client, num_want as i64).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
@@ -138,7 +138,7 @@ async fn list_torrents(
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let query = req.uri().query().unwrap_or_default();
-    let data: ListRequest = serde_qs::from_str(query).map_err(error_string)?;
+    let data: ListRequest = serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
     let tags = data.tags.unwrap_or_default();
     let page = data.page.unwrap_or(0);
     let sort = data.sort.unwrap_or(Sort::LastEdit);
@@ -179,7 +179,7 @@ async fn search_torrents(
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let query = req.uri().query().unwrap_or_default();
-    let data: SearchRequest = serde_qs::from_str(query).map_err(error_string)?;
+    let data: SearchRequest = serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
     let page = data.page.unwrap_or(0);
     let sort = data.sort.unwrap_or(Sort::LastEdit);
     let sort_type = data.sort_type.unwrap_or(SortType::Desc);
@@ -260,10 +260,11 @@ struct IdWrapper {
 
 #[get("/show_torrent")]
 async fn show_torrent(
-    web::Query(data): web::Query<IdWrapper>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
+    let query = req.uri().query().unwrap_or_default();
+    let data: IdWrapper = serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
     let ret = torrent_info_model::find_torrent_by_id(&client, data.id).await?;
     if !ret.visible {
         let claim = get_info_in_token(&req)?;
@@ -278,7 +279,6 @@ async fn show_torrent(
 
 #[get("/get_torrent")]
 async fn get_torrent(
-    web::Query(data): web::Query<IdWrapper>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
@@ -288,6 +288,8 @@ async fn get_torrent(
         return Err(Error::NoPermission)
     }
 
+    let query = req.uri().query().unwrap_or_default();
+    let data: IdWrapper = serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
     let user = user_model::find_user_by_username(&client, &username).await?;
     let torrent_info = torrent_info_model::find_torrent_by_id_mini(&client, data.id).await?;
     if !torrent_info.visible &&

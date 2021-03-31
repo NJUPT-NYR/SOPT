@@ -10,6 +10,7 @@ use std::fmt::{Display, Formatter};
 ///     like utilities and standard library error.
 /// 4. NotFound
 /// 5. No permission in this account
+/// 6. Request Error
 ///
 /// All errors will be transformed to Http Response so no panic will happen.
 #[derive(Debug)]
@@ -20,6 +21,7 @@ pub enum Error {
     RocksDBError(rocksdb::Error),
     NotFound,
     NoPermission,
+    RequestError(String),
 }
 
 impl From<sqlx::Error> for Error {
@@ -52,16 +54,13 @@ impl ResponseError for Error {
     /// Transform error messages to Http Response.
     fn error_response(&self) -> HttpResponse {
         match *self {
-            Error::OtherError(ref err) => HttpResponse::InternalServerError().body(err),
-            Error::DBError(ref err) => HttpResponse::InternalServerError().body(err.to_string()),
-            Error::RocksDBError(ref err) => {
-                HttpResponse::InternalServerError().body(err.to_string())
-            }
-            Error::AuthError => {
-                HttpResponse::Unauthorized().json(GeneralResponse::from_err("not login yet"))
-            },
             Error::NotFound => HttpResponse::NotFound().body("Not Found"),
-            Error::NoPermission => HttpResponse::Ok().json(GeneralResponse::from_err("no permission")),
+            Error::DBError(ref err) => HttpResponse::InternalServerError().body(err.to_string()),
+            Error::RocksDBError(ref err) => HttpResponse::InternalServerError().body(err.to_string()),
+            Error::AuthError => HttpResponse::Unauthorized().json(GeneralResponse::from_err("Not login yet")),
+            Error::NoPermission => HttpResponse::Unauthorized().json(GeneralResponse::from_err("No permission")),
+            Error::OtherError(ref err) => HttpResponse::InternalServerError().json(GeneralResponse::from_err(err)),
+            Error::RequestError(ref err) => HttpResponse::UnprocessableEntity().json(GeneralResponse::from_err(err)),
         }
     }
 }

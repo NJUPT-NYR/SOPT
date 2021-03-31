@@ -107,7 +107,6 @@ struct IdWrapper {
 /// I hope this never get used
 #[get("/ban_user")]
 async fn ban_user(
-    data: web::Json<IdWrapper>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
@@ -115,13 +114,15 @@ async fn ban_user(
     if is_no_permission_to_users(claim.role) {
         return Err(Error::NoPermission)
     }
+
+    let query = req.uri().query().unwrap_or_default();
+    let data: IdWrapper = serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
     user_model::delete_role_by_id(&client, data.id, 0).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
 #[get("/unban_user")]
 async fn unban_user(
-    data: web::Json<IdWrapper>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
@@ -129,6 +130,9 @@ async fn unban_user(
     if is_no_permission_to_users(claim.role) {
         return Err(Error::NoPermission)
     }
+
+    let query = req.uri().query().unwrap_or_default();
+    let data: IdWrapper = serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
     user_model::add_role_by_id(&client, data.id, 0).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }

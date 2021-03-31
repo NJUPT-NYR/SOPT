@@ -180,13 +180,14 @@ struct UserRequest {
 
 #[get("show_user")]
 async fn show_user(
-    web::Query(data): web::Query<UserRequest>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let claim = get_info_in_token(&req)?;
     let username = claim.sub;
 
+    let query = req.uri().query().unwrap_or_default();
+    let data: UserRequest = serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
     let mut ret = user_info_model::find_user_info_by_name(&client, &data.username).await?;
     if username == data.username {
         Ok(HttpResponse::Ok().json(ret.to_json()))
@@ -200,11 +201,12 @@ async fn show_user(
 
 #[get("/show_torrent_status")]
 async fn show_torrent_status(
-    web::Query(data): web::Query<UserRequest>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let _claim = get_info_in_token(&req)?;
+    let query = req.uri().query().unwrap_or_default();
+    let data: UserRequest = serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
     let user = user_info_model::find_user_info_by_name_mini(&client, &data.username).await?;
 
     let downloading = torrent_status_model::find_downloading_torrent(&client, user.id).await?;
