@@ -8,6 +8,7 @@ pub mod rank;
 pub mod torrent_status;
 #[cfg(feature = "message")]
 pub mod message;
+pub mod activation;
 mod response;
 
 use serde::{Serialize, Deserialize};

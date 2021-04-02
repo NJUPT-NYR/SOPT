@@ -21,7 +21,7 @@ async fn send_invitation(
         return Err(Error::NoPermission)
     }
 
-    let code = generate_invitation_code();
+    let code = generate_random_code();
     let num = get_from_config_cf!("INVITE_CONSUME", f64);
     user_info_model::update_money_by_name(&client, &username, num).await?;
     let ret = invitation_model::add_invitation_code(&client, &username, &code, &data.address).await?;

@@ -122,10 +122,10 @@ pub fn send_mail(
     Ok(())
 }
 
-/// Generate invite code for invitations
+/// Generate random code for invitations and activations, etc.
 ///
 /// format: {random 10 chars}_{timestamp}
-pub fn generate_invitation_code() -> String {
+pub fn generate_random_code() -> String {
     use rand::distributions::Alphanumeric;
 
     let rand_string: String = thread_rng()

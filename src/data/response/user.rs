@@ -15,6 +15,8 @@ pub type RankVecRet = Result<Vec<Rank>, Error>;
 
 pub type MessageVecRet = Result<Vec<Message>, Error>;
 
+pub type ActivationRet = Result<Activation, Error>;
+
 #[derive(Serialize, Debug, ToResponse)]
 pub struct Account {
     pub id: i64,
@@ -30,6 +32,7 @@ pub struct Validation {
     pub username: String,
     pub password: String,
     pub role: i64,
+    pub activated: bool,
 }
 
 #[derive(Debug)]
@@ -88,4 +91,11 @@ pub struct Message {
     pub read: bool,
     #[serde(rename = "sendTime")]
     pub sendtime: DateTime<Utc>,
+}
+
+#[derive(Debug)]
+pub struct Activation {
+    pub id: i64,
+    pub code: String,
+    pub used: bool,
 }

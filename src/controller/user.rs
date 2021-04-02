@@ -3,7 +3,8 @@ use crate::data::{user as user_model,
                   invitation as invitation_model,
                   user_info as user_info_model,
                   rank as rank_model,
-                  torrent_status as torrent_status_model};
+                  torrent_status as torrent_status_model,
+                  activation as activation_model};
 
 static ALLOWED_AVATAR_EXTENSION: [&str; 4] = [
     "jpg",
@@ -89,6 +90,10 @@ async fn login(
     let mut val = validation.unwrap();
     if !verify_password(&user.password, &val.password)? {
         return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("password not match")))
+    }
+    if !val.activated {
+        let msg = format!("account with id {} not activated yet", val.id);
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err(&msg)))
     }
 
     user_info_model::update_activity_by_name(&client, &user.username).await?;
@@ -271,6 +276,58 @@ async fn transfer_money(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
+#[derive(Deserialize, Debug)]
+struct IdWrapper {
+    id: i64,
+}
+
+#[get("/send_activation")]
+async fn send_activation(
+    req: HttpRequest,
+    client: web::Data<sqlx::PgPool>,
+) -> HttpResult {
+    let query = req.uri().query().unwrap_or_default();
+    let id = serde_qs::from_str::<IdWrapper>(query).map_err(|e| Error::RequestError(e.to_string()))?.id;
+    let user = user_model::find_user_by_id(&client, id).await?;
+
+    let code = generate_random_code();
+    activation_model::update_or_add_activation(&client, id, &code).await?;
+
+    // TODO: Make it configurable
+    let msg = format!("Welcome to register SOPT!\n\nClick following address to activate: https://sopt.rs/auth/activate?id={}&code={}", id, code);
+    std::thread::spawn(move || {
+       send_mail(&user.username, &user.email, "SOPT", msg).expect("unable to send mail");
+    });
+
+    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
+}
+
+#[derive(Deserialize, Debug)]
+struct Activate {
+    id: i64,
+    code: String,
+}
+
+#[get("/activate")]
+async fn activate(
+    req: HttpRequest,
+    client: web::Data<sqlx::PgPool>,
+) -> HttpResult {
+    let query = req.uri().query().unwrap_or_default();
+    let data: Activate = serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
+
+    let validation = activation_model::find_activation_by_id(&client, data.id).await?;
+    if data.code != validation.code {
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("activation code invalid")))
+    }
+    if validation.used {
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("already activated")))
+    }
+
+    activation_model::update_activated_by_id(&client, data.id).await?;
+    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
+}
+
 pub(crate) fn user_service() -> Scope {
     web::scope("/user")
         .service(add_user)
@@ -282,5 +339,7 @@ pub(crate) fn user_service() -> Scope {
         .service(web::scope("/auth")
             .service(reset_password)
             .service(reset_passkey)
-            .service(transfer_money))
+            .service(transfer_money)
+            .service(send_activation)
+            .service(activate))
 }
