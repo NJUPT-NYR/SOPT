@@ -1,22 +1,22 @@
 [package]
-name = "sopt"
-version = "0.1.0"
 authors = [
-            "Brethland Yang <brethland@gmail.com>",
-            "CattChen",
-            "Five Qin"
-          ]
+  "Brethland Yang <brethland@gmail.com>",
+  "CattChen",
+  "Five Qin",
+]
 description = "Next generation private tracker framework"
 edition = "2018"
-repository = "https://github.com/njupt-nyr/sopt/"
 license = "MIT OR Apache-2.0"
+name = "sopt"
+repository = "https://github.com/njupt-nyr/sopt/"
+version = "0.1.0"
 
 [lib]
 name = "sopt"
 
 [[test]]
-name = "cucumber"
 harness = false
+name = "cucumber"
 
 [features]
 default = ["email-restriction", "message"]
@@ -25,42 +25,43 @@ message = []
 
 [dependencies]
 # actix and sql stuff
-actix-web = "3.3.2"
 actix-multipart = "0.3.0"
-tokio = { version = "^0.2", features = [ "macros", "time" ] }
-sqlx = { version = "0.4.1", features = [ "postgres", "runtime-actix-native-tls", "chrono", "json" ] }
-rocksdb = { git = "https://github.com/rust-rocksdb/rust-rocksdb" }
+actix-web = "3.3.2"
+rocksdb = {git = "https://github.com/rust-rocksdb/rust-rocksdb"}
+sqlx = {version = "0.4.1", features = ["postgres", "runtime-actix-native-tls", "chrono", "json"]}
+tokio = {version = "^0.2", features = ["macros", "time"]}
 
 #serde related
-serde = { version = "*", features = [ "derive" ] }
+serde = {version = "*", features = ["derive"]}
 serde_bencode = "*"
-serde_json = "*"
 serde_bytes = "*"
+serde_json = "*"
 serde_qs = "*"
 
 # utils
-futures = "0.3.13"
-dotenv = "*"
+chrono = {version = "0.4.19", features = ["serde"]}
 config = "*"
+dotenv = "*"
 env_logger = "*"
-pest = "*"
-pest_derive = "*"
-lettre = "0.10.0-alpha.4"
+futures = "0.3.13"
 hex = "*"
-sanitize-filename = "*"
-chrono = { version = "0.4.19", features = [ "serde" ] }
 jsonwebtoken = "7"
 lazy_static = "*"
+lettre = "0.10.0-alpha.4"
+pest = "*"
+pest_derive = "*"
+sanitize-filename = "*"
+sopt-derive = {git = "https://github.com/NJUPT-NYR/SOPT-derive", branch = "master"}
 strsim = "*"
-sopt-derive = { git = "https://github.com/NJUPT-NYR/SOPT-derive", branch = "master" }
 
 # crypto related
-sha2 = "0.9"
-sha-1 = "0.9"
+base64 = "*"
 rand = "0.8.3"
 rust-argon2 = "0.8"
-base64 = "*"
+sha-1 = "0.9"
+sha2 = "0.9"
 
 [dev-dependencies]
-reqwest = { version = "^0.10", features = [ "json" ] }
-cucumber_rust = { git = "https://github.com/bbqsrc/cucumber-rust", branch = "main" }
+cargo-husky = {version = "1", default-features = false, features = ["precommit-hook", "run-cargo-fmt"]}
+cucumber_rust = {git = "https://github.com/bbqsrc/cucumber-rust", branch = "main"}
+reqwest = {version = "^0.10", features = ["json"]}
