@@ -8,6 +8,11 @@ lazy_static! {
         RwLock::new(SearchEngine::new(0.8));
 }
 
+/// A search engine includes
+/// 1. a threshold used to determine the relation of
+/// keywords and results
+/// 2. a forward map from id to tokens
+/// 3. a reverse map from token to ids
 pub struct SearchEngine {
     threshold: f64,
     forward: HashMap<i64, Vec<String>>,
@@ -15,6 +20,8 @@ pub struct SearchEngine {
 }
 
 impl SearchEngine {
+    /// give a threshold and return a
+    /// new engine
     pub fn new(threshold: f64) -> Self {
         SearchEngine {
             threshold,
@@ -23,6 +30,8 @@ impl SearchEngine {
         }
     }
 
+    /// insert into engines. it will automatically
+    /// tokenize words via empty char and '[' and ']'
     pub fn insert(&mut self, id: i64, tokens: Vec<String>) {
         self.delete(id);
         let tokens = Self::tokenize(&tokens);
@@ -35,6 +44,8 @@ impl SearchEngine {
         self.forward.insert(id, tokens);
     }
 
+    /// perform searches, multiple keywords is supported
+    /// via and relation
     pub fn search(&self, patterns: Vec<String>) -> Vec<i64> {
         let patterns = Self::tokenize(&patterns);
         let mut scores: HashMap<&str, f64> = HashMap::new();
@@ -61,6 +72,7 @@ impl SearchEngine {
         result_ids
     }
 
+    /// delete entry from search engine, hope not to use
     pub fn delete(&mut self, id: i64) {
         for token in self.forward.entry(id).or_default() {
             self.reverse.get_mut(token).unwrap().retain(|i| *i != id);
@@ -68,6 +80,8 @@ impl SearchEngine {
         self.forward.remove(&id);
     }
 
+    /// tokenize keywords and search entries, maybe
+    /// user defined separated words will be supported soon
     fn tokenize(tokens: &[String]) -> Vec<String> {
         let mut ret: Vec<String> = tokens
             .iter()

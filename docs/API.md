@@ -50,6 +50,8 @@
   * [/auth/reset_password](#apiuserauthreset_password)
   * [/auth/reset_passkey](#apiuserauthreset_passkey)
   * [/auth/transfer_money](#apiuserauthtransfer_money)
+  * [/auth/send_activation](#apiuserauthsend_activation)
+  * [/auth/activate](#apiuserauthactivate)
 * [Role Design](#role-design)
 * [Response Data](#response-data)
   * [TorrentId](#torrentid)
@@ -1058,6 +1060,49 @@ Show definite user's torrent seeding status.
 Give away some money to users.
 
 Banned user cannot access.
+
+### /api/user/auth/send_activation
+**Type**: GET
+
+**Request**
+
+    - id: i64
+
+**Example**
+
+```
+https://localhost:8000/api/user/auth/send_activation?id=114
+```
+
+**Response**
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: Empty `GeneralResponse`
+
+**Comment**
+
+(Re)Send activation email to definite user, will replace old activation code.
+
+### /api/user/auth/activate
+**Type**: GET
+
+**Request**
+
+    - id: i64
+    - code: String
+
+**Example**
+
+```
+https://localhost:8000/api/user/auth/activate?id=114&code=kja21jasfd_1282492947
+```
+
+**Response**
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: Empty `GeneralResponse`
+
+**Comment**
+
+Activate account with the newest activation code.
 
 ## Role Design
 This is a map from bit to bool(or 01 string). 0 is unset and 1 is set.

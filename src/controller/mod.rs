@@ -20,6 +20,8 @@ use actix_web::{HttpResponse, *};
 use serde::Deserialize;
 use std::convert::TryInto;
 
+/// A macro used to make load data
+/// from `rocksdb` smoother.
 #[macro_export]
 macro_rules! get_from_config_cf {
     ($s:literal, $t:ty) => {
