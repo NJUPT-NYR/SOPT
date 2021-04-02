@@ -1,6 +1,12 @@
 use super::*;
 
-pub async fn add_torrent_info(client: &sqlx::PgPool, title: &str, poster: &str, description: Option<&str>, tags: &[String]) -> TorrentIdRet {
+pub async fn add_torrent_info(
+    client: &sqlx::PgPool,
+    title: &str,
+    poster: &str,
+    description: Option<&str>,
+    tags: &[String],
+) -> TorrentIdRet {
     Ok(sqlx::query_as!(
         TorrentId,
         "INSERT INTO torrent_info(title, poster, description, createTime, lastEdit, tag) \
@@ -9,12 +15,18 @@ pub async fn add_torrent_info(client: &sqlx::PgPool, title: &str, poster: &str, 
         poster,
         description,
         tags
-        )
-        .fetch_one(client)
-        .await?)
+    )
+    .fetch_one(client)
+    .await?)
 }
 
-pub async fn update_torrent_info(client: &sqlx::PgPool, id: i64, title: &str, description: Option<&str>, tags: &[String]) -> TorrentIdRet {
+pub async fn update_torrent_info(
+    client: &sqlx::PgPool,
+    id: i64,
+    title: &str,
+    description: Option<&str>,
+    tags: &[String],
+) -> TorrentIdRet {
     sqlx::query_as!(
         TorrentId,
         "UPDATE torrent_info SET title = $1, description = $2, lastEdit = NOW(), tag = $3 \
@@ -23,11 +35,11 @@ pub async fn update_torrent_info(client: &sqlx::PgPool, id: i64, title: &str, de
         description,
         tags,
         id
-        )
-        .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::NotFound)
+    )
+    .fetch_all(client)
+    .await?
+    .pop()
+    .ok_or(Error::NotFound)
 }
 
 pub async fn find_torrent_by_id_mini(client: &sqlx::PgPool, id: i64) -> MiniTorrentRet {
@@ -37,11 +49,11 @@ pub async fn find_torrent_by_id_mini(client: &sqlx::PgPool, id: i64) -> MiniTorr
         FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
         WHERE torrent_info.id = $1;",
         id
-        )
-        .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::NotFound)
+    )
+    .fetch_all(client)
+    .await?
+    .pop()
+    .ok_or(Error::NotFound)
 }
 
 pub async fn make_torrent_visible(client: &sqlx::PgPool, ids: &[i64]) -> MiniTorrentVecRet {
@@ -51,9 +63,9 @@ pub async fn make_torrent_visible(client: &sqlx::PgPool, ids: &[i64]) -> MiniTor
         WHERE torrent_info.id = torrent.id AND torrent_info.id = ANY($1) \
         RETURNING poster, visible, free, tag, length;",
         ids
-        )
-        .fetch_all(client)
-        .await?)
+    )
+    .fetch_all(client)
+    .await?)
 }
 
 pub async fn find_stick_torrent(client: &sqlx::PgPool) -> SlimTorrentVecRet {
@@ -64,13 +76,18 @@ pub async fn find_stick_torrent(client: &sqlx::PgPool) -> SlimTorrentVecRet {
         FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
         WHERE visible = TRUE AND stick = TRUE \
         ORDER BY lastEdit DESC;",
-        )
-        .fetch_all(client)
-        .await?)
+    )
+    .fetch_all(client)
+    .await?)
 }
 
 /// find visible torrent with definite tags that are not stick
-pub async fn find_visible_torrent_by_tag_desc(client: &sqlx::PgPool, tags: &[String], page_offset: i64, sort_string: &str) -> SlimTorrentVecRet {
+pub async fn find_visible_torrent_by_tag_desc(
+    client: &sqlx::PgPool,
+    tags: &[String],
+    page_offset: i64,
+    sort_string: &str,
+) -> SlimTorrentVecRet {
     // due to sqlx not support type cast of postgres
     Ok(sqlx::query_as_unchecked!(
         SlimTorrent,
@@ -95,7 +112,12 @@ pub async fn find_visible_torrent_by_tag_desc(client: &sqlx::PgPool, tags: &[Str
         .await?)
 }
 
-pub async fn find_visible_torrent_by_tag_asc(client: &sqlx::PgPool, tags: &[String], page_offset: i64, sort_string: &str) -> SlimTorrentVecRet {
+pub async fn find_visible_torrent_by_tag_asc(
+    client: &sqlx::PgPool,
+    tags: &[String],
+    page_offset: i64,
+    sort_string: &str,
+) -> SlimTorrentVecRet {
     Ok(sqlx::query_as_unchecked!(
         SlimTorrent,
         "SELECT torrent_info.id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished \
@@ -119,7 +141,12 @@ pub async fn find_visible_torrent_by_tag_asc(client: &sqlx::PgPool, tags: &[Stri
         .await?)
 }
 
-pub async fn find_visible_torrent_by_ids_desc(client: &sqlx::PgPool, ids: &[i64], page_offset: i64, sort_string: &str) -> SlimTorrentVecRet {
+pub async fn find_visible_torrent_by_ids_desc(
+    client: &sqlx::PgPool,
+    ids: &[i64],
+    page_offset: i64,
+    sort_string: &str,
+) -> SlimTorrentVecRet {
     Ok(sqlx::query_as!(
         SlimTorrent,
         "SELECT torrent_info.id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished \
@@ -143,7 +170,12 @@ pub async fn find_visible_torrent_by_ids_desc(client: &sqlx::PgPool, ids: &[i64]
         .await?)
 }
 
-pub async fn find_visible_torrent_by_ids_asc(client: &sqlx::PgPool, ids: &[i64], page_offset: i64, sort_string: &str) -> SlimTorrentVecRet {
+pub async fn find_visible_torrent_by_ids_asc(
+    client: &sqlx::PgPool,
+    ids: &[i64],
+    page_offset: i64,
+    sort_string: &str,
+) -> SlimTorrentVecRet {
     Ok(sqlx::query_as!(
         SlimTorrent,
         "SELECT torrent_info.id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished \
@@ -174,9 +206,9 @@ pub async fn find_invisible_torrent(client: &sqlx::PgPool) -> SlimTorrentVecRet 
         free, downloading, uploading, finished \
         FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
         WHERE visible = FALSE;"
-        )
-        .fetch_all(client)
-        .await?)
+    )
+    .fetch_all(client)
+    .await?)
 }
 
 pub async fn find_torrent_by_poster(client: &sqlx::PgPool, poster: &str) -> SlimTorrentVecRet {
@@ -187,9 +219,9 @@ pub async fn find_torrent_by_poster(client: &sqlx::PgPool, poster: &str) -> Slim
         FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
         WHERE poster = $1",
         poster
-        )
-        .fetch_all(client)
-        .await?)
+    )
+    .fetch_all(client)
+    .await?)
 }
 
 pub async fn find_torrent_by_id(client: &sqlx::PgPool, id: i64) -> FullTorrentRet {
@@ -215,11 +247,11 @@ pub async fn query_torrent_counts_by_tag(client: &sqlx::PgPool, tags: &[String])
         "SELECT COUNT(*) FROM torrent_info \
         WHERE visible = TRUE AND ($1::VARCHAR[] <@ tag) AND stick = FALSE;",
         tags
-        )
-        .fetch_one(client)
-        .await?
-        .count
-        .expect("sql function not right"))
+    )
+    .fetch_one(client)
+    .await?
+    .count
+    .expect("sql function not right"))
 }
 
 pub async fn make_torrent_stick(client: &sqlx::PgPool, ids: &[i64]) -> Result<(), Error> {
@@ -227,9 +259,9 @@ pub async fn make_torrent_stick(client: &sqlx::PgPool, ids: &[i64]) -> Result<()
         "UPDATE torrent_info SET stick = TRUE \
         WHERE id = ANY($1);",
         ids
-        )
-        .execute(client)
-        .await?;
+    )
+    .execute(client)
+    .await?;
 
     Ok(())
 }
@@ -239,9 +271,9 @@ pub async fn make_torrent_unstick(client: &sqlx::PgPool, ids: &[i64]) -> Result<
         "UPDATE torrent_info SET stick = FALSE \
         WHERE id = ANY($1);",
         ids
-        )
-        .execute(client)
-        .await?;
+    )
+    .execute(client)
+    .await?;
 
     Ok(())
 }
@@ -251,9 +283,9 @@ pub async fn make_torrent_free(client: &sqlx::PgPool, ids: &[i64]) -> Result<(),
         "UPDATE torrent_info SET free = TRUE \
         WHERE id = ANY($1);",
         ids
-        )
-        .execute(client)
-        .await?;
+    )
+    .execute(client)
+    .await?;
 
     Ok(())
 }
@@ -263,14 +295,20 @@ pub async fn make_torrent_unfree(client: &sqlx::PgPool, ids: &[i64]) -> Result<(
         "UPDATE torrent_info SET free = FALSE \
         WHERE id = ANY($1);",
         ids
-        )
-        .execute(client)
-        .await?;
+    )
+    .execute(client)
+    .await?;
 
     Ok(())
 }
 
-pub async fn update_torrent_status(client: &sqlx::PgPool, id: i64, downloading: i32, uploading: i32, finished: i64) -> Result<(), Error> {
+pub async fn update_torrent_status(
+    client: &sqlx::PgPool,
+    id: i64,
+    downloading: i32,
+    uploading: i32,
+    finished: i64,
+) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE torrent_info SET downloading = downloading + $1, \
         uploading = uploading + $2, finished = finished + $3 \
@@ -279,9 +317,9 @@ pub async fn update_torrent_status(client: &sqlx::PgPool, id: i64, downloading: 
         uploading,
         finished,
         id
-        )
-        .execute(client)
-        .await?;
+    )
+    .execute(client)
+    .await?;
 
     Ok(())
 }

@@ -1,6 +1,11 @@
 use super::*;
 
-pub async fn add_invitation_code(client: &sqlx::PgPool, sender: &str, code: &str, send_to: &str) -> InvitationRet {
+pub async fn add_invitation_code(
+    client: &sqlx::PgPool,
+    sender: &str,
+    code: &str,
+    send_to: &str,
+) -> InvitationRet {
     Ok(sqlx::query_as!(
         Invitation,
         "INSERT INTO invitations(sender, code, address) \
@@ -8,9 +13,9 @@ pub async fn add_invitation_code(client: &sqlx::PgPool, sender: &str, code: &str
         sender,
         code,
         send_to,
-        )
-        .fetch_one(client)
-        .await?)
+    )
+    .fetch_one(client)
+    .await?)
 }
 
 pub async fn find_invitation_by_user(client: &sqlx::PgPool, username: &str) -> InvitationVecRet {
@@ -19,9 +24,9 @@ pub async fn find_invitation_by_user(client: &sqlx::PgPool, username: &str) -> I
         "SELECT * FROM invitations \
         WHERE sender = $1;",
         username,
-        )
-        .fetch_all(client)
-        .await?)
+    )
+    .fetch_all(client)
+    .await?)
 }
 
 pub async fn find_invitation_by_code(client: &sqlx::PgPool, code: &str) -> InvitationVecRet {
@@ -30,7 +35,7 @@ pub async fn find_invitation_by_code(client: &sqlx::PgPool, code: &str) -> Invit
         "SELECT * FROM invitations \
         WHERE code = $1;",
         code,
-        )
-        .fetch_all(client)
-        .await?)
+    )
+    .fetch_all(client)
+    .await?)
 }

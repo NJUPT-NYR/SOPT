@@ -1,17 +1,10 @@
 use super::*;
-use crate::data::{user as user_model,
-                  invitation as invitation_model,
-                  user_info as user_info_model,
-                  rank as rank_model,
-                  torrent_status as torrent_status_model,
-                  activation as activation_model};
+use crate::data::{
+    activation as activation_model, invitation as invitation_model, rank as rank_model,
+    torrent_status as torrent_status_model, user as user_model, user_info as user_info_model,
+};
 
-static ALLOWED_AVATAR_EXTENSION: [&str; 4] = [
-    "jpg",
-    "jpeg",
-    "png",
-    "webp",
-];
+static ALLOWED_AVATAR_EXTENSION: [&str; 4] = ["jpg", "jpeg", "png", "webp"];
 
 #[derive(Deserialize, Debug)]
 struct Registry {
@@ -22,10 +15,7 @@ struct Registry {
 }
 
 #[post("/add_user")]
-async fn add_user(
-    data: web::Json<Registry>,
-    client: web::Data<sqlx::PgPool>,
-) -> HttpResult {
+async fn add_user(data: web::Json<Registry>, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let user = data.into_inner();
     let mut allowed = false;
     let mut code = None;
@@ -33,35 +23,58 @@ async fn add_user(
     match parse_email(&user.email) {
         Some(_email) => {
             #[cfg(feature = "email-restriction")]
-            if user.invite_code.is_none() && ALLOWED_DOMAIN.read().await.get(&_email.domain).is_some() {
+            if user.invite_code.is_none()
+                && ALLOWED_DOMAIN.read().await.get(&_email.domain).is_some()
+            {
                 allowed = true;
             }
-        },
-        None => return Ok(HttpResponse::BadRequest().json(GeneralResponse::from_err("invalid email address"))),
+        }
+        None => {
+            return Ok(
+                HttpResponse::BadRequest().json(GeneralResponse::from_err("invalid email address"))
+            )
+        }
     }
     if let Some(str) = user.invite_code {
         let mut ret = invitation_model::find_invitation_by_code(&client, &str).await?;
         if !ret.is_empty() {
             if ret[0].usage {
-                return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("invitation code already taken")))
+                return Ok(HttpResponse::Ok()
+                    .json(GeneralResponse::from_err("invitation code already taken")));
             }
             code = Some(ret.pop().unwrap());
             allowed = true;
         }
     }
     if !allowed {
-        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("not allowed to register")))
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("not allowed to register")));
     }
     let check = user_model::check_existence(&client, &user.email, &user.username).await?;
     if !check.is_empty() {
-        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err(&format!("{} already taken", check))))
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err(&format!(
+            "{} already taken",
+            check
+        ))));
     }
 
     let passkey = generate_passkey(&user.username)?;
-    let new_user = user_model::add_user(&client, &user.email, &user.username, &hash_password(&user.password)?, &passkey).await?;
+    let new_user = user_model::add_user(
+        &client,
+        &user.email,
+        &user.username,
+        &hash_password(&user.password)?,
+        &passkey,
+    )
+    .await?;
     if code.is_some() {
         let true_code = code.unwrap();
-        user_info_model::add_invitor_by_name(&client, new_user.id, true_code.sender, &true_code.code).await?;
+        user_info_model::add_invitor_by_name(
+            &client,
+            new_user.id,
+            true_code.sender,
+            &true_code.code,
+        )
+        .await?;
     }
     Ok(HttpResponse::Ok().json(new_user.to_json()))
 }
@@ -73,27 +86,26 @@ struct Login {
 }
 
 #[post("/login")]
-async fn login(
-    data: web::Json<Login>,
-    client: web::Data<sqlx::PgPool>,
-) -> HttpResult {
-    use chrono::{Utc, Duration};
+async fn login(data: web::Json<Login>, client: web::Data<sqlx::PgPool>) -> HttpResult {
+    use chrono::{Duration, Utc};
     use jsonwebtoken::{encode, EncodingKey, Header};
 
     let user = data.into_inner();
     let secret = CONFIG.secret_key.as_bytes();
 
-    let validation = user_model::find_validation_by_name(&client, &user.username).await?.pop();
+    let validation = user_model::find_validation_by_name(&client, &user.username)
+        .await?
+        .pop();
     if validation.is_none() {
-        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("password not match")))
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("password not match")));
     }
     let mut val = validation.unwrap();
     if !verify_password(&user.password, &val.password)? {
-        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("password not match")))
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("password not match")));
     }
     if !val.activated {
         let msg = format!("account with id {} not activated yet", val.id);
-        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err(&msg)))
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err(&msg)));
     }
 
     user_info_model::update_activity_by_name(&client, &user.username).await?;
@@ -110,7 +122,10 @@ async fn login(
                 user_model::add_role_by_id(&client, val.id, (role % 32) as i32).await?;
             }
             user_info_model::update_rank_by_name(&client, &user.username, &next_rank.name).await?;
-            val = user_model::find_validation_by_name(&client, &user.username).await?.pop().unwrap();
+            val = user_model::find_validation_by_name(&client, &user.username)
+                .await?
+                .pop()
+                .unwrap();
         }
     }
     let claim = Claim {
@@ -121,7 +136,9 @@ async fn login(
     let tokens = encode(
         &Header::default(),
         &claim,
-        &EncodingKey::from_secret(secret)).unwrap();
+        &EncodingKey::from_secret(secret),
+    )
+    .unwrap();
     Ok(HttpResponse::Ok().json(tokens.to_json()))
 }
 
@@ -156,14 +173,25 @@ async fn upload_avatar(
     let username = get_name_in_token(req)?;
 
     if let Ok(Some(mut file)) = payload.try_next().await {
-        let content_type = file.content_disposition().ok_or_else(|| Error::OtherError("incomplete file".to_string()))?;
-        let filename = content_type.get_filename().ok_or_else(|| "incomplete file".to_string())?;
+        let content_type = file
+            .content_disposition()
+            .ok_or_else(|| Error::OtherError("incomplete file".to_string()))?;
+        let filename = content_type
+            .get_filename()
+            .ok_or_else(|| "incomplete file".to_string())?;
         let cleaned_name = sanitize_filename::sanitize(&filename);
 
-        let suffix = cleaned_name.rfind('.').ok_or_else(|| Error::OtherError("missing filename extension".to_string()))?;
+        let suffix = cleaned_name
+            .rfind('.')
+            .ok_or_else(|| Error::OtherError("missing filename extension".to_string()))?;
         let ext = cleaned_name[suffix + 1..].to_ascii_lowercase();
-        if ALLOWED_AVATAR_EXTENSION.iter().find(|x| x == &&ext.as_str()).is_none() {
-            return Ok(HttpResponse::UnsupportedMediaType().json(GeneralResponse::from_err("must be jpg or png or webp")))
+        if ALLOWED_AVATAR_EXTENSION
+            .iter()
+            .find(|x| x == &&ext.as_str())
+            .is_none()
+        {
+            return Ok(HttpResponse::UnsupportedMediaType()
+                .json(GeneralResponse::from_err("must be jpg or png or webp")));
         }
 
         let mut buf: Vec<u8> = vec![];
@@ -184,15 +212,13 @@ struct UserRequest {
 }
 
 #[get("show_user")]
-async fn show_user(
-    req: HttpRequest,
-    client: web::Data<sqlx::PgPool>,
-) -> HttpResult {
+async fn show_user(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let claim = get_info_in_token(&req)?;
     let username = claim.sub;
 
     let query = req.uri().query().unwrap_or_default();
-    let data: UserRequest = serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
+    let data: UserRequest =
+        serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
     let mut ret = user_info_model::find_user_info_by_name(&client, &data.username).await?;
     if username == data.username {
         Ok(HttpResponse::Ok().json(ret.to_json()))
@@ -205,13 +231,11 @@ async fn show_user(
 }
 
 #[get("/show_torrent_status")]
-async fn show_torrent_status(
-    req: HttpRequest,
-    client: web::Data<sqlx::PgPool>,
-) -> HttpResult {
+async fn show_torrent_status(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let _claim = get_info_in_token(&req)?;
     let query = req.uri().query().unwrap_or_default();
-    let data: UserRequest = serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
+    let data: UserRequest =
+        serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
     let user = user_info_model::find_user_info_by_name_mini(&client, &data.username).await?;
 
     let downloading = torrent_status_model::find_downloading_torrent(&client, user.id).await?;
@@ -240,17 +264,16 @@ async fn reset_password(
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let username = get_name_in_token(req)?;
-    user_model::update_password_by_username(&client, &username, &hash_password(&data.password)?).await?;
+    user_model::update_password_by_username(&client, &username, &hash_password(&data.password)?)
+        .await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
 #[get("/reset_passkey")]
-async fn reset_passkey(
-    req: HttpRequest,
-    client: web::Data<sqlx::PgPool>,
-) -> HttpResult {
+async fn reset_passkey(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let username = get_name_in_token(req)?;
-    user_model::update_passkey_by_username(&client, &username, &generate_passkey(&username)?).await?;
+    user_model::update_passkey_by_username(&client, &username, &generate_passkey(&username)?)
+        .await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
@@ -269,7 +292,7 @@ async fn transfer_money(
     let claim = get_info_in_token(&req)?;
     let username = claim.sub;
     if is_not_ordinary_user(claim.role) {
-        return Err(Error::NoPermission)
+        return Err(Error::NoPermission);
     }
 
     user_info_model::transfer_money_by_name(&client, &username, &data.to, data.amount).await?;
@@ -282,12 +305,11 @@ struct IdWrapper {
 }
 
 #[get("/send_activation")]
-async fn send_activation(
-    req: HttpRequest,
-    client: web::Data<sqlx::PgPool>,
-) -> HttpResult {
+async fn send_activation(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let query = req.uri().query().unwrap_or_default();
-    let id = serde_qs::from_str::<IdWrapper>(query).map_err(|e| Error::RequestError(e.to_string()))?.id;
+    let id = serde_qs::from_str::<IdWrapper>(query)
+        .map_err(|e| Error::RequestError(e.to_string()))?
+        .id;
     let user = user_model::find_user_by_id(&client, id).await?;
 
     let code = generate_random_code();
@@ -296,7 +318,7 @@ async fn send_activation(
     // TODO: Make it configurable
     let msg = format!("Welcome to register SOPT!\n\nClick following address to activate: https://sopt.rs/auth/activate?id={}&code={}", id, code);
     std::thread::spawn(move || {
-       send_mail(&user.username, &user.email, "SOPT", msg).expect("unable to send mail");
+        send_mail(&user.username, &user.email, "SOPT", msg).expect("unable to send mail");
     });
 
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
@@ -309,19 +331,17 @@ struct Activate {
 }
 
 #[get("/activate")]
-async fn activate(
-    req: HttpRequest,
-    client: web::Data<sqlx::PgPool>,
-) -> HttpResult {
+async fn activate(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let query = req.uri().query().unwrap_or_default();
-    let data: Activate = serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
+    let data: Activate =
+        serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
 
     let validation = activation_model::find_activation_by_id(&client, data.id).await?;
     if data.code != validation.code {
-        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("activation code invalid")))
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("activation code invalid")));
     }
     if validation.used {
-        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("already activated")))
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("already activated")));
     }
 
     activation_model::update_activated_by_id(&client, data.id).await?;
@@ -336,10 +356,12 @@ pub(crate) fn user_service() -> Scope {
         .service(upload_avatar)
         .service(show_user)
         .service(show_torrent_status)
-        .service(web::scope("/auth")
-            .service(reset_password)
-            .service(reset_passkey)
-            .service(transfer_money)
-            .service(send_activation)
-            .service(activate))
+        .service(
+            web::scope("/auth")
+                .service(reset_password)
+                .service(reset_passkey)
+                .service(transfer_money)
+                .service(send_activation)
+                .service(activate),
+        )
 }

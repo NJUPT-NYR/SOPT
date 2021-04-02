@@ -6,9 +6,9 @@ pub async fn update_or_add_tag(client: &sqlx::PgPool, name: &str) -> Result<(), 
         ON CONFLICT (name) DO \
         UPDATE SET amount = tag.amount + 1;",
         name
-        )
-        .execute(client)
-        .await?;
+    )
+    .execute(client)
+    .await?;
 
     Ok(())
 }
@@ -19,9 +19,9 @@ pub async fn decrease_amount_by_name(client: &sqlx::PgPool, name: &str) -> Resul
         "UPDATE tag SET amount = amount - 1 \
         WHERE name = $1;",
         name
-        )
-        .execute(client)
-        .await?;
+    )
+    .execute(client)
+    .await?;
 
     Ok(())
 }
@@ -32,7 +32,7 @@ pub async fn find_hot_tag_by_amount(client: &sqlx::PgPool, num_want: i64) -> Tag
         "SELECT * FROM tag \
         ORDER BY amount DESC LIMIT $1;",
         num_want
-        )
-        .fetch_all(client)
-        .await?)
+    )
+    .fetch_all(client)
+    .await?)
 }

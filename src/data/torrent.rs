@@ -1,6 +1,6 @@
 use super::*;
-use serde_bytes::ByteBuf;
 use crate::rocksdb::put_cf;
+use serde_bytes::ByteBuf;
 
 type TorrentRet = Result<TorrentTable, Error>;
 
@@ -23,7 +23,7 @@ pub struct Info {
     pub name: String,
     // much more faster to deserialize
     pub pieces: ByteBuf,
-    #[serde(rename="piece length")]
+    #[serde(rename = "piece length")]
     pub piece_length: i64,
     pub length: Option<i64>,
     pub files: Option<Vec<File>>,
@@ -51,7 +51,11 @@ pub struct TorrentTable {
     pub infohash: String,
 }
 
-pub async fn update_or_add_torrent(client: &sqlx::PgPool, torrent: &TorrentTable, id: i64) -> Result<(), Error> {
+pub async fn update_or_add_torrent(
+    client: &sqlx::PgPool,
+    torrent: &TorrentTable,
+    id: i64,
+) -> Result<(), Error> {
     sqlx::query!(
         "INSERT INTO torrent(id, name, length, comment, files, info, infohash) \
         VALUES($1, $2, $3, $4, $5, $6, $7) \
@@ -64,9 +68,9 @@ pub async fn update_or_add_torrent(client: &sqlx::PgPool, torrent: &TorrentTable
         &torrent.files,
         &torrent.info,
         torrent.infohash
-        )
-        .execute(client)
-        .await?;
+    )
+    .execute(client)
+    .await?;
     put_cf("info_hash", &torrent.infohash, torrent.id.to_le_bytes())?;
     Ok(())
 }
@@ -77,9 +81,9 @@ pub async fn find_torrent_by_id(client: &sqlx::PgPool, id: i64) -> TorrentRet {
         "SELECT * FROM torrent \
         WHERE id = $1;",
         id
-        )
-        .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::NotFound)
+    )
+    .fetch_all(client)
+    .await?
+    .pop()
+    .ok_or(Error::NotFound)
 }

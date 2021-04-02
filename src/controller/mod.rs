@@ -1,11 +1,11 @@
 mod admin;
 mod config;
 mod invitation;
+#[cfg(feature = "message")]
+mod message;
 mod torrent;
 mod tracker;
 mod user;
-#[cfg(feature = "message")]
-mod message;
 
 use crate::config::CONFIG;
 pub use crate::controller::config::ALLOWED_DOMAIN;
@@ -71,7 +71,8 @@ pub fn api_service() -> Scope {
         .service(admin::admin_service())
         .service(tracker::tracker_service());
 
-    #[cfg(feature = "message")] {
+    #[cfg(feature = "message")]
+    {
         scope = scope.service(message::message_service());
     }
 

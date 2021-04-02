@@ -1,5 +1,5 @@
 use super::*;
-use crate::data::{message as message_model};
+use crate::data::message as message_model;
 
 #[derive(Deserialize, Debug)]
 struct Message {
@@ -17,10 +17,17 @@ async fn send_message(
     let claim = get_info_in_token(&req)?;
     let sender = claim.sub;
     if is_not_ordinary_user(claim.role) || cannot_send_msg(claim.role) {
-        return Err(Error::NoPermission)
+        return Err(Error::NoPermission);
     }
 
-    message_model::add_message(&client, &sender, &data.receiver, &data.title, data.body.as_deref()).await?;
+    message_model::add_message(
+        &client,
+        &sender,
+        &data.receiver,
+        &data.title,
+        data.body.as_deref(),
+    )
+    .await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
@@ -62,20 +69,14 @@ async fn delete_message(
 }
 
 #[get("/list_sent")]
-async fn list_sent(
-    req: HttpRequest,
-    client: web::Data<sqlx::PgPool>,
-) -> HttpResult {
+async fn list_sent(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let sender = get_name_in_token(req)?;
     let ret = message_model::list_sent_message(&client, &sender).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
 #[get("/list_received")]
-async fn list_received(
-    req: HttpRequest,
-    client: web::Data<sqlx::PgPool>,
-) -> HttpResult {
+async fn list_received(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let receiver = get_name_in_token(req)?;
     let ret = message_model::list_received_message(&client, &receiver).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))

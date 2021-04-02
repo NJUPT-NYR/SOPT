@@ -10,9 +10,9 @@ pub async fn update_or_add_rank(client: &sqlx::PgPool, rank: Rank) -> Result<(),
         rank.upload,
         rank.age,
         rank.next
-        )
-        .execute(client)
-        .await?;
+    )
+    .execute(client)
+    .await?;
 
     Ok(())
 }
@@ -24,11 +24,11 @@ pub async fn find_rank_by_username(client: &sqlx::PgPool, username: &str) -> Ran
         INNER JOIN user_info ON rank.name = user_info.rank \
         WHERE user_info.username = $1;",
         username
-        )
-        .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::NotFound)
+    )
+    .fetch_all(client)
+    .await?
+    .pop()
+    .ok_or(Error::NotFound)
 }
 
 pub async fn find_rank_by_id(client: &sqlx::PgPool, id: i32) -> RankRet {
@@ -37,18 +37,15 @@ pub async fn find_rank_by_id(client: &sqlx::PgPool, id: i32) -> RankRet {
         "SELECT * FROM rank \
         WHERE id = $1;",
         id
-        )
-        .fetch_all(client)
-        .await?
-        .pop()
-        .ok_or(Error::NotFound)
+    )
+    .fetch_all(client)
+    .await?
+    .pop()
+    .ok_or(Error::NotFound)
 }
 
 pub async fn find_all_ranks(client: &sqlx::PgPool) -> RankVecRet {
-    Ok(sqlx::query_as!(
-        Rank,
-        "SELECT * FROM rank;"
-        )
+    Ok(sqlx::query_as!(Rank, "SELECT * FROM rank;")
         .fetch_all(client)
         .await?)
 }

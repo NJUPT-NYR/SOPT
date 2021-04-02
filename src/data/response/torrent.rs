@@ -84,7 +84,7 @@ pub struct PersonalTorrent {
     pub title: String,
     pub length: i64,
     pub upload: i64,
-    pub download: i64
+    pub download: i64,
 }
 
 #[derive(Serialize, Debug, ToResponse)]

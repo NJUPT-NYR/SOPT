@@ -1,23 +1,23 @@
+pub mod activation;
 pub mod invitation;
-pub mod torrent_info;
-pub mod user;
-pub mod user_info;
-pub mod tag;
-pub mod torrent;
-pub mod rank;
-pub mod torrent_status;
 #[cfg(feature = "message")]
 pub mod message;
-pub mod activation;
+pub mod rank;
 mod response;
+pub mod tag;
+pub mod torrent;
+pub mod torrent_info;
+pub mod torrent_status;
+pub mod user;
+pub mod user_info;
 
-use serde::{Serialize, Deserialize};
-use chrono::{DateTime, Utc};
-use sopt_derive::ToResponse;
-use std::collections::HashSet;
 use crate::error::Error;
+use chrono::{DateTime, Utc};
 use response::*;
 pub use response::{Rank, TorrentStatusByUser};
+use serde::{Deserialize, Serialize};
+use sopt_derive::ToResponse;
+use std::collections::HashSet;
 
 /// General Response structure used to
 /// communicate with frontends.
@@ -85,10 +85,7 @@ pub struct DataWithCount {
 
 impl DataWithCount {
     pub fn new(ret: serde_json::Value, count: i64) -> Self {
-        DataWithCount {
-            count,
-            ret,
-        }
+        DataWithCount { count, ret }
     }
 }
 

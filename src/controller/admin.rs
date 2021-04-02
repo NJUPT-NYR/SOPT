@@ -1,18 +1,14 @@
 use super::*;
-use crate::data::{torrent_info as torrent_info_model,
-                  tag as tag_model,
-                  user as user_model,
-                  rank as rank_model,
-                  user_info as user_info_model};
+use crate::data::{
+    rank as rank_model, tag as tag_model, torrent_info as torrent_info_model, user as user_model,
+    user_info as user_info_model,
+};
 
 #[get("/show_invisible_torrents")]
-async fn show_invisible_torrents(
-    req: HttpRequest,
-    client: web::Data<sqlx::PgPool>,
-) -> HttpResult {
+async fn show_invisible_torrents(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let claim = get_info_in_token(&req)?;
     if is_no_permission_to_torrents(claim.role) {
-        return Err(Error::NoPermission)
+        return Err(Error::NoPermission);
     }
     let ret = torrent_info_model::find_invisible_torrent(&client).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
@@ -31,7 +27,7 @@ async fn accept_torrents(
 ) -> HttpResult {
     let claim = get_info_in_token(&req)?;
     if is_no_permission_to_torrents(claim.role) {
-        return Err(Error::NoPermission)
+        return Err(Error::NoPermission);
     }
     let ret = torrent_info_model::make_torrent_visible(&client, &data.ids).await?;
 
@@ -51,7 +47,7 @@ async fn stick_torrents(
 ) -> HttpResult {
     let claim = get_info_in_token(&req)?;
     if is_no_permission_to_torrents(claim.role) {
-        return Err(Error::NoPermission)
+        return Err(Error::NoPermission);
     }
     torrent_info_model::make_torrent_stick(&client, &data.ids).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
@@ -65,7 +61,7 @@ async fn unstick_torrents(
 ) -> HttpResult {
     let claim = get_info_in_token(&req)?;
     if is_no_permission_to_torrents(claim.role) {
-        return Err(Error::NoPermission)
+        return Err(Error::NoPermission);
     }
     torrent_info_model::make_torrent_unstick(&client, &data.ids).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
@@ -79,7 +75,7 @@ async fn free_torrents(
 ) -> HttpResult {
     let claim = get_info_in_token(&req)?;
     if is_no_permission_to_torrents(claim.role) {
-        return Err(Error::NoPermission)
+        return Err(Error::NoPermission);
     }
     torrent_info_model::make_torrent_free(&client, &data.ids).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
@@ -93,7 +89,7 @@ async fn unfree_torrents(
 ) -> HttpResult {
     let claim = get_info_in_token(&req)?;
     if is_no_permission_to_torrents(claim.role) {
-        return Err(Error::NoPermission)
+        return Err(Error::NoPermission);
     }
     torrent_info_model::make_torrent_unfree(&client, &data.ids).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
@@ -106,45 +102,38 @@ struct IdWrapper {
 
 /// I hope this never get used
 #[get("/ban_user")]
-async fn ban_user(
-    req: HttpRequest,
-    client: web::Data<sqlx::PgPool>,
-) -> HttpResult {
+async fn ban_user(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let claim = get_info_in_token(&req)?;
     if is_no_permission_to_users(claim.role) {
-        return Err(Error::NoPermission)
+        return Err(Error::NoPermission);
     }
 
     let query = req.uri().query().unwrap_or_default();
-    let data: IdWrapper = serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
+    let data: IdWrapper =
+        serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
     user_model::delete_role_by_id(&client, data.id, 0).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
 #[get("/unban_user")]
-async fn unban_user(
-    req: HttpRequest,
-    client: web::Data<sqlx::PgPool>,
-) -> HttpResult {
+async fn unban_user(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let claim = get_info_in_token(&req)?;
     if is_no_permission_to_users(claim.role) {
-        return Err(Error::NoPermission)
+        return Err(Error::NoPermission);
     }
 
     let query = req.uri().query().unwrap_or_default();
-    let data: IdWrapper = serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
+    let data: IdWrapper =
+        serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
     user_model::add_role_by_id(&client, data.id, 0).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
 #[get("/list_banned_user")]
-async fn list_banned_user(
-    req: HttpRequest,
-    client: web::Data<sqlx::PgPool>,
-) -> HttpResult {
+async fn list_banned_user(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let claim = get_info_in_token(&req)?;
     if is_no_permission_to_users(claim.role) {
-        return Err(Error::NoPermission)
+        return Err(Error::NoPermission);
     }
     let ret = user_model::list_banned_user(&client).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
@@ -164,7 +153,7 @@ async fn group_awards(
 ) -> HttpResult {
     let claim = get_info_in_token(&req)?;
     if is_no_permission_to_users(claim.role) {
-        return Err(Error::NoPermission)
+        return Err(Error::NoPermission);
     }
     data.ids.sort_unstable();
     data.ids.dedup();
@@ -188,7 +177,7 @@ async fn change_permission(
 ) -> HttpResult {
     let claim = get_info_in_token(&req)?;
     if is_not_su(claim.role) {
-        return Err(Error::NoPermission)
+        return Err(Error::NoPermission);
     }
 
     for permission in &data.give {
@@ -201,12 +190,10 @@ async fn change_permission(
 }
 
 #[get("/get_email_whitelist")]
-async fn get_email_whitelist(
-    req: HttpRequest,
-) -> HttpResult {
+async fn get_email_whitelist(req: HttpRequest) -> HttpResult {
     let claim = get_info_in_token(&req)?;
     if is_no_permission_to_site(claim.role) {
-        return Err(Error::NoPermission)
+        return Err(Error::NoPermission);
     }
 
     let ret = ALLOWED_DOMAIN.read().await;
@@ -220,29 +207,27 @@ struct EmailRequest {
 }
 
 #[post("/update_email_whitelist")]
-async fn update_email_whitelist(
-    data: web::Json<EmailRequest>,
-    req: HttpRequest,
-) -> HttpResult {
+async fn update_email_whitelist(data: web::Json<EmailRequest>, req: HttpRequest) -> HttpResult {
     let claim = get_info_in_token(&req)?;
     if is_no_permission_to_site(claim.role) {
-        return Err(Error::NoPermission)
+        return Err(Error::NoPermission);
     }
 
     let mut w = ALLOWED_DOMAIN.write().await;
-    data.add.iter().for_each(|s| { w.insert(String::from(s)); });
-    data.delete.iter().for_each(|s| { w.take(s); });
+    data.add.iter().for_each(|s| {
+        w.insert(String::from(s));
+    });
+    data.delete.iter().for_each(|s| {
+        w.take(s);
+    });
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
 #[get("/get_rank")]
-async fn get_rank(
-    req: HttpRequest,
-    client: web::Data<sqlx::PgPool>,
-) -> HttpResult {
+async fn get_rank(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let claim = get_info_in_token(&req)?;
     if is_no_permission_to_site(claim.role) {
-        return Err(Error::NoPermission)
+        return Err(Error::NoPermission);
     }
 
     let ret = rank_model::find_all_ranks(&client).await?;
@@ -257,7 +242,7 @@ async fn update_rank(
 ) -> HttpResult {
     let claim = get_info_in_token(&req)?;
     if is_no_permission_to_site(claim.role) {
-        return Err(Error::NoPermission)
+        return Err(Error::NoPermission);
     }
 
     rank_model::update_or_add_rank(&client, data.into_inner()).await?;
@@ -266,22 +251,28 @@ async fn update_rank(
 
 pub(crate) fn admin_service() -> Scope {
     web::scope("/admin")
-        .service(web::scope("/torrent")
-            .service(accept_torrents)
-            .service(stick_torrents)
-            .service(unstick_torrents)
-            .service(free_torrents)
-            .service(unfree_torrents)
-            .service(show_invisible_torrents))
-        .service(web::scope("/user")
-            .service(ban_user)
-            .service(unban_user)
-            .service(list_banned_user)
-            .service(group_awards)
-            .service(change_permission))
-        .service(web::scope("/site")
-            .service(get_email_whitelist)
-            .service(update_email_whitelist)
-            .service(get_rank)
-            .service(update_rank))
+        .service(
+            web::scope("/torrent")
+                .service(accept_torrents)
+                .service(stick_torrents)
+                .service(unstick_torrents)
+                .service(free_torrents)
+                .service(unfree_torrents)
+                .service(show_invisible_torrents),
+        )
+        .service(
+            web::scope("/user")
+                .service(ban_user)
+                .service(unban_user)
+                .service(list_banned_user)
+                .service(group_awards)
+                .service(change_permission),
+        )
+        .service(
+            web::scope("/site")
+                .service(get_email_whitelist)
+                .service(update_email_whitelist)
+                .service(get_rank)
+                .service(update_rank),
+        )
 }

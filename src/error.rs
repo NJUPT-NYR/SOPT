@@ -56,11 +56,21 @@ impl ResponseError for Error {
         match *self {
             Error::NotFound => HttpResponse::NotFound().body("Not Found"),
             Error::DBError(ref err) => HttpResponse::InternalServerError().body(err.to_string()),
-            Error::RocksDBError(ref err) => HttpResponse::InternalServerError().body(err.to_string()),
-            Error::AuthError => HttpResponse::Unauthorized().json(GeneralResponse::from_err("Not login yet")),
-            Error::NoPermission => HttpResponse::Unauthorized().json(GeneralResponse::from_err("No permission")),
-            Error::OtherError(ref err) => HttpResponse::InternalServerError().json(GeneralResponse::from_err(err)),
-            Error::RequestError(ref err) => HttpResponse::UnprocessableEntity().json(GeneralResponse::from_err(err)),
+            Error::RocksDBError(ref err) => {
+                HttpResponse::InternalServerError().body(err.to_string())
+            }
+            Error::AuthError => {
+                HttpResponse::Unauthorized().json(GeneralResponse::from_err("Not login yet"))
+            }
+            Error::NoPermission => {
+                HttpResponse::Unauthorized().json(GeneralResponse::from_err("No permission"))
+            }
+            Error::OtherError(ref err) => {
+                HttpResponse::InternalServerError().json(GeneralResponse::from_err(err))
+            }
+            Error::RequestError(ref err) => {
+                HttpResponse::UnprocessableEntity().json(GeneralResponse::from_err(err))
+            }
         }
     }
 }

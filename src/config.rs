@@ -1,6 +1,6 @@
 use config::ConfigError;
-use serde::Deserialize;
 use lazy_static::lazy_static;
+use serde::Deserialize;
 use std::sync::Arc;
 
 lazy_static! {

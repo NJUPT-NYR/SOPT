@@ -1,4 +1,4 @@
-use cucumber_rust::{Cucumber, criteria::feature, Context, futures::FutureExt};
+use cucumber_rust::{criteria::feature, futures::FutureExt, Context, Cucumber};
 use sopt::sopt_main;
 
 mod sign_up_and_login;
@@ -15,14 +15,20 @@ async fn main() {
         .features(&["./tests/features/"])
         .steps(sign_up_and_login::steps())
         .context(Context::new().add(pool))
-        .after(feature("Register a new user and sign in."),
-            |ctx| {
-                let pool = ctx.get::<sqlx::PgPool>().unwrap().clone();
-                async move {
-                    sqlx::query!("DELETE FROM user_info WHERE id > 1;").execute(&pool).await.unwrap();
-                    sqlx::query!("DELETE FROM users WHERE id > 1;").execute(&pool).await.unwrap();
-                }.boxed()
-            })
+        .after(feature("Register a new user and sign in."), |ctx| {
+            let pool = ctx.get::<sqlx::PgPool>().unwrap().clone();
+            async move {
+                sqlx::query!("DELETE FROM user_info WHERE id > 1;")
+                    .execute(&pool)
+                    .await
+                    .unwrap();
+                sqlx::query!("DELETE FROM users WHERE id > 1;")
+                    .execute(&pool)
+                    .await
+                    .unwrap();
+            }
+            .boxed()
+        })
         .cli()
         .run()
         .await;

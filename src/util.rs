@@ -1,9 +1,9 @@
+use crate::config::CONFIG;
+use crate::error::{error_string, Error};
+use chrono::Utc;
 use pest::Parser;
 use pest_derive::*;
 use rand::{thread_rng, Rng};
-use chrono::Utc;
-use crate::config::CONFIG;
-use crate::error::{error_string, Error};
 
 #[derive(Parser)]
 #[grammar = "email_address.pest"]
@@ -75,12 +75,7 @@ pub fn verify_password(password: &str, hash: &str) -> Result<bool, Error> {
 /// to handle it. SMTP is used so config is need.
 ///
 /// Default retry count: 5
-pub fn send_mail(
-    receiver: &str,
-    address: &str,
-    from: &str,
-    body: String,
-) -> Result<(), Error> {
+pub fn send_mail(receiver: &str, address: &str, from: &str, body: String) -> Result<(), Error> {
     use lettre::transport::smtp::authentication::Credentials;
     use lettre::{Message, SmtpTransport, Transport};
     use std::thread::sleep;
@@ -91,11 +86,7 @@ pub fn send_mail(
                 .parse()
                 .unwrap(),
         )
-        .to(
-            format!("{} <{}>", receiver, address)
-                .parse()
-                .unwrap(),
-        )
+        .to(format!("{} <{}>", receiver, address).parse().unwrap())
         .subject("Invitation Code")
         .body(body)
         .map_err(error_string)?;
@@ -142,11 +133,14 @@ pub fn generate_random_code() -> String {
 use crate::data::Claim;
 /// try decode and verify if jwt is expired
 pub fn decode_and_verify_jwt(token: &str, secret: &[u8]) -> Result<Claim, Error> {
-    use jsonwebtoken::{decode, Validation, DecodingKey};
+    use jsonwebtoken::{decode, DecodingKey, Validation};
 
-    let decoded =
-        decode::<Claim>(token, &DecodingKey::from_secret(secret), &Validation::default())
-            .map_err(error_string)?;
+    let decoded = decode::<Claim>(
+        token,
+        &DecodingKey::from_secret(secret),
+        &Validation::default(),
+    )
+    .map_err(error_string)?;
 
     let claim: Claim = decoded.claims;
     if claim.exp < Utc::now().timestamp() {
@@ -160,7 +154,7 @@ use crate::data::torrent::{Torrent, TorrentTable};
 /// Parse uploaded torrent file and convert into a table row
 pub fn parse_torrent_file(buf: &[u8]) -> Result<TorrentTable, Error> {
     use serde_bencode::{from_bytes, to_bytes};
-    use sha1::{Sha1, Digest};
+    use sha1::{Digest, Sha1};
     use std::convert::TryInto;
 
     let mut ret = from_bytes::<Torrent>(buf).map_err(error_string)?;
@@ -168,18 +162,24 @@ pub fn parse_torrent_file(buf: &[u8]) -> Result<TorrentTable, Error> {
     let info = to_bytes(&ret.info).map_err(error_string)?;
     let mut hasher = Sha1::new();
     hasher.update(&info);
-    let res: Vec<u8> = hasher.finalize()
+    let res: Vec<u8> = hasher
+        .finalize()
         .as_slice()
         .try_into()
         .map_err(error_string)?;
     let infohash = hex::encode(res);
 
     let length = ret.info.length.unwrap_or(ret.info.piece_length * 8);
-    let files = ret.info.files.unwrap_or_default()
+    let files = ret
+        .info
+        .files
+        .unwrap_or_default()
         .iter()
-        .map(|file| file.path.iter()
-            .fold("".to_string(),
-                  |acc, x| acc + "/" + x))
+        .map(|file| {
+            file.path
+                .iter()
+                .fold("".to_string(), |acc, x| acc + "/" + x)
+        })
         .collect();
 
     Ok(TorrentTable {
@@ -196,15 +196,26 @@ pub fn parse_torrent_file(buf: &[u8]) -> Result<TorrentTable, Error> {
 /// Generate torrent file buf with custom announce and passkey
 ///
 /// Announce format: {announce_addr}?passkey={passkey}&tid={torrent id}&uid={user id}
-pub fn generate_torrent_file(mut info: Vec<u8>, passkey: &str, tid: i64, uid: i64, comment: &str) -> Vec<u8> {
+pub fn generate_torrent_file(
+    mut info: Vec<u8>,
+    passkey: &str,
+    tid: i64,
+    uid: i64,
+    comment: &str,
+) -> Vec<u8> {
     use serde_bencode::to_string;
 
-    let announce_address = to_string(&format!("{}?passkey={}&tid={}&uid={}", CONFIG.announce_addr, passkey, tid, uid)).unwrap();
+    let announce_address = to_string(&format!(
+        "{}?passkey={}&tid={}&uid={}",
+        CONFIG.announce_addr, passkey, tid, uid
+    ))
+    .unwrap();
     let comment = to_string(&comment).unwrap();
 
     let mut hand_ser = "d4:info".to_string().into_bytes();
     hand_ser.append(&mut info);
-    hand_ser.append(&mut format!("8:announce{}7:comment{}e", announce_address, comment).into_bytes());
+    hand_ser
+        .append(&mut format!("8:announce{}7:comment{}e", announce_address, comment).into_bytes());
 
     hand_ser
 }
@@ -253,8 +264,8 @@ mod tests {
     }
     #[test]
     fn decode_and_verify_jwt_works() {
-        use jsonwebtoken::{encode, EncodingKey, Header};
         use crate::data::Claim;
+        use jsonwebtoken::{encode, EncodingKey, Header};
 
         let claim = Claim {
             sub: "YUKI.N".to_string(),
@@ -264,7 +275,9 @@ mod tests {
         let tokens = encode(
             &Header::default(),
             &claim,
-            &EncodingKey::from_secret("secret".as_bytes())).unwrap();
+            &EncodingKey::from_secret("secret".as_bytes()),
+        )
+        .unwrap();
         let ret = decode_and_verify_jwt(&tokens, "secret".as_bytes()).unwrap();
 
         assert_eq!(ret.sub, "YUKI.N".to_string())
