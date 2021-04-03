@@ -233,7 +233,7 @@ async fn search_torrents(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> H
 
 #[get("list_posted_torrent")]
 async fn list_posted_torrent(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
-    let username = get_name_in_token(req)?;
+    let username = get_name_in_token(&req)?;
     let ret = torrent_info_model::find_torrent_by_poster(&client, &username).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }

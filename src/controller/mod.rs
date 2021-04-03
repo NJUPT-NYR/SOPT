@@ -61,8 +61,8 @@ fn get_info_in_token(req: &HttpRequest) -> Result<Claim, Error> {
 }
 
 /// since most of cases are the need of username
-fn get_name_in_token(req: HttpRequest) -> Result<String, Error> {
-    Ok(get_info_in_token(&req)?.sub)
+fn get_name_in_token(req: &HttpRequest) -> Result<String, Error> {
+    Ok(get_info_in_token(req)?.sub)
 }
 
 pub fn api_service() -> Scope {

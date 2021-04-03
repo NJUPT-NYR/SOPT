@@ -40,7 +40,7 @@ async fn send_invitation(
 
 #[get("/list_invitations")]
 async fn list_invitations(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
-    let username = get_name_in_token(req)?;
+    let username = get_name_in_token(&req)?;
     let ret = invitation_model::find_invitation_by_user(&client, &username).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }

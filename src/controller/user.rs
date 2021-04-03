@@ -154,7 +154,7 @@ async fn personal_info_update(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let username = get_name_in_token(req)?;
+    let username = get_name_in_token(&req)?;
     let level: user_info_model::Level = data.privacy.try_into()?;
 
     user_info_model::update_privacy_by_name(&client, &username, level).await?;
@@ -170,7 +170,7 @@ async fn upload_avatar(
 ) -> HttpResult {
     use futures::{StreamExt, TryStreamExt};
 
-    let username = get_name_in_token(req)?;
+    let username = get_name_in_token(&req)?;
 
     if let Ok(Some(mut file)) = payload.try_next().await {
         let content_type = file
@@ -208,19 +208,20 @@ async fn upload_avatar(
 
 #[derive(Deserialize, Debug)]
 struct UserRequest {
-    username: String,
+    username: Option<String>,
 }
 
 #[get("show_user")]
 async fn show_user(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let claim = get_info_in_token(&req)?;
-    let username = claim.sub;
+    let current_user = claim.sub;
 
     let query = req.uri().query().unwrap_or_default();
     let data: UserRequest =
         serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
-    let mut ret = user_info_model::find_user_info_by_name(&client, &data.username).await?;
-    if username == data.username {
+    let name = data.username.unwrap_or(current_user.clone());
+    let mut ret = user_info_model::find_user_info_by_name(&client, &name).await?;
+    if name == current_user {
         Ok(HttpResponse::Ok().json(ret.to_json()))
     } else if ret.privacy == 1 && is_no_permission_to_users(claim.role) {
         Err(Error::NoPermission)
@@ -232,11 +233,12 @@ async fn show_user(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpRes
 
 #[get("/show_torrent_status")]
 async fn show_torrent_status(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
-    let _claim = get_info_in_token(&req)?;
+    let current_user = get_name_in_token(&req)?;
     let query = req.uri().query().unwrap_or_default();
     let data: UserRequest =
         serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
-    let user = user_info_model::find_user_info_by_name_mini(&client, &data.username).await?;
+    let name = data.username.unwrap_or(current_user);
+    let user = user_info_model::find_user_info_by_name_mini(&client, &name).await?;
 
     let downloading = torrent_status_model::find_downloading_torrent(&client, user.id).await?;
     let uploading = torrent_status_model::find_uploading_torrent(&client, user.id).await?;
@@ -263,7 +265,7 @@ async fn reset_password(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let username = get_name_in_token(req)?;
+    let username = get_name_in_token(&req)?;
     user_model::update_password_by_username(&client, &username, &hash_password(&data.password)?)
         .await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
@@ -271,7 +273,7 @@ async fn reset_password(
 
 #[get("/reset_passkey")]
 async fn reset_passkey(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
-    let username = get_name_in_token(req)?;
+    let username = get_name_in_token(&req)?;
     user_model::update_passkey_by_username(&client, &username, &generate_passkey(&username)?)
         .await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))

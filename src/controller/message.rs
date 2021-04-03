@@ -42,7 +42,7 @@ async fn read_message(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let receiver = get_name_in_token(req)?;
+    let receiver = get_name_in_token(&req)?;
     message_model::read_message(&client, &data.ids, &receiver).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
@@ -59,7 +59,7 @@ async fn delete_message(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
-    let username = get_name_in_token(req)?;
+    let username = get_name_in_token(&req)?;
     if data.sender {
         message_model::delete_message_by_sender(&client, &data.ids, &username).await?;
     } else {
@@ -70,14 +70,14 @@ async fn delete_message(
 
 #[get("/list_sent")]
 async fn list_sent(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
-    let sender = get_name_in_token(req)?;
+    let sender = get_name_in_token(&req)?;
     let ret = message_model::list_sent_message(&client, &sender).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
 #[get("/list_received")]
 async fn list_received(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
-    let receiver = get_name_in_token(req)?;
+    let receiver = get_name_in_token(&req)?;
     let ret = message_model::list_received_message(&client, &receiver).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }

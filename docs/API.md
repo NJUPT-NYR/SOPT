@@ -881,7 +881,9 @@ Used by the tracker for announcing.
 
 **Comment**
 
-Sign up. Default rank is first rank.
+Sign up. Default rank is first rank. 
+
+Warning: invitation code will be used if it is valid even email is in the whitelist.
 
 ### /api/user/login
 **Type**: POST
@@ -967,7 +969,7 @@ Avatar will be stored in the database with base64 encoded.
 
 **Request**
 
-    - username: String
+    - username: Option<String>
 
 **Example**
 ```
@@ -980,7 +982,7 @@ https://localhost:8000/api/user/show_user?username=brethland
 
 **Comment**
 
-Show definite user. 
+Show definite user. If request param is not set, then current user is shown.
 
 If user set the privacy, and you are not the user with user admin role,
 you cannot access.
@@ -1006,8 +1008,8 @@ https://localhost:8000/api/user/show_torrent_status?username=brethland
 
 **Comment**
 
-Show definite user's torrent seeding status.
-
+Show definite user's torrent seeding status. If request param is not
+set, then current user is shown.
 ### /api/user/auth/reset_password
 **Type**: POST
 
