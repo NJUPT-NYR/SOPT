@@ -38,6 +38,7 @@
   * [/list_posted_torrent](#apitorrentlist_posted_torrent)
   * [/upload_torrent](#apitorrentupload_torrent)
   * [/get_torrent](#apitorrentget_torrent)
+* [oss](#oss-api)
 * [Tracker](#tracker-api)
   * [/get_announce](#apitrackerget_announce)
 * [User](#user-api)
@@ -817,6 +818,22 @@ Invisible torrents can only be downloaded by the creator or
 user with torrent admin role.
 
 Banned user cannot download.
+
+## OSS API
+
+### /oss/:PATH
+**Type**: GET
+
+**Response**
+1. Success: return the file stored in oss/PATH
+2. 404: file not exists
+
+**Comment**
+
+Act just like URL.
+
+The minio will have a root bucket named oss, where all files are
+stored.
 
 ## Tracker API
 
