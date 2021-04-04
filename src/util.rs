@@ -75,7 +75,13 @@ pub fn verify_password(password: &str, hash: &str) -> Result<bool, Error> {
 /// to handle it. SMTP is used so config is need.
 ///
 /// Default retry count: 5
-pub fn send_mail(receiver: &str, address: &str, from: &str, body: String) -> Result<(), Error> {
+pub fn send_mail(
+    receiver: &str,
+    address: &str,
+    from: &str,
+    body: String,
+    subject: &str,
+) -> Result<(), Error> {
     use lettre::transport::smtp::authentication::Credentials;
     use lettre::{Message, SmtpTransport, Transport};
     use std::thread::sleep;
@@ -87,7 +93,7 @@ pub fn send_mail(receiver: &str, address: &str, from: &str, body: String) -> Res
                 .unwrap(),
         )
         .to(format!("{} <{}>", receiver, address).parse().unwrap())
-        .subject("Invitation Code")
+        .subject(subject)
         .body(body)
         .map_err(error_string)?;
 
@@ -128,6 +134,16 @@ pub fn generate_random_code() -> String {
     // is it proper to add a timestamp
     // maybe easier to check expiration
     format!("{}_{}", rand_string, Utc::now().timestamp())
+}
+
+/// split the random code and get timestamp
+/// in it.
+pub fn get_time_from_code(code: String) -> Result<i64, Error> {
+    let strings: Vec<&str> = code.split('_').collect();
+    if strings.len() < 2 {
+        return Err(Error::OtherError("invalid code".to_string()));
+    }
+    i64::from_str_radix(strings[1].trim(), 10).map_err(error_string)
 }
 
 use crate::data::Claim;
@@ -281,5 +297,19 @@ mod tests {
         let ret = decode_and_verify_jwt(&tokens, "secret".as_bytes()).unwrap();
 
         assert_eq!(ret.sub, "YUKI.N".to_string())
+    }
+    #[test]
+    fn get_timestamp_from_code_works() {
+        let code = format!("acdxfghjk_{}", 114514);
+        let wrong1 = format!("akjashdka2189213");
+        let wrong2 = format!("kajsjdncjk_212jas28");
+
+        let time = get_time_from_code(code).unwrap();
+        let ret1 = get_time_from_code(wrong1);
+        let ret2 = get_time_from_code(wrong2);
+
+        assert_eq!(time, 114514);
+        assert!(ret1.is_err());
+        assert!(ret2.is_err());
     }
 }

@@ -7,7 +7,7 @@ lazy_static! {
     pub static ref ROCKSDB: DB = rocksdb::DB::open_cf(
         &rocksdb_config(),
         &CONFIG.rocksdb_path,
-        &["config", "passkey", "info_hash"]
+        &["config", "passkey", "info_hash", "reset"]
     )
     .expect("unable to connect to rocksdb");
 }

@@ -12,10 +12,10 @@ pub use crate::controller::config::ALLOWED_DOMAIN;
 use crate::controller::config::*;
 use crate::data::*;
 use crate::error::{error_string, Error};
-use crate::get_from_config_cf;
-use crate::rocksdb::ROCKSDB;
+use crate::rocksdb::{put_cf, ROCKSDB};
 use crate::search::TORRENT_SEARCH_ENGINE;
 use crate::util::*;
+use crate::{get_from_config_cf, get_from_config_cf_untyped};
 use actix_web::{HttpResponse, *};
 use serde::Deserialize;
 use std::convert::TryInto;
@@ -35,6 +35,20 @@ macro_rules! get_from_config_cf {
                 .try_into()
                 .unwrap(),
         )
+    };
+}
+
+/// A macro used to load data from
+/// `rocksdb` and returns a string
+#[macro_export]
+macro_rules! get_from_config_cf_untyped {
+    ($s:literal) => {
+        String::from_utf8(
+            ROCKSDB
+                .get_cf(ROCKSDB.cf_handle("config").unwrap(), $s)?
+                .unwrap(),
+        )
+        .map_err(error_string)?
     };
 }
 

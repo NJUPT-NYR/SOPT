@@ -55,6 +55,19 @@ pub async fn find_user_by_id(client: &sqlx::PgPool, id: i64) -> AccountRet {
     .ok_or(Error::NotFound)
 }
 
+pub async fn find_user_by_email(client: &sqlx::PgPool, email: &str) -> AccountRet {
+    sqlx::query_as!(
+        Account,
+        "SELECT id, email, username, passkey, role FROM users \
+        WHERE email = $1;",
+        email
+    )
+    .fetch_all(client)
+    .await?
+    .pop()
+    .ok_or(Error::NotFound)
+}
+
 pub async fn list_banned_user(client: &sqlx::PgPool) -> AccountVecRet {
     Ok(sqlx::query_as!(
         Account,

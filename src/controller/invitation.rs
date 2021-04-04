@@ -32,6 +32,7 @@ async fn send_invitation(
             &data.address,
             &data.to,
             format!("{}\n\nYour Invitation Code is: {}\n", &data.body, &code),
+            "INVITATION CODE",
         )
         .expect("unable to send mail");
     });

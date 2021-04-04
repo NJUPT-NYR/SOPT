@@ -38,7 +38,7 @@
   * [/list_posted_torrent](#apitorrentlist_posted_torrent)
   * [/upload_torrent](#apitorrentupload_torrent)
   * [/get_torrent](#apitorrentget_torrent)
-* [oss](#oss-api)
+* [OSS](#oss-api)
 * [Tracker](#tracker-api)
   * [/get_announce](#apitrackerget_announce)
 * [User](#user-api)
@@ -53,6 +53,8 @@
   * [/auth/transfer_money](#apiuserauthtransfer_money)
   * [/auth/send_activation](#apiuserauthsend_activation)
   * [/auth/activate](#apiuserauthactivate)
+  * [/auth/forget_password](#apiuserauthforget_password)
+  * [/auth/validate_reset](#apiuserauthvalidate_reset)
 * [Role Design](#role-design)
 * [Response Data](#response-data)
   * [TorrentId](#torrentid)
@@ -1122,6 +1124,54 @@ https://localhost:8000/api/user/auth/activate?id=114&code=kja21jasfd_1282492947
 **Comment**
 
 Activate account with the newest activation code.
+
+### /api/user/auth/forget_password
+**Type**: GET
+
+**Request**
+
+    - email: String
+
+**Example**
+
+```
+https://localhost:8000/api/user/auth/forget_password?email=brethland@gmail.com
+```
+
+**Response**
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: Empty `GeneralResponse`
+
+**Comment**
+
+(Re)send reset password email, minimal interval will be 1 minute.
+
+### /api/user/auth/validate_reset
+**Type**: POST
+
+**Request**
+
+    - id: i64
+    - code: String
+    - password: String
+
+**Example**
+
+```json
+{
+  "id": 114,
+  "code": "jkaks12ada_289422241",
+  "password": "1145141919810"
+}
+```
+
+**Response**
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: Empty `GeneralResponse`
+
+**Comment**
+
+Validate the reset code, if valid, reset the password with new one.
 
 ## Role Design
 This is a map from bit to bool(or 01 string). 0 is unset and 1 is set.

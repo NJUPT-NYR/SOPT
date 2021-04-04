@@ -317,10 +317,11 @@ async fn send_activation(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> H
     let code = generate_random_code();
     activation_model::update_or_add_activation(&client, id, &code).await?;
 
-    // TODO: Make it configurable
-    let msg = format!("Welcome to register SOPT!\n\nClick following address to activate: https://sopt.rs/auth/activate?id={}&code={}", id, code);
+    let mut body = get_from_config_cf_untyped!("ACTIVATE_EMAIL");
+    body.push_str(&format!("?id={}&code={}", id, code));
     std::thread::spawn(move || {
-        send_mail(&user.username, &user.email, "SOPT", msg).expect("unable to send mail");
+        send_mail(&user.username, &user.email, "SOPT", body, "ACTIVATE")
+            .expect("unable to send mail");
     });
 
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
@@ -350,6 +351,81 @@ async fn activate(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResu
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
+#[derive(Deserialize, Debug)]
+struct EmailWrapper {
+    email: String,
+}
+
+#[get("/forget_password")]
+async fn forget_password(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
+    let query = req.uri().query().unwrap_or_default();
+    let email = serde_qs::from_str::<EmailWrapper>(query)
+        .map_err(|e| Error::RequestError(e.to_string()))?
+        .email;
+
+    let user = user_model::find_user_by_email(&client, &email).await?;
+    let code = generate_random_code();
+    let original_code =
+        ROCKSDB.get_cf(ROCKSDB.cf_handle("reset").unwrap(), &user.id.to_ne_bytes())?;
+    if original_code.is_none() {
+        put_cf("reset", &user.id.to_ne_bytes(), &code)?;
+    } else {
+        let original_code = String::from_utf8(original_code.unwrap()).map_err(error_string)?;
+        let time = get_time_from_code(original_code)?;
+        if chrono::Utc::now().timestamp() - time < 60 {
+            return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("retry too often")));
+        } else {
+            put_cf("reset", &user.id.to_ne_bytes(), &code)?;
+        }
+    }
+
+    let mut body = get_from_config_cf_untyped!("PASSWORD_RESET_EMAIL");
+    body.push_str(&format!("?id={}&code={}", user.id, code));
+    std::thread::spawn(move || {
+        send_mail(&user.username, &email, "SOPT", body, "RESET PASSWORD")
+            .expect("unable to send mail");
+    });
+
+    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
+}
+
+#[derive(Deserialize, Debug)]
+struct PasswordReset {
+    id: i64,
+    code: String,
+    password: String,
+}
+
+#[post("/validate_reset")]
+async fn validate_reset(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
+    let query = req.uri().query().unwrap_or_default();
+    let data: PasswordReset =
+        serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
+
+    let code = ROCKSDB.get_cf(ROCKSDB.cf_handle("reset").unwrap(), &data.id.to_ne_bytes())?;
+    if code.is_none() {
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("request code doesn't exist")));
+    } else {
+        let code = String::from_utf8(code.unwrap()).map_err(error_string)?;
+        if code != data.code {
+            return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("invalid code")));
+        }
+
+        let time = get_time_from_code(code)?;
+        if chrono::Utc::now().timestamp() - time > 1800 {
+            return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("code has expired")));
+        }
+        ROCKSDB.delete_cf(ROCKSDB.cf_handle("reset").unwrap(), &data.id.to_ne_bytes())?;
+    }
+
+    let name = user_model::find_user_by_id(&client, data.id)
+        .await?
+        .username;
+    user_model::update_password_by_username(&client, &name, &hash_password(&data.password)?)
+        .await?;
+    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
+}
+
 pub(crate) fn user_service() -> Scope {
     web::scope("/user")
         .service(add_user)
@@ -364,6 +440,8 @@ pub(crate) fn user_service() -> Scope {
                 .service(reset_passkey)
                 .service(transfer_money)
                 .service(send_activation)
-                .service(activate),
+                .service(activate)
+                .service(forget_password)
+                .service(validate_reset),
         )
 }
