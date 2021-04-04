@@ -35,6 +35,8 @@ SMTP.USERNAME=brethland@gmail.com
 SMTP.PASSWORD=fake_pass
 # Rocksdb 的存储路径，一般保持默认
 ROCKSDB_PATH=./rocksdb
+# 对象存储的路径，支持一切s3协议的引擎
+OSS_PATH=http://127.0.0.1:9000
 ```
 
 编辑 `Cargo.toml` 以开关功能块：
@@ -66,8 +68,17 @@ cargo build --release
 一起复制到你喜欢的任何地方。
 
 ### Tracker
+在开始前，您需要安装以下依赖：
+1. Rust >= 1.48
+2. Redis >= 6.0
 
-todo!
+``` shell
+git clone https://github.com/NJUPT-NYR/SOPT-Tracker
+cargo build --release
+```
+
+将编译好的二进制包（路径为 [`./target/release/ruapt_proxy`, `./target/release/libretracker.dylib`]）
+与`.env`以及`etc/redis.conf`一起复制到你喜欢的任何地方。
 
 ### 前端
 

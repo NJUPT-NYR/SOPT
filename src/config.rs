@@ -25,6 +25,7 @@ pub(crate) struct SMTPAccount {
 /// 4. tracker announce addr
 /// 5. smtp configuration
 /// 6. path for rocksdb, used to store
+/// 7. path for s3/minio, used to object storage
 /// site configs
 #[derive(Deserialize, Debug)]
 pub(crate) struct Config {
@@ -34,6 +35,7 @@ pub(crate) struct Config {
     pub announce_addr: String,
     pub smtp: SMTPAccount,
     pub rocksdb_path: String,
+    pub oss_path: String,
 }
 
 impl Config {
