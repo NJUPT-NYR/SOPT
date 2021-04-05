@@ -54,7 +54,9 @@ impl ResponseError for Error {
     /// Transform error messages to Http Response.
     fn error_response(&self) -> HttpResponse {
         match *self {
-            Error::NotFound => HttpResponse::NotFound().body("Not Found"),
+            Error::NotFound => {
+                HttpResponse::Ok().json(GeneralResponse::from_err("DB record not found"))
+            }
             Error::DBError(ref err) => HttpResponse::InternalServerError().body(err.to_string()),
             Error::RocksDBError(ref err) => {
                 HttpResponse::InternalServerError().body(err.to_string())
@@ -63,7 +65,7 @@ impl ResponseError for Error {
                 HttpResponse::Unauthorized().json(GeneralResponse::from_err("Not login yet"))
             }
             Error::NoPermission => {
-                HttpResponse::Unauthorized().json(GeneralResponse::from_err("No permission"))
+                HttpResponse::Ok().json(GeneralResponse::from_err("No permission"))
             }
             Error::OtherError(ref err) => {
                 HttpResponse::InternalServerError().json(GeneralResponse::from_err(err))
