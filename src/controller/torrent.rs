@@ -86,21 +86,14 @@ async fn update_torrent(
 
 #[get("/hot_tags")]
 async fn hot_tags(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
-    let query = req.uri().query().unwrap_or_default();
-    let num_want = serde_qs::from_str::<NumWrapper>(query)
-        .map_err(|e| Error::RequestError(e.to_string()))?
-        .num
-        .unwrap_or(10);
-
+    let num_want = deserialize_from_req!(req, NumWrapper).num.unwrap_or(10);
     let ret = tag_model::find_hot_tag_by_amount(&client, num_want as i64).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
 #[get("/list_torrents")]
 async fn list_torrents(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
-    let query = req.uri().query().unwrap_or_default();
-    let data: TorrentRequest =
-        serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
+    let data = deserialize_from_req!(req, TorrentRequest);
     let tags = data.tags.unwrap_or_default();
     let page = data.page.unwrap_or(0);
     let freeonly = data.freeonly.unwrap_or(false);
@@ -140,9 +133,7 @@ async fn list_torrents(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> Htt
 
 #[get("/search_torrents")]
 async fn search_torrents(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
-    let query = req.uri().query().unwrap_or_default();
-    let data: TorrentRequest =
-        serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
+    let data = deserialize_from_req!(req, TorrentRequest);
     let keywords = data.keywords.unwrap_or_default();
     let page = data.page.unwrap_or(0);
     let freeonly = data.freeonly.unwrap_or(false);
@@ -239,9 +230,7 @@ async fn upload_torrent(
 
 #[get("/show_torrent")]
 async fn show_torrent(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
-    let query = req.uri().query().unwrap_or_default();
-    let data: IdWrapper =
-        serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
+    let data = deserialize_from_req!(req, IdWrapper);
     let ret = torrent_info_model::find_torrent_by_id(&client, data.id).await?;
     if !ret.visible {
         let claim = get_info_in_token(&req)?;
@@ -262,9 +251,7 @@ async fn get_torrent(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpR
         return Err(Error::NoPermission);
     }
 
-    let query = req.uri().query().unwrap_or_default();
-    let data: IdWrapper =
-        serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
+    let data = deserialize_from_req!(req, IdWrapper);
     let user = user_model::find_user_by_username(&client, &username).await?;
     let torrent_info = torrent_info_model::find_torrent_by_id_mini(&client, data.id).await?;
     if !torrent_info.visible

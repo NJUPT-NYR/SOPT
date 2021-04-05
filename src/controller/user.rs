@@ -190,9 +190,7 @@ async fn show_user(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpRes
     let claim = get_info_in_token(&req)?;
     let current_user = claim.sub;
 
-    let query = req.uri().query().unwrap_or_default();
-    let data: UsernameWrapper =
-        serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
+    let data = deserialize_from_req!(req, UsernameWrapper);
     let name = data.username.unwrap_or(current_user.clone());
     let mut ret = user_info_model::find_user_info_by_name(&client, &name).await?;
     if name == current_user {
@@ -208,9 +206,7 @@ async fn show_user(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpRes
 #[get("/show_torrent_status")]
 async fn show_torrent_status(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let current_user = get_name_in_token(&req)?;
-    let query = req.uri().query().unwrap_or_default();
-    let data: UsernameWrapper =
-        serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
+    let data = deserialize_from_req!(req, UsernameWrapper);
     let name = data.username.unwrap_or(current_user);
     let user = user_info_model::find_user_info_by_name_mini(&client, &name).await?;
 
@@ -266,10 +262,7 @@ async fn transfer_money(
 
 #[get("/send_activation")]
 async fn send_activation(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
-    let query = req.uri().query().unwrap_or_default();
-    let id = serde_qs::from_str::<IdWrapper>(query)
-        .map_err(|e| Error::RequestError(e.to_string()))?
-        .id;
+    let id = deserialize_from_req!(req, IdWrapper).id;
     let user = user_model::find_user_by_id(&client, id).await?;
 
     let code = generate_random_code();
@@ -287,10 +280,7 @@ async fn send_activation(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> H
 
 #[get("/activate")]
 async fn activate(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
-    let query = req.uri().query().unwrap_or_default();
-    let data: ActivateRequest =
-        serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
-
+    let data = deserialize_from_req!(req, ActivateRequest);
     let validation = activation_model::find_activation_by_id(&client, data.id).await?;
     if data.code != validation.code {
         return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("activation code invalid")));
@@ -305,11 +295,7 @@ async fn activate(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResu
 
 #[get("/forget_password")]
 async fn forget_password(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
-    let query = req.uri().query().unwrap_or_default();
-    let email = serde_qs::from_str::<EmailWrapper>(query)
-        .map_err(|e| Error::RequestError(e.to_string()))?
-        .email;
-
+    let email = deserialize_from_req!(req, EmailWrapper).email;
     let user = user_model::find_user_by_email(&client, &email).await?;
     let code = generate_random_code();
     let original_code =

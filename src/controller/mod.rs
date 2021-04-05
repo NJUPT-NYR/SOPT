@@ -16,7 +16,7 @@ use crate::error::{error_string, Error};
 use crate::rocksdb::{put_cf, ROCKSDB};
 use crate::search::TORRENT_SEARCH_ENGINE;
 use crate::util::*;
-use crate::{get_from_config_cf, get_from_config_cf_untyped};
+use crate::{deserialize_from_req, get_from_config_cf, get_from_config_cf_untyped};
 use actix_web::{HttpResponse, *};
 use request::*;
 use serde::Deserialize;
@@ -51,6 +51,14 @@ macro_rules! get_from_config_cf_untyped {
                 .unwrap(),
         )
         .map_err(error_string)?
+    };
+}
+
+#[macro_export]
+macro_rules! deserialize_from_req {
+    ($s:expr, $t:ty) => {
+        serde_qs::from_str::<$t>($s.uri().query().unwrap_or_default())
+            .map_err(|e| Error::RequestError(e.to_string()))?
     };
 }
 

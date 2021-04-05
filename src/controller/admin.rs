@@ -97,10 +97,7 @@ async fn ban_user(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResu
     if is_no_permission_to_users(claim.role) {
         return Err(Error::NoPermission);
     }
-
-    let query = req.uri().query().unwrap_or_default();
-    let data: IdWrapper =
-        serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
+    let data = deserialize_from_req!(req, IdWrapper);
     user_model::delete_role_by_id(&client, data.id, 0).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
@@ -111,10 +108,7 @@ async fn unban_user(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpRe
     if is_no_permission_to_users(claim.role) {
         return Err(Error::NoPermission);
     }
-
-    let query = req.uri().query().unwrap_or_default();
-    let data: IdWrapper =
-        serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
+    let data = deserialize_from_req!(req, IdWrapper);
     user_model::add_role_by_id(&client, data.id, 0).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
@@ -172,7 +166,6 @@ async fn get_email_whitelist(req: HttpRequest) -> HttpResult {
     if is_no_permission_to_site(claim.role) {
         return Err(Error::NoPermission);
     }
-
     let ret = ALLOWED_DOMAIN.read().await;
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
@@ -200,7 +193,6 @@ async fn get_rank(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResu
     if is_no_permission_to_site(claim.role) {
         return Err(Error::NoPermission);
     }
-
     let ret = rank_model::find_all_ranks(&client).await?;
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
@@ -215,7 +207,6 @@ async fn update_rank(
     if is_no_permission_to_site(claim.role) {
         return Err(Error::NoPermission);
     }
-
     rank_model::update_or_add_rank(&client, data.into_inner()).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
