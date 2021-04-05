@@ -1,16 +1,9 @@
 use super::*;
 use crate::data::{invitation as invitation_model, user_info as user_info_model};
 
-#[derive(Deserialize, Debug)]
-struct Message {
-    to: String,
-    address: String,
-    body: String,
-}
-
 #[post("/send_invitation")]
 async fn send_invitation(
-    data: web::Json<Message>,
+    data: web::Json<InvitationRequest>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {

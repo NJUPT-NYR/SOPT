@@ -670,7 +670,7 @@ enum SortType {
 
     - page: Option<usize>(>= 0)
     - tags: Option<Vec<String>>
-    - freeonly: bool
+    - freeonly: Option<bool>
     - sort: Option<Sort>
     - type: Option<SortType>
 
@@ -720,7 +720,7 @@ enum SortType {
 
     - page: Option<usize>(>= 0)
     - keywords: Vec<String>
-    - freeonly: bool
+    - freeonly: Option<bool>
     - sort: Option<Sort>
     - type: Option<SortType>
 

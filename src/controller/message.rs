@@ -1,16 +1,9 @@
 use super::*;
 use crate::data::message as message_model;
 
-#[derive(Deserialize, Debug)]
-struct Message {
-    receiver: String,
-    title: String,
-    body: Option<String>,
-}
-
 #[post("/send_message")]
 async fn send_message(
-    data: web::Json<Message>,
+    data: web::Json<MessageRequest>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
@@ -31,14 +24,9 @@ async fn send_message(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
-#[derive(Deserialize, Debug)]
-struct MessageList {
-    ids: Vec<i64>,
-}
-
 #[post("/read_message")]
 async fn read_message(
-    data: web::Json<MessageList>,
+    data: web::Json<IdsWrapper>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
@@ -47,15 +35,9 @@ async fn read_message(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
-#[derive(Deserialize, Debug)]
-struct MessageDelete {
-    ids: Vec<i64>,
-    sender: bool,
-}
-
 #[post("/delete_message")]
 async fn delete_message(
-    data: web::Json<MessageDelete>,
+    data: web::Json<MessageDeleteRequest>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {

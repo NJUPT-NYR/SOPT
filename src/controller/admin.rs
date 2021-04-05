@@ -14,14 +14,9 @@ async fn show_invisible_torrents(req: HttpRequest, client: web::Data<sqlx::PgPoo
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
-#[derive(Debug, Deserialize)]
-struct TorrentList {
-    ids: Vec<i64>,
-}
-
 #[post("/accept_torrents")]
 async fn accept_torrents(
-    data: web::Json<TorrentList>,
+    data: web::Json<IdsWrapper>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
@@ -41,7 +36,7 @@ async fn accept_torrents(
 
 #[post("/stick_torrents")]
 async fn stick_torrents(
-    data: web::Json<TorrentList>,
+    data: web::Json<IdsWrapper>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
@@ -55,7 +50,7 @@ async fn stick_torrents(
 
 #[post("/unstick_torrents")]
 async fn unstick_torrents(
-    data: web::Json<TorrentList>,
+    data: web::Json<IdsWrapper>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
@@ -69,7 +64,7 @@ async fn unstick_torrents(
 
 #[post("/free_torrents")]
 async fn free_torrents(
-    data: web::Json<TorrentList>,
+    data: web::Json<IdsWrapper>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
@@ -83,7 +78,7 @@ async fn free_torrents(
 
 #[post("/unfree_torrents")]
 async fn unfree_torrents(
-    data: web::Json<TorrentList>,
+    data: web::Json<IdsWrapper>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
@@ -93,11 +88,6 @@ async fn unfree_torrents(
     }
     torrent_info_model::make_torrent_unfree(&client, &data.ids).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
-}
-
-#[derive(Deserialize, Debug)]
-struct IdWrapper {
-    id: i64,
 }
 
 /// I hope this never get used
@@ -139,15 +129,9 @@ async fn list_banned_user(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> 
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
-#[derive(Deserialize, Debug)]
-struct GroupAward {
-    ids: Vec<i64>,
-    amount: f64,
-}
-
 #[post("/group_awards")]
 async fn group_awards(
-    mut data: web::Json<GroupAward>,
+    mut data: web::Json<GroupAwardRequest>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
@@ -160,13 +144,6 @@ async fn group_awards(
 
     user_info_model::award_money_by_id(&client, &data.ids, data.amount).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
-}
-
-#[derive(Deserialize, Debug)]
-struct PermissionRequest {
-    give: Vec<i32>,
-    take: Vec<i32>,
-    id: i64,
 }
 
 #[post("/change_permission")]
@@ -200,14 +177,8 @@ async fn get_email_whitelist(req: HttpRequest) -> HttpResult {
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
-#[derive(Deserialize, Debug)]
-struct EmailRequest {
-    add: Vec<String>,
-    delete: Vec<String>,
-}
-
 #[post("/update_email_whitelist")]
-async fn update_email_whitelist(data: web::Json<EmailRequest>, req: HttpRequest) -> HttpResult {
+async fn update_email_whitelist(data: web::Json<EmailListRequest>, req: HttpRequest) -> HttpResult {
     let claim = get_info_in_token(&req)?;
     if is_no_permission_to_site(claim.role) {
         return Err(Error::NoPermission);

@@ -3,6 +3,7 @@ mod config;
 mod invitation;
 #[cfg(feature = "message")]
 mod message;
+mod request;
 mod torrent;
 mod tracker;
 mod user;
@@ -17,6 +18,7 @@ use crate::search::TORRENT_SEARCH_ENGINE;
 use crate::util::*;
 use crate::{get_from_config_cf, get_from_config_cf_untyped};
 use actix_web::{HttpResponse, *};
+use request::*;
 use serde::Deserialize;
 use std::convert::TryInto;
 
@@ -52,8 +54,8 @@ macro_rules! get_from_config_cf_untyped {
     };
 }
 
-/// A wrapper of Error so to reduce panic
-/// and make HttpError more smooth
+/// A wrapper of `Error` so to reduce panic
+/// and make `HttpError` more smooth
 type HttpResult = Result<HttpResponse, Error>;
 
 /// get username in jwt token

@@ -6,16 +6,8 @@ use crate::data::{
 
 static ALLOWED_AVATAR_EXTENSION: [&str; 4] = ["jpg", "jpeg", "png", "webp"];
 
-#[derive(Deserialize, Debug)]
-struct Registry {
-    email: String,
-    username: String,
-    password: String,
-    invite_code: Option<String>,
-}
-
 #[post("/add_user")]
-async fn add_user(data: web::Json<Registry>, client: web::Data<sqlx::PgPool>) -> HttpResult {
+async fn add_user(data: web::Json<SignUpRequest>, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let user = data.into_inner();
     let mut allowed = false;
     let mut code = None;
@@ -79,28 +71,21 @@ async fn add_user(data: web::Json<Registry>, client: web::Data<sqlx::PgPool>) ->
     Ok(HttpResponse::Ok().json(new_user.to_json()))
 }
 
-#[derive(Deserialize, Debug)]
-struct Login {
-    username: String,
-    password: String,
-}
-
 #[post("/login")]
-async fn login(data: web::Json<Login>, client: web::Data<sqlx::PgPool>) -> HttpResult {
+async fn login(data: web::Json<LoginRequest>, client: web::Data<sqlx::PgPool>) -> HttpResult {
     use chrono::{Duration, Utc};
     use jsonwebtoken::{encode, EncodingKey, Header};
 
-    let user = data.into_inner();
     let secret = CONFIG.secret_key.as_bytes();
 
-    let validation = user_model::find_validation_by_name(&client, &user.username)
+    let validation = user_model::find_validation_by_name(&client, &data.username)
         .await?
         .pop();
     if validation.is_none() {
         return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("password not match")));
     }
     let mut val = validation.unwrap();
-    if !verify_password(&user.password, &val.password)? {
+    if !verify_password(&data.password, &val.password)? {
         return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("password not match")));
     }
     if !val.activated {
@@ -108,12 +93,12 @@ async fn login(data: web::Json<Login>, client: web::Data<sqlx::PgPool>) -> HttpR
         return Ok(HttpResponse::Ok().json(GeneralResponse::from_err(&msg)));
     }
 
-    user_info_model::update_activity_by_name(&client, &user.username).await?;
-    let current_rank = rank_model::find_rank_by_username(&client, &user.username).await?;
+    user_info_model::update_activity_by_name(&client, &data.username).await?;
+    let current_rank = rank_model::find_rank_by_username(&client, &data.username).await?;
     // TODO: Auto update role in jwt
     if current_rank.next.is_some() {
         let next_rank = rank_model::find_rank_by_id(&client, current_rank.next.unwrap()).await?;
-        let info = user_info_model::find_user_info_by_name_mini(&client, &user.username).await?;
+        let info = user_info_model::find_user_info_by_name_mini(&client, &data.username).await?;
         let current = Utc::now().timestamp();
         let before = info.registertime.timestamp();
         if info.upload > next_rank.upload && current - before > next_rank.age {
@@ -121,8 +106,8 @@ async fn login(data: web::Json<Login>, client: web::Data<sqlx::PgPool>) -> HttpR
             for role in roles {
                 user_model::add_role_by_id(&client, val.id, (role % 32) as i32).await?;
             }
-            user_info_model::update_rank_by_name(&client, &user.username, &next_rank.name).await?;
-            val = user_model::find_validation_by_name(&client, &user.username)
+            user_info_model::update_rank_by_name(&client, &data.username, &next_rank.name).await?;
+            val = user_model::find_validation_by_name(&client, &data.username)
                 .await?
                 .pop()
                 .unwrap();
@@ -140,12 +125,6 @@ async fn login(data: web::Json<Login>, client: web::Data<sqlx::PgPool>) -> HttpR
     )
     .unwrap();
     Ok(HttpResponse::Ok().json(tokens.to_json()))
-}
-
-#[derive(Deserialize, Debug)]
-struct InfoWrapper {
-    info: serde_json::Value,
-    privacy: i32,
 }
 
 #[post("/personal_info_update")]
@@ -206,18 +185,13 @@ async fn upload_avatar(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
-#[derive(Deserialize, Debug)]
-struct UserRequest {
-    username: Option<String>,
-}
-
 #[get("show_user")]
 async fn show_user(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let claim = get_info_in_token(&req)?;
     let current_user = claim.sub;
 
     let query = req.uri().query().unwrap_or_default();
-    let data: UserRequest =
+    let data: UsernameWrapper =
         serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
     let name = data.username.unwrap_or(current_user.clone());
     let mut ret = user_info_model::find_user_info_by_name(&client, &name).await?;
@@ -235,7 +209,7 @@ async fn show_user(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpRes
 async fn show_torrent_status(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let current_user = get_name_in_token(&req)?;
     let query = req.uri().query().unwrap_or_default();
-    let data: UserRequest =
+    let data: UsernameWrapper =
         serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
     let name = data.username.unwrap_or(current_user);
     let user = user_info_model::find_user_info_by_name_mini(&client, &name).await?;
@@ -254,14 +228,9 @@ async fn show_torrent_status(req: HttpRequest, client: web::Data<sqlx::PgPool>) 
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
-#[derive(Deserialize, Debug)]
-struct PassWrapper {
-    password: String,
-}
-
 #[post("/reset_password")]
 async fn reset_password(
-    data: web::Json<PassWrapper>,
+    data: web::Json<PasswordWrapper>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
@@ -279,15 +248,9 @@ async fn reset_passkey(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> Htt
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
-#[derive(Deserialize, Debug)]
-struct Transfer {
-    to: String,
-    amount: f64,
-}
-
 #[post("/transfer_money")]
 async fn transfer_money(
-    data: web::Json<Transfer>,
+    data: web::Json<TransferRequest>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
@@ -299,11 +262,6 @@ async fn transfer_money(
 
     user_info_model::transfer_money_by_name(&client, &username, &data.to, data.amount).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
-}
-
-#[derive(Deserialize, Debug)]
-struct IdWrapper {
-    id: i64,
 }
 
 #[get("/send_activation")]
@@ -327,16 +285,10 @@ async fn send_activation(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> H
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
-#[derive(Deserialize, Debug)]
-struct Activate {
-    id: i64,
-    code: String,
-}
-
 #[get("/activate")]
 async fn activate(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let query = req.uri().query().unwrap_or_default();
-    let data: Activate =
+    let data: ActivateRequest =
         serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
 
     let validation = activation_model::find_activation_by_id(&client, data.id).await?;
@@ -349,11 +301,6 @@ async fn activate(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResu
 
     activation_model::update_activated_by_id(&client, data.id).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
-}
-
-#[derive(Deserialize, Debug)]
-struct EmailWrapper {
-    email: String,
 }
 
 #[get("/forget_password")]
@@ -389,25 +336,22 @@ async fn forget_password(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> H
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
-#[derive(Deserialize, Debug)]
-struct PasswordReset {
-    id: i64,
-    code: String,
-    password: String,
-}
-
 #[post("/validate_reset")]
-async fn validate_reset(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
-    let query = req.uri().query().unwrap_or_default();
-    let data: PasswordReset =
-        serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
+async fn validate_reset(
+    data: web::Json<PasswordWrapper>,
+    client: web::Data<sqlx::PgPool>,
+) -> HttpResult {
+    if data.id.is_none() || data.code.is_none() {
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("missing fields")));
+    }
+    let id = data.id.unwrap();
 
-    let code = ROCKSDB.get_cf(ROCKSDB.cf_handle("reset").unwrap(), &data.id.to_ne_bytes())?;
+    let code = ROCKSDB.get_cf(ROCKSDB.cf_handle("reset").unwrap(), &id.to_ne_bytes())?;
     if code.is_none() {
         return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("request code doesn't exist")));
     } else {
         let code = String::from_utf8(code.unwrap()).map_err(error_string)?;
-        if code != data.code {
+        if code != data.code.as_deref().unwrap() {
             return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("invalid code")));
         }
 
@@ -415,12 +359,10 @@ async fn validate_reset(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> Ht
         if chrono::Utc::now().timestamp() - time > 1800 {
             return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("code has expired")));
         }
-        ROCKSDB.delete_cf(ROCKSDB.cf_handle("reset").unwrap(), &data.id.to_ne_bytes())?;
+        ROCKSDB.delete_cf(ROCKSDB.cf_handle("reset").unwrap(), &id.to_ne_bytes())?;
     }
 
-    let name = user_model::find_user_by_id(&client, data.id)
-        .await?
-        .username;
+    let name = user_model::find_user_by_id(&client, id).await?.username;
     user_model::update_password_by_username(&client, &name, &hash_password(&data.password)?)
         .await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))

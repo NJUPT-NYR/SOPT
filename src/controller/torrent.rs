@@ -4,16 +4,9 @@ use crate::data::{
     user as user_model,
 };
 
-#[derive(Deserialize, Debug)]
-struct TorrentPost {
-    title: String,
-    description: Option<String>,
-    tags: Option<Vec<String>>,
-}
-
 #[post("/add_torrent")]
 async fn add_torrent(
-    data: web::Json<TorrentPost>,
+    data: web::Json<TorrentPostRequest>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
@@ -41,24 +34,20 @@ async fn add_torrent(
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
-#[derive(Deserialize, Debug)]
-struct TorrentUpdatePost {
-    id: i64,
-    title: String,
-    description: Option<String>,
-    tags: Option<Vec<String>>,
-}
-
 #[post("/update_torrent")]
 async fn update_torrent(
-    data: web::Json<TorrentUpdatePost>,
+    data: web::Json<TorrentPostRequest>,
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
     let claim = get_info_in_token(&req)?;
     let username = claim.sub;
+    if data.id.is_none() {
+        return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("missing torrent id")));
+    }
+    let id = data.id.unwrap();
 
-    let old_torrent = torrent_info_model::find_torrent_by_id_mini(&client, data.id).await?;
+    let old_torrent = torrent_info_model::find_torrent_by_id_mini(&client, id).await?;
     if username != old_torrent.poster && is_no_permission_to_torrents(claim.role) {
         return Err(Error::NoPermission);
     }
@@ -69,7 +58,7 @@ async fn update_torrent(
     }
     let ret = torrent_info_model::update_torrent_info(
         &client,
-        data.id,
+        id,
         &data.title,
         data.description.as_deref(),
         tags,
@@ -95,15 +84,10 @@ async fn update_torrent(
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
-#[derive(Deserialize, Debug)]
-struct TagRequest {
-    num: Option<usize>,
-}
-
 #[get("/hot_tags")]
 async fn hot_tags(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let query = req.uri().query().unwrap_or_default();
-    let num_want = serde_qs::from_str::<TagRequest>(query)
+    let num_want = serde_qs::from_str::<NumWrapper>(query)
         .map_err(|e| Error::RequestError(e.to_string()))?
         .num
         .unwrap_or(10);
@@ -112,46 +96,14 @@ async fn hot_tags(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResu
     Ok(HttpResponse::Ok().json(ret.to_json()))
 }
 
-#[derive(Deserialize, Debug)]
-enum Sort {
-    Title,
-    Poster,
-    LastEdit,
-    Length,
-    Downloading,
-    Uploading,
-    Finished,
-}
-
-#[derive(Deserialize, Debug, PartialEq)]
-enum SortType {
-    Asc,
-    Desc,
-}
-
-impl std::fmt::Display for Sort {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-#[derive(Deserialize, Debug)]
-struct ListRequest {
-    tags: Option<Vec<String>>,
-    page: Option<usize>,
-    freeonly: bool,
-    sort: Option<Sort>,
-    #[serde(rename = "type")]
-    sort_type: Option<SortType>,
-}
-
 #[get("/list_torrents")]
 async fn list_torrents(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let query = req.uri().query().unwrap_or_default();
-    let data: ListRequest =
+    let data: TorrentRequest =
         serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
     let tags = data.tags.unwrap_or_default();
     let page = data.page.unwrap_or(0);
+    let freeonly = data.freeonly.unwrap_or(false);
     let sort = data.sort.unwrap_or(Sort::LastEdit);
     let sort_type = data.sort_type.unwrap_or(SortType::Desc);
     let sort_string = format!("{}", sort).to_ascii_lowercase();
@@ -177,7 +129,7 @@ async fn list_torrents(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> Htt
         )
         .await?
     };
-    if data.freeonly {
+    if freeonly {
         ret.retain(|t| t.free);
     }
 
@@ -186,27 +138,19 @@ async fn list_torrents(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> Htt
     Ok(HttpResponse::Ok().json(resp.to_json()))
 }
 
-#[derive(Deserialize, Debug)]
-struct SearchRequest {
-    keywords: Vec<String>,
-    page: Option<usize>,
-    freeonly: bool,
-    sort: Option<Sort>,
-    #[serde(rename = "type")]
-    sort_type: Option<SortType>,
-}
-
 #[get("/search_torrents")]
 async fn search_torrents(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let query = req.uri().query().unwrap_or_default();
-    let data: SearchRequest =
+    let data: TorrentRequest =
         serde_qs::from_str(query).map_err(|e| Error::RequestError(e.to_string()))?;
+    let keywords = data.keywords.unwrap_or_default();
     let page = data.page.unwrap_or(0);
+    let freeonly = data.freeonly.unwrap_or(false);
     let sort = data.sort.unwrap_or(Sort::LastEdit);
     let sort_type = data.sort_type.unwrap_or(SortType::Desc);
     let sort_string = format!("{}", sort).to_ascii_lowercase();
 
-    let ids = TORRENT_SEARCH_ENGINE.read().await.search(data.keywords);
+    let ids = TORRENT_SEARCH_ENGINE.read().await.search(keywords);
     let mut ret = if sort_type == SortType::Desc {
         torrent_info_model::find_visible_torrent_by_ids_desc(
             &client,
@@ -224,7 +168,7 @@ async fn search_torrents(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> H
         )
         .await?
     };
-    if data.freeonly {
+    if freeonly {
         ret.retain(|t| t.free);
     }
 
@@ -291,11 +235,6 @@ async fn upload_torrent(
     torrent_model::update_or_add_torrent(&client, &parsed.unwrap(), id).await?;
 
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
-}
-
-#[derive(Deserialize, Debug)]
-struct IdWrapper {
-    id: i64,
 }
 
 #[get("/show_torrent")]
