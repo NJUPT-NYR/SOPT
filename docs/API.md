@@ -19,6 +19,8 @@
   * [/site/update_email_whitelist](#apiadminsiteupdate_email_whitelist)
   * [/site/get_rank](#apiadminsiteget_rank)
   * [/site/update_rank](#apiadminsiteupdate_rank)
+  * [/site/list_site_settings](#apiadminsitelist_site_settings)
+  * [/site/update_site_settings](#apiadminsiteupdate_site_settings)
 * [Invitation](#invitation-api)
   * [/send_invitation](#apiinvitationsend_invitation)
   * [/list_invitations](#apiinvitationlist_invitations)
@@ -410,6 +412,45 @@ A `Rank` Struct.
 **Comment**
 
 Update or Add new rank, you can edit everything about a rank.
+
+Only user with site admin role can access.
+
+### /api/admin/site/list_site_settings
+**Type**: GET
+
+**Response**
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: A `GeneralResponse` with a `HashMap` of setting items
+
+**Comment**
+
+List all editable site settings.
+
+Only user with site admin role can access.
+
+### /api/admin/site/update_site_settings
+**Type**: POST
+
+**Request**
+
+    - settings: HashMap<String, String>
+
+**Example**
+```json
+{
+  "settings": {
+    "INVITE CONSUME": "1919810.0"
+  }
+}
+```
+
+**Response**
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: Empty `GeneralResponse`
+
+**Comment**
+
+Edit some site settings, invalid field will be ignored.
 
 Only user with site admin role can access.
 

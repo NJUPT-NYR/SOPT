@@ -14,10 +14,6 @@ version = "0.1.0"
 [lib]
 name = "sopt"
 
-[[test]]
-harness = false
-name = "cucumber"
-
 [features]
 default = ["email-restriction", "message"]
 email-restriction = []
@@ -66,3 +62,7 @@ sha2 = "0.9"
 cargo-husky = {version = "1", default-features = false, features = ["precommit-hook", "run-cargo-fmt"]}
 cucumber_rust = {git = "https://github.com/bbqsrc/cucumber-rust", branch = "main"}
 reqwest = {version = "^0.10", features = ["json"]}
+
+# [[test]]
+# harness = false
+# name = "cucumber"

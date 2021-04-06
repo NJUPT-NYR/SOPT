@@ -1,4 +1,5 @@
 use super::*;
+use std::collections::HashMap;
 
 // single wrapper
 #[derive(Deserialize, Debug)]
@@ -133,4 +134,8 @@ pub struct PermissionRequest {
     pub give: Vec<i32>,
     pub take: Vec<i32>,
     pub id: i64,
+}
+#[derive(Deserialize, Debug)]
+pub struct SiteSettingRequest {
+    pub settings: HashMap<String, String>,
 }

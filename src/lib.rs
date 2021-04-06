@@ -40,21 +40,14 @@ async fn initializing_search(client: &sqlx::PgPool) {
 fn init_settings() {
     use crate::rocksdb::put_cf;
 
-    put_cf("config", "SITE NAME", "SOPT").unwrap();
+    for (key, val) in controller::STRING_SITE_SETTING.iter() {
+        put_cf("config", key, val).unwrap();
+    }
+    // TODO: Reflection?
     put_cf("config", "INVITE CONSUME", 5000_f64.to_ne_bytes()).unwrap();
     put_cf("config", "BAN UPLOAD RATIO", 0.3_f64.to_ne_bytes()).unwrap();
     put_cf("config", "NEWBIE TERM", 14_i64.to_ne_bytes()).unwrap();
     put_cf("config", "LOGIN EXPIRE DAY", 3_i64.to_ne_bytes()).unwrap();
-    put_cf(
-        "config",
-           "ACTIVATE EMAIL",
-           "Welcome to register SOPT!\n\nClick following address to activate: https://sopt.rs/auth/activate"
-    ).unwrap();
-    put_cf(
-        "config",
-        "PASSWORD RESET EMAIL",
-        "Code will be expired in 30 minutes.\n\nClick following address to reset your password: https://sopt.rs/auth/validate_reset"
-    ).unwrap();
 }
 
 #[actix_web::main]

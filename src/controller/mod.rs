@@ -9,8 +9,8 @@ mod tracker;
 mod user;
 
 use crate::config::CONFIG;
-pub use crate::controller::config::ALLOWED_DOMAIN;
 use crate::controller::config::*;
+pub use crate::controller::config::{ALLOWED_DOMAIN, STRING_SITE_SETTING};
 use crate::data::*;
 use crate::error::{error_string, Error};
 use crate::rocksdb::{put_cf, ROCKSDB};

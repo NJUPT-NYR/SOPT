@@ -17,7 +17,7 @@ use response::*;
 pub use response::{Rank, TorrentStatusByUser};
 use serde::{Deserialize, Serialize};
 use sopt_derive::ToResponse;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 /// General Response structure used to
 /// communicate with frontends.
@@ -75,6 +75,7 @@ pub trait ToResponse: Serialize {
 
 impl ToResponse for String {}
 impl ToResponse for HashSet<String> {}
+impl ToResponse for HashMap<String, String> {}
 
 /// A common wrapper used to return page count with list
 #[derive(Serialize, Debug, ToResponse)]

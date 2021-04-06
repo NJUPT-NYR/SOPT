@@ -1,5 +1,5 @@
 use lazy_static::lazy_static;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use tokio::sync::RwLock;
 
 pub fn is_not_su(role: i64) -> bool {
@@ -26,4 +26,12 @@ pub fn is_not_ordinary_user(role: i64) -> bool {
 
 lazy_static! {
     pub static ref ALLOWED_DOMAIN: RwLock<HashSet<String>> = RwLock::new(HashSet::new());
+}
+
+lazy_static! {
+    pub static ref STRING_SITE_SETTING: HashMap<&'static str, &'static str> = [
+        ("SITE NAME", "SOPT"),
+        ("ACTIVATE EMAIL", "Welcome to register SOPT!\n\nClick following address to activate: https://sopt.rs/auth/activate"),
+        ("PASSWORD RESET EMAIL", "Code will be expired in 30 minutes.\n\nClick following address to reset your password: https://sopt.rs/auth/validate_reset"),
+    ].iter().copied().collect();
 }

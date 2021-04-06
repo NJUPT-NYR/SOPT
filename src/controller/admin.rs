@@ -211,6 +211,80 @@ async fn update_rank(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
+#[get("/list_site_settings")]
+async fn list_site_settings(req: HttpRequest) -> HttpResult {
+    use std::collections::HashMap;
+
+    let claim = get_info_in_token(&req)?;
+    if is_no_permission_to_site(claim.role) {
+        return Err(Error::NoPermission);
+    }
+    let mut settings: HashMap<String, String> = HashMap::new();
+    for (key, _) in STRING_SITE_SETTING.iter() {
+        let setting = get_from_config_cf_untyped!(key);
+        settings.insert(key.to_string(), setting);
+    }
+    let val = get_from_config_cf!("INVITE CONSUME", f64);
+    settings.insert("INVITE CONSUME".to_string(), val.to_string());
+    let val = get_from_config_cf!("BAN UPLOAD RATIO", f64);
+    settings.insert("BAN UPLOAD RATIO".to_string(), val.to_string());
+    let val = get_from_config_cf!("NEWBIE TERM", i64);
+    settings.insert("NEWBIE TERM".to_string(), val.to_string());
+    let val = get_from_config_cf!("LOGIN EXPIRE DAY", i64);
+    settings.insert("LOGIN EXPIRE DAY".to_string(), val.to_string());
+
+    Ok(HttpResponse::Ok().json(settings.to_json()))
+}
+
+#[post("/update_site_settings")]
+async fn update_site_settings(data: web::Json<SiteSettingRequest>, req: HttpRequest) -> HttpResult {
+    use std::str::FromStr;
+
+    let claim = get_info_in_token(&req)?;
+    if is_no_permission_to_site(claim.role) {
+        return Err(Error::NoPermission);
+    }
+    for (key, val) in data.settings.iter() {
+        if key.eq("INVITE CONSUME") {
+            put_cf(
+                "config",
+                "INVITE CONSUME",
+                f64::from_str(&val).map_err(error_string)?.to_ne_bytes(),
+            )?;
+        }
+        if key.eq("BAN UPLOAD RATIO") {
+            put_cf(
+                "config",
+                "BAN UPLOAD RATIO",
+                f64::from_str(&val).map_err(error_string)?.to_ne_bytes(),
+            )?;
+        }
+        if key.eq("NEWBIE TERM") {
+            put_cf(
+                "config",
+                "NEWBIE TERM",
+                i64::from_str(&val).map_err(error_string)?.to_ne_bytes(),
+            )?;
+        }
+        if key.eq("LOGIN EXPIRE DAY") {
+            put_cf(
+                "config",
+                "LOGIN EXPIRE DAY",
+                i64::from_str(&val).map_err(error_string)?.to_ne_bytes(),
+            )?;
+        }
+        if STRING_SITE_SETTING
+            .keys()
+            .find(|x| x.to_string().eq(key))
+            .is_some()
+        {
+            put_cf("config", &key, &val)?;
+        }
+    }
+
+    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
+}
+
 pub(crate) fn admin_service() -> Scope {
     web::scope("/admin")
         .service(
@@ -235,6 +309,8 @@ pub(crate) fn admin_service() -> Scope {
                 .service(get_email_whitelist)
                 .service(update_email_whitelist)
                 .service(get_rank)
-                .service(update_rank),
+                .service(update_rank)
+                .service(list_site_settings)
+                .service(update_site_settings),
         )
 }

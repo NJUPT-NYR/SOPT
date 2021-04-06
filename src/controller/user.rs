@@ -269,9 +269,9 @@ async fn send_activation(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> H
 
     let mut body = get_from_config_cf_untyped!("ACTIVATE EMAIL");
     body.push_str(&format!("?id={}&code={}", id, code));
-    let site_name = &get_from_config_cf_untyped!("SITE NAME");
+    let site_name = get_from_config_cf_untyped!("SITE NAME");
     std::thread::spawn(move || {
-        send_mail(&user.username, &user.email, site_name, body, "ACTIVATE")
+        send_mail(&user.username, &user.email, &site_name, body, "ACTIVATE")
             .expect("unable to send mail");
     });
 
@@ -314,9 +314,9 @@ async fn forget_password(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> H
 
     let mut body = get_from_config_cf_untyped!("PASSWORD RESET EMAIL");
     body.push_str(&format!("?id={}&code={}", user.id, code));
-    let site_name = &get_from_config_cf_untyped!("SITE NAME");
+    let site_name = get_from_config_cf_untyped!("SITE NAME");
     std::thread::spawn(move || {
-        send_mail(&user.username, &email, site_name, body, "RESET PASSWORD")
+        send_mail(&user.username, &email, &site_name, body, "RESET PASSWORD")
             .expect("unable to send mail");
     });
 
