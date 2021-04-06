@@ -8,9 +8,10 @@ use std::fmt::{Display, Formatter};
 /// 2. DBError, wrapper for sqlx `Error`
 /// 3. OtherError, with a generic to rewrite other errors to string
 ///     like utilities and standard library error.
-/// 4. NotFound
+/// 4. NotFound of database
 /// 5. No permission in this account
 /// 6. Request Error
+/// 7. RocksDBError, wrapper for rocksdb `Error`
 ///
 /// All errors will be transformed to Http Response so no panic will happen.
 #[derive(Debug)]

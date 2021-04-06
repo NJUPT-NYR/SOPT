@@ -26,7 +26,7 @@ use std::convert::TryInto;
 /// from `rocksdb` smoother.
 #[macro_export]
 macro_rules! get_from_config_cf {
-    ($s:literal, $t:ty) => {
+    ($s:expr, $t:ty) => {
         <$t>::from_ne_bytes(
             ROCKSDB
                 .get_cf(ROCKSDB.cf_handle("config").unwrap(), $s)?
@@ -44,7 +44,7 @@ macro_rules! get_from_config_cf {
 /// `rocksdb` and returns a string
 #[macro_export]
 macro_rules! get_from_config_cf_untyped {
-    ($s:literal) => {
+    ($s:expr) => {
         String::from_utf8(
             ROCKSDB
                 .get_cf(ROCKSDB.cf_handle("config").unwrap(), $s)?
@@ -78,6 +78,9 @@ fn get_info_in_token(req: &HttpRequest) -> Result<Claim, Error> {
         .map_err(error_string)?
         .split("Bearer")
         .collect();
+    if data.len() < 2 {
+        return Err(Error::AuthError);
+    }
     let token = data[1].trim();
 
     let secret = CONFIG.secret_key.as_bytes();

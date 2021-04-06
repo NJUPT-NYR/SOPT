@@ -95,7 +95,6 @@ async fn login(data: web::Json<LoginRequest>, client: web::Data<sqlx::PgPool>) -
 
     user_info_model::update_activity_by_name(&client, &data.username).await?;
     let current_rank = rank_model::find_rank_by_username(&client, &data.username).await?;
-    // TODO: Auto update role in jwt
     if current_rank.next.is_some() {
         let next_rank = rank_model::find_rank_by_id(&client, current_rank.next.unwrap()).await?;
         let info = user_info_model::find_user_info_by_name_mini(&client, &data.username).await?;
@@ -113,10 +112,11 @@ async fn login(data: web::Json<LoginRequest>, client: web::Data<sqlx::PgPool>) -
                 .unwrap();
         }
     }
+    let day = get_from_config_cf!("LOGIN EXPIRE DAY", i64);
     let claim = Claim {
         sub: val.username,
         role: val.role,
-        exp: (Utc::now() + Duration::days(3)).timestamp(),
+        exp: (Utc::now() + Duration::days(day)).timestamp(),
     };
     let tokens = encode(
         &Header::default(),
@@ -135,7 +135,6 @@ async fn personal_info_update(
 ) -> HttpResult {
     let username = get_name_in_token(&req)?;
     let level: user_info_model::Level = data.privacy.try_into()?;
-
     user_info_model::update_privacy_by_name(&client, &username, level).await?;
     user_info_model::update_other_by_name(&client, &username, &data.info).await?;
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
@@ -268,10 +267,11 @@ async fn send_activation(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> H
     let code = generate_random_code();
     activation_model::update_or_add_activation(&client, id, &code).await?;
 
-    let mut body = get_from_config_cf_untyped!("ACTIVATE_EMAIL");
+    let mut body = get_from_config_cf_untyped!("ACTIVATE EMAIL");
     body.push_str(&format!("?id={}&code={}", id, code));
+    let site_name = &get_from_config_cf_untyped!("SITE NAME");
     std::thread::spawn(move || {
-        send_mail(&user.username, &user.email, "SOPT", body, "ACTIVATE")
+        send_mail(&user.username, &user.email, site_name, body, "ACTIVATE")
             .expect("unable to send mail");
     });
 
@@ -312,10 +312,11 @@ async fn forget_password(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> H
         }
     }
 
-    let mut body = get_from_config_cf_untyped!("PASSWORD_RESET_EMAIL");
+    let mut body = get_from_config_cf_untyped!("PASSWORD RESET EMAIL");
     body.push_str(&format!("?id={}&code={}", user.id, code));
+    let site_name = &get_from_config_cf_untyped!("SITE NAME");
     std::thread::spawn(move || {
-        send_mail(&user.username, &email, "SOPT", body, "RESET PASSWORD")
+        send_mail(&user.username, &email, site_name, body, "RESET PASSWORD")
             .expect("unable to send mail");
     });
 
