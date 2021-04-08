@@ -85,6 +85,7 @@ pub struct PersonalTorrent {
     pub length: i64,
     pub upload: i64,
     pub download: i64,
+    pub free: bool,
 }
 
 #[derive(Serialize, Debug, ToResponse)]

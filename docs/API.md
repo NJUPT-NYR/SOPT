@@ -1283,6 +1283,7 @@ This is a map from bit to bool(or 01 string). 0 is unset and 1 is set.
     - length: i64(in byte)
     - upload: i64(in byte)
     - download: i64(in byte)
+    - free: bool
 
 ### Account
 

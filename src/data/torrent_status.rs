@@ -19,7 +19,7 @@ pub async fn find_status_by_tid_uid(
 pub async fn find_downloading_torrent(client: &sqlx::PgPool, uid: i64) -> PersonalTorrentVecRet {
     Ok(sqlx::query_as!(
         PersonalTorrent,
-        "SELECT torrent_info.id, title, length, torrent_status.upload, torrent_status.download \
+        "SELECT torrent_info.id, title, length, torrent_status.upload, torrent_status.download, torrent_info.free \
         FROM torrent_status INNER JOIN torrent ON torrent_status.tid = torrent.id INNER JOIN torrent_info ON \
         torrent.id = torrent_info.id \
         WHERE status = 0 AND uid = $1;",
@@ -32,7 +32,7 @@ pub async fn find_downloading_torrent(client: &sqlx::PgPool, uid: i64) -> Person
 pub async fn find_uploading_torrent(client: &sqlx::PgPool, uid: i64) -> PersonalTorrentVecRet {
     Ok(sqlx::query_as!(
         PersonalTorrent,
-        "SELECT torrent_info.id, title, length, torrent_status.upload, torrent_status.download \
+        "SELECT torrent_info.id, title, length, torrent_status.upload, torrent_status.download, torrent_info.free \
         FROM torrent_status INNER JOIN torrent ON torrent_status.tid = torrent.id INNER JOIN torrent_info ON \
         torrent.id = torrent_info.id \
         WHERE status = 1 AND uid = $1;",
@@ -45,7 +45,7 @@ pub async fn find_uploading_torrent(client: &sqlx::PgPool, uid: i64) -> Personal
 pub async fn find_finished_torrent(client: &sqlx::PgPool, uid: i64) -> PersonalTorrentVecRet {
     Ok(sqlx::query_as!(
         PersonalTorrent,
-        "SELECT torrent_info.id, title, length, torrent_status.upload, torrent_status.download \
+        "SELECT torrent_info.id, title, length, torrent_status.upload, torrent_status.download, torrent_info.free \
         FROM torrent_status INNER JOIN torrent ON torrent_status.tid = torrent.id INNER JOIN torrent_info ON \
         torrent.id = torrent_info.id \
         WHERE torrent_status.finished = TRUE AND uid = $1;",
@@ -58,7 +58,7 @@ pub async fn find_finished_torrent(client: &sqlx::PgPool, uid: i64) -> PersonalT
 pub async fn find_unfinished_torrent(client: &sqlx::PgPool, uid: i64) -> PersonalTorrentVecRet {
     Ok(sqlx::query_as!(
         PersonalTorrent,
-        "SELECT torrent_info.id, title, length, torrent_status.upload, torrent_status.download \
+        "SELECT torrent_info.id, title, length, torrent_status.upload, torrent_status.download, torrent_info.free \
         FROM torrent_status INNER JOIN torrent ON torrent_status.tid = torrent.id INNER JOIN torrent_info ON \
         torrent.id = torrent_info.id \
         WHERE torrent_status.finished = FALSE AND status = 2 AND uid = $1;",
