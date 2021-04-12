@@ -37,8 +37,16 @@ impl From<String> for Error {
     }
 }
 
+#[cfg(feature = "sled")]
 impl From<sled::Error> for Error {
     fn from(err: sled::Error) -> Self {
+        Error::KVError(err.to_string())
+    }
+}
+
+#[cfg(feature = "rocksdb")]
+impl From<rocksdb::Error> for Error {
+    fn from(err: rocksdb::Error) -> Self {
         Error::KVError(err.to_string())
     }
 }

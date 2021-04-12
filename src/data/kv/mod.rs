@@ -1,6 +1,7 @@
 mod csv;
 mod redis;
-mod rocksdb;
+#[cfg(feature = "rocksdb")]
+mod rocks;
 #[cfg(feature = "sled")]
 mod sled_embedded;
 
@@ -9,18 +10,28 @@ use crate::error::Error;
 use lazy_static::lazy_static;
 use std::sync::Arc;
 
-lazy_static! {
-    pub static ref KVDB: Arc<dyn KVStorage> = Arc::new(
-        #[cfg(feature = "sled")]
-        {
-            sled_embedded::SledWrapper {
+cfg_if::cfg_if! {
+    if #[cfg(feature = "sled")] {
+        lazy_static! {
+            pub static ref KVDB: Arc<dyn KVStorage> = Arc::new(sled_embedded::SledWrapper {
                 db: sled::open(&CONFIG.kv_path).expect("unable to open kv"),
-            }
+            });
         }
-    );
+    } else {
+        lazy_static! {
+            pub static ref KVDB: Arc<dyn KVStorage> = Arc::new(rocks::RocksWrapper {
+                db: rocksdb::DB::open_cf(
+                    &rocksdb::Options::default(),
+                    &CONFIG.kv_path,
+                    &["config", "reset"],
+                )
+                .expect("unable to open kv"),
+            });
+        }
+    }
 }
 
-// TODO: structured value support is needed
+// TODO: structured value support
 pub trait KVStorage: Send + Sync {
     fn put(&self, cf: &str, key: &[u8], val: &[u8]) -> Result<(), Error>;
     fn get_string(&self, cf: &str, key: &[u8]) -> Result<Option<String>, Error>;
