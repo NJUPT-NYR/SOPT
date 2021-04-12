@@ -11,48 +11,16 @@ mod user;
 use crate::config::CONFIG;
 use crate::controller::config::*;
 pub use crate::controller::config::{ALLOWED_DOMAIN, STRING_SITE_SETTING};
+use crate::data::kv::KVDB;
 use crate::data::*;
+use crate::deserialize_from_req;
 use crate::error::{error_string, Error};
-use crate::rocksdb::{put_cf, ROCKSDB};
 use crate::search::TORRENT_SEARCH_ENGINE;
 use crate::util::*;
-use crate::{deserialize_from_req, get_from_config_cf, get_from_config_cf_untyped};
 use actix_web::{HttpResponse, *};
 use request::*;
 use serde::Deserialize;
 use std::convert::TryInto;
-
-/// A macro used to make load data
-/// from `rocksdb` smoother.
-#[macro_export]
-macro_rules! get_from_config_cf {
-    ($s:expr, $t:ty) => {
-        <$t>::from_ne_bytes(
-            ROCKSDB
-                .get_cf(ROCKSDB.cf_handle("config").unwrap(), $s)?
-                .unwrap()
-                .as_slice()
-                .split_at(std::mem::size_of::<$t>())
-                .0
-                .try_into()
-                .unwrap(),
-        )
-    };
-}
-
-/// A macro used to load data from
-/// `rocksdb` and returns a string
-#[macro_export]
-macro_rules! get_from_config_cf_untyped {
-    ($s:expr) => {
-        String::from_utf8(
-            ROCKSDB
-                .get_cf(ROCKSDB.cf_handle("config").unwrap(), $s)?
-                .unwrap(),
-        )
-        .map_err(error_string)?
-    };
-}
 
 #[macro_export]
 macro_rules! deserialize_from_req {

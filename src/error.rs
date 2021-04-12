@@ -19,7 +19,7 @@ pub enum Error {
     AuthError,
     OtherError(String),
     DBError(DBError),
-    RocksDBError(rocksdb::Error),
+    KVError(String),
     NotFound,
     NoPermission,
     RequestError(String),
@@ -37,9 +37,9 @@ impl From<String> for Error {
     }
 }
 
-impl From<rocksdb::Error> for Error {
-    fn from(err: rocksdb::Error) -> Self {
-        Error::RocksDBError(err)
+impl From<sled::Error> for Error {
+    fn from(err: sled::Error) -> Self {
+        Error::KVError(err.to_string())
     }
 }
 
@@ -59,8 +59,8 @@ impl ResponseError for Error {
                 HttpResponse::Ok().json(GeneralResponse::from_err("DB record not found"))
             }
             Error::DBError(ref err) => HttpResponse::InternalServerError().body(err.to_string()),
-            Error::RocksDBError(ref err) => {
-                HttpResponse::InternalServerError().body(err.to_string())
+            Error::KVError(ref err) => {
+                HttpResponse::InternalServerError().json(GeneralResponse::from_err(err))
             }
             Error::AuthError => {
                 HttpResponse::Unauthorized().json(GeneralResponse::from_err("Not login yet"))

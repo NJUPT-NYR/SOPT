@@ -1,6 +1,6 @@
 /target
 .env
 /.idea
-/rocksdb
+/kv
 .cargo
 Cargo.lock

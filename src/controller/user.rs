@@ -112,11 +112,14 @@ async fn login(data: web::Json<LoginRequest>, client: web::Data<sqlx::PgPool>) -
                 .unwrap();
         }
     }
-    let day = get_from_config_cf!("LOGIN EXPIRE DAY", i64);
+    let days = KVDB
+        .clone()
+        .get_number("config", "LOGIN EXPIRE DAY".as_ref())?
+        .unwrap();
     let claim = Claim {
         sub: val.username,
         role: val.role,
-        exp: (Utc::now() + Duration::days(day)).timestamp(),
+        exp: (Utc::now() + Duration::days(days)).timestamp(),
     };
     let tokens = encode(
         &Header::default(),
@@ -267,9 +270,15 @@ async fn send_activation(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> H
     let code = generate_random_code();
     activation_model::update_or_add_activation(&client, id, &code).await?;
 
-    let mut body = get_from_config_cf_untyped!("ACTIVATE EMAIL");
+    let mut body = KVDB
+        .clone()
+        .get_string("config", "ACTIVATE EMAIL".as_ref())?
+        .unwrap();
     body.push_str(&format!("?id={}&code={}", id, code));
-    let site_name = get_from_config_cf_untyped!("SITE NAME");
+    let site_name = KVDB
+        .clone()
+        .get_string("config", "SITE NAME".as_ref())?
+        .unwrap();
     std::thread::spawn(move || {
         send_mail(&user.username, &user.email, &site_name, body, "ACTIVATE")
             .expect("unable to send mail");
@@ -298,23 +307,30 @@ async fn forget_password(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> H
     let email = deserialize_from_req!(req, EmailWrapper).email;
     let user = user_model::find_user_by_email(&client, &email).await?;
     let code = generate_random_code();
-    let original_code =
-        ROCKSDB.get_cf(ROCKSDB.cf_handle("reset").unwrap(), &user.id.to_ne_bytes())?;
+    let original_code = KVDB.clone().get_string("reset", &user.id.to_ne_bytes())?;
     if original_code.is_none() {
-        put_cf("reset", &user.id.to_ne_bytes(), &code)?;
+        KVDB.clone()
+            .put("reset", &user.id.to_ne_bytes(), &code.as_ref())?;
     } else {
-        let original_code = String::from_utf8(original_code.unwrap()).map_err(error_string)?;
+        let original_code = original_code.unwrap();
         let time = get_time_from_code(original_code)?;
         if chrono::Utc::now().timestamp() - time < 60 {
             return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("retry too often")));
         } else {
-            put_cf("reset", &user.id.to_ne_bytes(), &code)?;
+            KVDB.clone()
+                .put("reset", &user.id.to_ne_bytes(), &code.as_ref())?;
         }
     }
 
-    let mut body = get_from_config_cf_untyped!("PASSWORD RESET EMAIL");
+    let mut body = KVDB
+        .clone()
+        .get_string("config", "PASSWORD RESET EMAIL".as_ref())?
+        .unwrap();
     body.push_str(&format!("?id={}&code={}", user.id, code));
-    let site_name = get_from_config_cf_untyped!("SITE NAME");
+    let site_name = KVDB
+        .clone()
+        .get_string("config", "SITE NAME".as_ref())?
+        .unwrap();
     std::thread::spawn(move || {
         send_mail(&user.username, &email, &site_name, body, "RESET PASSWORD")
             .expect("unable to send mail");
@@ -333,11 +349,11 @@ async fn validate_reset(
     }
     let id = data.id.unwrap();
 
-    let code = ROCKSDB.get_cf(ROCKSDB.cf_handle("reset").unwrap(), &id.to_ne_bytes())?;
+    let code = KVDB.get_string("reset", &id.to_ne_bytes())?;
     if code.is_none() {
         return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("request code doesn't exist")));
     } else {
-        let code = String::from_utf8(code.unwrap()).map_err(error_string)?;
+        let code = code.unwrap();
         if code != data.code.as_deref().unwrap() {
             return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("invalid code")));
         }
@@ -346,7 +362,7 @@ async fn validate_reset(
         if chrono::Utc::now().timestamp() - time > 1800 {
             return Ok(HttpResponse::Ok().json(GeneralResponse::from_err("code has expired")));
         }
-        ROCKSDB.delete_cf(ROCKSDB.cf_handle("reset").unwrap(), &id.to_ne_bytes())?;
+        KVDB.clone().delete("reset", &id.to_ne_bytes())?;
     }
 
     let name = user_model::find_user_by_id(&client, id).await?.username;

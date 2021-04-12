@@ -2,7 +2,6 @@ mod config;
 mod controller;
 pub mod data;
 mod error;
-mod rocksdb;
 mod search;
 mod util;
 
@@ -38,16 +37,30 @@ async fn initializing_search(client: &sqlx::PgPool) {
 }
 
 fn init_settings() {
-    use crate::rocksdb::put_cf;
+    use crate::data::kv::KVDB;
 
     for (key, val) in controller::STRING_SITE_SETTING.iter() {
-        put_cf("config", key, val).unwrap();
+        KVDB.clone()
+            .put("config", key.as_ref(), val.as_ref())
+            .unwrap();
     }
     // TODO: Reflection?
-    put_cf("config", "INVITE CONSUME", 5000_f64.to_ne_bytes()).unwrap();
-    put_cf("config", "BAN UPLOAD RATIO", 0.3_f64.to_ne_bytes()).unwrap();
-    put_cf("config", "NEWBIE TERM", 14_i64.to_ne_bytes()).unwrap();
-    put_cf("config", "LOGIN EXPIRE DAY", 3_i64.to_ne_bytes()).unwrap();
+    KVDB.clone()
+        .put("config", "INVITE CONSUME".as_ref(), &5000_f64.to_ne_bytes())
+        .unwrap();
+    KVDB.clone()
+        .put(
+            "config",
+            "BAN UPLOAD RATIO".as_ref(),
+            &0.3_f64.to_ne_bytes(),
+        )
+        .unwrap();
+    KVDB.clone()
+        .put("config", "NEWBIE TERM".as_ref(), &14_i64.to_ne_bytes())
+        .unwrap();
+    KVDB.clone()
+        .put("config", "LOGIN EXPIRE DAY".as_ref(), &3_i64.to_ne_bytes())
+        .unwrap();
 }
 
 #[actix_web::main]

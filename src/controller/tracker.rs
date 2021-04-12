@@ -45,8 +45,14 @@ async fn get_announce(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> Http
     }
     let ret =
         user_info_model::update_io_by_id(&client, data.uid, data.upload, data.download).await?;
-    let ratio = get_from_config_cf!("BAN USER RATIO", f64);
-    let days = get_from_config_cf!("NEWBIE TERM", i64);
+    let ratio = KVDB
+        .clone()
+        .get_float("config", "BAN USER RATIO".as_ref())?
+        .unwrap();
+    let days = KVDB
+        .clone()
+        .get_number("config", "NEWBIE TERM".as_ref())?
+        .unwrap();
     if (ret.upload as f64 / ret.download as f64) < ratio
         && (Utc::now() - Duration::days(days)).timestamp() > ret.registertime.timestamp()
     {

@@ -1,5 +1,4 @@
 use super::*;
-use crate::rocksdb::put_cf;
 use serde_bytes::ByteBuf;
 
 type TorrentRet = Result<TorrentTable, Error>;
@@ -71,7 +70,6 @@ pub async fn update_or_add_torrent(
     )
     .execute(client)
     .await?;
-    put_cf("info_hash", &torrent.infohash, torrent.id.to_le_bytes())?;
     Ok(())
 }
 

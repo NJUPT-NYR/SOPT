@@ -33,8 +33,8 @@ ANNOUNCE_ADDR=https://tracker.sopt.rs/announce
 SMTP.SERVER=smtp.gmail.com
 SMTP.USERNAME=brethland@gmail.com
 SMTP.PASSWORD=fake_pass
-# Rocksdb 的存储路径，一般保持默认
-ROCKSDB_PATH=./rocksdb
+# KV-Pair 的存储路径，一般保持默认
+KV_PATH=./kv
 # 对象存储的路径，支持一切s3协议的引擎
 OSS_PATH=http://127.0.0.1:9000
 ```
@@ -44,7 +44,9 @@ OSS_PATH=http://127.0.0.1:9000
 ```toml
 [features]
 # 将需要的功能填入该数组，以半角分号分隔
-default = ["email-restriction", "message"]
+# 你必须选择一个 K-V 的存储层，默认是 sled
+# 可选项有 sled, csv, redis 和 rocksdb
+default = ["email-restriction", "message", "sled"]
 # 使用邮箱注册白名单（无需邀请码）
 email-restriction = []
 # 私信功能
@@ -156,8 +158,8 @@ ANNOUNCE_ADDR=https://tracker.sopt.rs/announce
 SMTP.SERVER=smtp.gmail.com
 SMTP.USERNAME=brethland@gmail.com
 SMTP.PASSWORD=fake_pass
-# path for rocksdb, keep default if nothing wrong.
-ROCKSDB_PATH=./rocksdb
+# path for kv database, keep default if nothing wrong.
+KV_PATH=./kv
 ```
 
 Edit `Cargo.toml` with selected features：
@@ -165,7 +167,9 @@ Edit `Cargo.toml` with selected features：
 ```toml
 [features]
 # load features seperated by ','
-default = ["email-restriction", "message"]
+# you must choose a kv storage backend
+# default is sled, options are sled, csv, redis and rocksdb
+default = ["email-restriction", "message", "sled"]
 # email whitlelist(so no invitation code is needed)
 email-restriction = []
 # private message

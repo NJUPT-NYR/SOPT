@@ -1,5 +1,6 @@
 pub mod activation;
 pub mod invitation;
+pub mod kv;
 #[cfg(feature = "message")]
 pub mod message;
 pub mod rank;

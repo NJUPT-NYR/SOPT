@@ -14,7 +14,10 @@ async fn send_invitation(
     }
 
     let code = generate_random_code();
-    let num = get_from_config_cf!("INVITE CONSUME", f64);
+    let num = KVDB
+        .clone()
+        .get_float("config", "INVITE CONSUME".as_ref())?
+        .unwrap();
     user_info_model::update_money_by_name(&client, &username, num).await?;
     let ret =
         invitation_model::add_invitation_code(&client, &username, &code, &data.address).await?;

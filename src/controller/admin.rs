@@ -221,16 +221,28 @@ async fn list_site_settings(req: HttpRequest) -> HttpResult {
     }
     let mut settings: HashMap<String, String> = HashMap::new();
     for (key, _) in STRING_SITE_SETTING.iter() {
-        let setting = get_from_config_cf_untyped!(key);
+        let setting = KVDB.clone().get_string("config", key.as_ref())?.unwrap();
         settings.insert(key.to_string(), setting);
     }
-    let val = get_from_config_cf!("INVITE CONSUME", f64);
+    let val = KVDB
+        .clone()
+        .get_float("config", "INVITE CONSUME".as_ref())?
+        .unwrap();
     settings.insert("INVITE CONSUME".to_string(), val.to_string());
-    let val = get_from_config_cf!("BAN UPLOAD RATIO", f64);
+    let val = KVDB
+        .clone()
+        .get_float("config", "BAN UPLOAD RATIO".as_ref())?
+        .unwrap();
     settings.insert("BAN UPLOAD RATIO".to_string(), val.to_string());
-    let val = get_from_config_cf!("NEWBIE TERM", i64);
+    let val = KVDB
+        .clone()
+        .get_number("config", "NEWBIE TERM".as_ref())?
+        .unwrap();
     settings.insert("NEWBIE TERM".to_string(), val.to_string());
-    let val = get_from_config_cf!("LOGIN EXPIRE DAY", i64);
+    let val = KVDB
+        .clone()
+        .get_number("config", "LOGIN EXPIRE DAY".as_ref())?
+        .unwrap();
     settings.insert("LOGIN EXPIRE DAY".to_string(), val.to_string());
 
     Ok(HttpResponse::Ok().json(settings.to_json()))
@@ -246,31 +258,31 @@ async fn update_site_settings(data: web::Json<SiteSettingRequest>, req: HttpRequ
     }
     for (key, val) in data.settings.iter() {
         if key.eq("INVITE CONSUME") {
-            put_cf(
+            KVDB.clone().put(
                 "config",
-                "INVITE CONSUME",
-                f64::from_str(&val).map_err(error_string)?.to_ne_bytes(),
+                "INVITE CONSUME".as_ref(),
+                &f64::from_str(&val).map_err(error_string)?.to_ne_bytes(),
             )?;
         }
         if key.eq("BAN UPLOAD RATIO") {
-            put_cf(
+            KVDB.clone().put(
                 "config",
-                "BAN UPLOAD RATIO",
-                f64::from_str(&val).map_err(error_string)?.to_ne_bytes(),
+                "BAN UPLOAD RATIO".as_ref(),
+                &f64::from_str(&val).map_err(error_string)?.to_ne_bytes(),
             )?;
         }
         if key.eq("NEWBIE TERM") {
-            put_cf(
+            KVDB.clone().put(
                 "config",
-                "NEWBIE TERM",
-                i64::from_str(&val).map_err(error_string)?.to_ne_bytes(),
+                "NEWBIE TERM".as_ref(),
+                &i64::from_str(&val).map_err(error_string)?.to_ne_bytes(),
             )?;
         }
         if key.eq("LOGIN EXPIRE DAY") {
-            put_cf(
+            KVDB.clone().put(
                 "config",
-                "LOGIN EXPIRE DAY",
-                i64::from_str(&val).map_err(error_string)?.to_ne_bytes(),
+                "LOGIN EXPIRE DAY".as_ref(),
+                &i64::from_str(&val).map_err(error_string)?.to_ne_bytes(),
             )?;
         }
         if STRING_SITE_SETTING
@@ -278,7 +290,7 @@ async fn update_site_settings(data: web::Json<SiteSettingRequest>, req: HttpRequ
             .find(|x| x.to_string().eq(key))
             .is_some()
         {
-            put_cf("config", &key, &val)?;
+            KVDB.clone().put("config", key.as_ref(), val.as_ref())?;
         }
     }
 

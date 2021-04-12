@@ -15,7 +15,7 @@ version = "0.1.0"
 name = "sopt"
 
 [features]
-default = ["email-restriction", "message"]
+default = ["email-restriction", "message", "sled"]
 email-restriction = []
 message = []
 
@@ -23,10 +23,10 @@ message = []
 # actix and sql stuff
 actix-multipart = "0.3.0"
 actix-web = "3.3.2"
-rocksdb = {git = "https://github.com/rust-rocksdb/rust-rocksdb"}
 sqlx = {version = "0.4.1", features = ["postgres", "runtime-actix-native-tls", "chrono", "json"]}
 tokio = {version = "^0.2", features = ["macros", "time"]}
 rust-s3 = "0.26.4"
+sled = { version = "0.34.6", optional = true }
 
 #serde related
 serde = {version = "*", features = ["derive"]}
