@@ -23,6 +23,8 @@ cp .env.example .env
 ```
 # 服务地址，一般请保持默认
 SERVER_ADDR=127.0.0.1:8000
+# Tracker 地址，一般请保持默认
+TRACKER_ADDR=127.0.0.1:8080
 # JWT 的密钥，建议采用随机字符串以提高安全性
 SECRET_KEY=secret
 # 数据库配置，请保证该数据库存在，否则使用 createdb 命令创建
@@ -147,6 +149,8 @@ Edit `.env`:
 ```
 # server address, keep default if nothing wrong.
 SERVER_ADDR=127.0.0.1:8000
+# tracker address, keep default if nothing wrong.
+TRACKER_ADDR=127.0.0.1:8080
 # key for JWT Auth, you can generate some random strings
 SECRET_KEY=secret
 # database configuration, make sure you have DB already,

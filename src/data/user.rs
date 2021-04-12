@@ -135,7 +135,7 @@ pub async fn update_passkey_by_username(
 ) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE users SET passkey = $1 \
-         WHERE username = $2 RETURNING id;",
+         WHERE username = $2;",
         new_key,
         username
     )

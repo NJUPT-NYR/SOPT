@@ -68,6 +68,7 @@ async fn add_user(data: web::Json<SignUpRequest>, client: web::Data<sqlx::PgPool
         )
         .await?;
     }
+    update_passkey_filter(Some(passkey), None).await?;
     Ok(HttpResponse::Ok().json(new_user.to_json()))
 }
 
@@ -241,8 +242,13 @@ async fn reset_password(
 #[get("/reset_passkey")]
 async fn reset_passkey(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
     let username = get_name_in_token(&req)?;
-    user_model::update_passkey_by_username(&client, &username, &generate_passkey(&username)?)
-        .await?;
+    let new_key = generate_passkey(&username)?;
+    let old_key = user_model::find_user_by_username(&client, &username)
+        .await?
+        .passkey;
+    user_model::update_passkey_by_username(&client, &username, &new_key).await?;
+    update_passkey_filter(Some(new_key), Some(old_key)).await?;
+
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 

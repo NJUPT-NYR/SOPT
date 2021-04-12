@@ -19,7 +19,7 @@ use crate::search::TORRENT_SEARCH_ENGINE;
 use crate::util::*;
 use actix_web::{HttpResponse, *};
 use request::*;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
 
 #[macro_export]
@@ -58,6 +58,30 @@ fn get_info_in_token(req: &HttpRequest) -> Result<Claim, Error> {
 /// since most of cases are the need of username
 fn get_name_in_token(req: &HttpRequest) -> Result<String, Error> {
     Ok(get_info_in_token(req)?.sub)
+}
+
+#[derive(Serialize, Debug)]
+struct UpdateFilter {
+    set: Option<String>,
+    delete: Option<String>,
+}
+
+async fn update_passkey_filter(set: Option<String>, delete: Option<String>) -> Result<(), Error> {
+    let addr = format!("{}/tracker/update_filter", CONFIG.tracker_addr);
+    let client = reqwest::Client::new();
+    let query = UpdateFilter { set, delete };
+
+    let resp = client
+        .post(&addr)
+        .json(&query)
+        .send()
+        .await
+        .map_err(|e| Error::OtherError(e.to_string()))?;
+    if !resp.status().is_success() {
+        return Err(Error::OtherError("unable to set filter".to_string()));
+    }
+
+    Ok(())
 }
 
 pub fn api_service() -> Scope {

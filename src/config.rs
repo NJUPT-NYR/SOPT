@@ -30,6 +30,7 @@ pub(crate) struct SMTPAccount {
 #[derive(Deserialize, Debug)]
 pub(crate) struct Config {
     pub server_addr: String,
+    pub tracker_addr: String,
     pub secret_key: String,
     pub database_url: String,
     pub announce_addr: String,
