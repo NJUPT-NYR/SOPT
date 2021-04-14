@@ -55,7 +55,7 @@ cfg-if = "1.0"
 reqwest = { version = "0.10", features = ["json"] }
 
 # crypto related
-base64 = "*"
+base64 = "0.13.0"
 rand = "0.8.3"
 rust-argon2 = "0.8"
 sha-1 = "0.9"

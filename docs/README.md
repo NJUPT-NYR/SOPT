@@ -15,8 +15,7 @@ cp .env.example .env
 在开始前，您需要安装以下依赖：
 
 1. PostgreSQL >= 9.5
-2. Rust >= 1.5
-3. GCC >= 8.0 or Clang >= 11.0
+2. Rust >= 1.50
 
 修改 `.env` 文件如下示例：
 
@@ -141,8 +140,7 @@ cp .env.example .env
 You need to install following dependencies:
 
 1. PostgreSQL >= 9.5
-2. Rust >= 1.5
-3. GCC >= 8.0 or Clang >= 11.0
+2. Rust >= 1.50
 
 Edit `.env`:
 

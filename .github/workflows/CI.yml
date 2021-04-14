@@ -1,9 +1,24 @@
 name: CI
-on: [push]
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [master]
+
 jobs:
-  testing:
-    name: Testing and Clippy
-    runs-on: ubuntu-latest
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - { name: Linux, os: ubuntu-latest, triple: x86_64-unknown-linux-gnu }
+          - { name: macOS, os: macos-latest, triple: x86_64-apple-darwin }
+          - { name: Windows, os: windows-latest, triple: x86_64-pc-windows-msvc }
+        version:
+          - stable
+    name: ${{ matrix.target.name }} / ${{ matrix.version }}
+    runs-on: ${{ matrix.target.os }}
+
     services:
       postgres:
         image: postgres:12
@@ -15,21 +30,39 @@ jobs:
           - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
-      redis:
-        image: redis:buster
-        ports:
-          - 6379:6379
+    env:
+      VCPKGRS_DYNAMIC: 1
 
     steps:
       - uses: actions/checkout@v2
 
+      - name: Set vcpkg root
+        if: matrix.target.triple == 'x86_64-pc-windows-msvc'
+        run: echo "VCPKG_ROOT=$env:VCPKG_INSTALLATION_ROOT" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: Install OpenSSL
+        if: matrix.target.triple == 'x86_64-pc-windows-msvc'
+        run: vcpkg install openssl:x64-windows
+
+      - name: Install ${{ matrix.version }}
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: ${{ matrix.version }}-${{ matrix.target.triple }}
+
+      - name: Generate Cargo.lock
+        uses: actions-rs/cargo@v1
+        with:
+          command: generate-lockfile
+
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v1.2.0
+
+      - name: Install sqlx-cli
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: sqlx-cli
 
       - run: cp .env.example .env
-      - run: cargo install sqlx-cli
       - run: sqlx migrate run
-      - run: PGPASSWORD=password psql -h localhost -U postgres -d sopt -f rank.sql
-      - run: cargo test
-#      - run: cargo clippy -- -D clippy::all
+      - run: cargo build -v
+      - run: cargo test -v
