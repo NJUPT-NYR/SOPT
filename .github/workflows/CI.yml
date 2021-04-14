@@ -44,7 +44,7 @@ jobs:
         run: vcpkg install openssl:x64-windows
 
       - name: Install ${{ matrix.version }}
-      - uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ matrix.version }}-${{ matrix.target.triple }}
 
