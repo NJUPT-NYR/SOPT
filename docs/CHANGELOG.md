@@ -7,5 +7,6 @@ new: Send hot passkey update to tracker, a new `env` field is introduced.
 
 refine: Now personal torrent status return whether torrent is free.
 
+fix: Eliminate previous unchecked sql statements.
 ## 0.1.0
 Initial version

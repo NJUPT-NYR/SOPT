@@ -81,15 +81,13 @@ pub async fn find_stick_torrent(client: &sqlx::PgPool) -> SlimTorrentVecRet {
     .await?)
 }
 
-/// find visible torrent with definite tags that are not stick
 pub async fn find_visible_torrent_by_tag_desc(
     client: &sqlx::PgPool,
     tags: &[String],
     page_offset: i64,
     sort_string: &str,
 ) -> SlimTorrentVecRet {
-    // due to sqlx not support type cast of postgres
-    Ok(sqlx::query_as_unchecked!(
+    Ok(sqlx::query_as!(
         SlimTorrent,
         "SELECT torrent_info.id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished \
         FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
@@ -118,7 +116,7 @@ pub async fn find_visible_torrent_by_tag_asc(
     page_offset: i64,
     sort_string: &str,
 ) -> SlimTorrentVecRet {
-    Ok(sqlx::query_as_unchecked!(
+    Ok(sqlx::query_as!(
         SlimTorrent,
         "SELECT torrent_info.id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished \
         FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id \
@@ -240,10 +238,8 @@ pub async fn find_torrent_by_id(client: &sqlx::PgPool, id: i64) -> FullTorrentRe
         .ok_or(Error::NotFound)
 }
 
-/// get counts of torrents definite tags that are not stick
 pub async fn query_torrent_counts_by_tag(client: &sqlx::PgPool, tags: &[String]) -> CountRet {
-    // due to sqlx not support type cast of postgres
-    Ok(sqlx::query_unchecked!(
+    Ok(sqlx::query!(
         "SELECT COUNT(*) FROM torrent_info \
         WHERE visible = TRUE AND ($1::VARCHAR[] <@ tag) AND stick = FALSE;",
         tags
