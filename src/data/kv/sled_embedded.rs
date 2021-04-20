@@ -1,6 +1,5 @@
 use super::*;
 use sled::{IVec, Serialize};
-use std::convert::TryInto;
 
 pub struct SledWrapper {
     pub db: sled::Db,

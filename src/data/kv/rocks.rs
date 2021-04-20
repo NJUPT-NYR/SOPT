@@ -1,5 +1,4 @@
 use super::*;
-use std::convert::TryInto;
 
 pub struct RocksWrapper {
     pub db: rocksdb::DB,

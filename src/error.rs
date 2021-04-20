@@ -51,6 +51,13 @@ impl From<rocksdb::Error> for Error {
     }
 }
 
+#[cfg(feature = "csv")]
+impl From<csv::Error> for Error {
+    fn from(err: csv::Error) -> Self {
+        Error::KVError(err.to_string())
+    }
+}
+
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self)

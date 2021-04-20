@@ -28,6 +28,7 @@ tokio = {version = "^0.2", features = ["macros", "time"]}
 rust-s3 = "0.26.4"
 sled = { version = "0.34.6", optional = true }
 rocksdb = { git = "https://github.com/rust-rocksdb/rust-rocksdb", optional = true }
+csv = { version = "1.1", optional = true }
 
 #serde related
 serde = {version = "*", features = ["derive"]}

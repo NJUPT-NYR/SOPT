@@ -1,4 +1,4 @@
-mod csv;
+mod csv_storage;
 mod redis;
 #[cfg(feature = "rocksdb")]
 mod rocks;
@@ -8,6 +8,8 @@ mod sled_embedded;
 use crate::config::CONFIG;
 use crate::error::Error;
 use lazy_static::lazy_static;
+use std::convert::TryInto;
+use std::path::Path;
 use std::sync::Arc;
 
 cfg_if::cfg_if! {
@@ -17,7 +19,7 @@ cfg_if::cfg_if! {
                 db: sled::open(&CONFIG.kv_path).expect("unable to open kv"),
             });
         }
-    } else {
+    } else if #[cfg(feature = "rocksdb")] {
         lazy_static! {
             pub static ref KVDB: Arc<dyn KVStorage> = Arc::new(rocks::RocksWrapper {
                 db: rocksdb::DB::open_cf(
@@ -26,6 +28,12 @@ cfg_if::cfg_if! {
                     &["config", "reset"],
                 )
                 .expect("unable to open kv"),
+            });
+        }
+    } else {
+        lazy_static! {
+            pub static ref KVDB: Arc<dyn KVStorage> = Arc::new(csv_storage::CSVReader {
+                path: String::from(&CONFIG.kv_path),
             });
         }
     }
