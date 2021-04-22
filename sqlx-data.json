@@ -1,0 +1,2470 @@
+{
+  "db": "PostgreSQL",
+  "054313cfc5b4eebdc97456ab65388d630997db004f9446a88125364ccd10d94a": {
+    "query": "UPDATE torrent_info SET free = TRUE WHERE id = ANY($1);",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int8Array"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "0675ed65896b90158137536989c268709f55e563a8849ab3ca489c04638a38e0": {
+    "query": "WITH ret1 AS ( INSERT INTO users(email, username, password, passkey) VALUES ($1, $2, $3, $4) RETURNING id, email, username, passkey, role),ret2 AS ( INSERT INTO user_info(id, username, registerTime, lastActivity, rank) SELECT (SELECT id FROM ret1), $2, NOW(), NOW(), name FROM rank WHERE rank.id = 1) SELECT id, email, username, passkey, role FROM ret1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "email",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "username",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "passkey",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "role",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Varchar"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "1020c537df8fab29df9baeb108e67748dc9228ff104b42f82619da5610589a3c": {
+    "query": "INSERT INTO torrent_status(tid, uid, status, upload, download) VALUES($1, $2, $3, $4, $5) ON CONFLICT (tid, uid) DO UPDATE SET status = $3, upload = torrent_status.upload + $4, download = torrent_status.download + $5;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8",
+          "Int4",
+          "Int8",
+          "Int8"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "10cc74d99cbeb3d976de9cdf3073582f8ea8fc6d22f5c3fde2440ae123e811a9": {
+    "query": "SELECT torrent_info.id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id WHERE visible = TRUE AND torrent_info.id = ANY($1) ORDER BY CASE WHEN $3 = 'title' THEN 2 WHEN $3 = 'poster' THEN 3 WHEN $3 = 'lastedit' THEN 5 WHEN $3 = 'length' THEN 6 WHEN $3 = 'downloading' THEN 8 WHEN $3 = 'uploading' THEN 9 WHEN $3 = 'finished' THEN 10 END ASC LIMIT 20 OFFSET $2;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "poster",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "tag",
+          "type_info": "VarcharArray"
+        },
+        {
+          "ordinal": 4,
+          "name": "lastedit",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 5,
+          "name": "length",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 6,
+          "name": "free",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 7,
+          "name": "downloading",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 8,
+          "name": "uploading",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 9,
+          "name": "finished",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8Array",
+          "Int8",
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "1550c6080fbd3b59ee1aba656b01a8bd564c2a541255bc71446baba839d5051e": {
+    "query": "UPDATE users SET passkey = $1 WHERE username = $2;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "1a0ad49e551d48bc122ae4c8f73d95106e9b0a28ad634018098b163d07cd8bd7": {
+    "query": "SELECT id, upload, download, registerTime FROM user_info WHERE username = $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "upload",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 2,
+          "name": "download",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 3,
+          "name": "registertime",
+          "type_info": "Timestamptz"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "1ae3e403e10c780d77d66d39f6d51476d836725eae86458f5496c04057872416": {
+    "query": "SELECT torrent_info.id, title, poster, tag, lastEdit, length,free, downloading, uploading, finished FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id WHERE visible = TRUE AND stick = TRUE ORDER BY lastEdit DESC;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "poster",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "tag",
+          "type_info": "VarcharArray"
+        },
+        {
+          "ordinal": 4,
+          "name": "lastedit",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 5,
+          "name": "length",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 6,
+          "name": "free",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 7,
+          "name": "downloading",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 8,
+          "name": "uploading",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 9,
+          "name": "finished",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "1b786843a6be3b725656bcd803af16c7a979e444fafc7113ee501d7e10958ef3": {
+    "query": "SELECT * FROM tag ORDER BY amount DESC LIMIT $1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "amount",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false
+      ]
+    }
+  },
+  "1f0abc9836e6eca63e580be12f5d73a7329fe6f585ca1f5dfc82166d01f9660d": {
+    "query": "INSERT INTO torrent_info(title, poster, description, createTime, lastEdit, tag) VALUES ($1, $2, $3, NOW(), NOW(), $4) RETURNING id, visible;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "visible",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Varchar",
+          "Text",
+          "VarcharArray"
+        ]
+      },
+      "nullable": [
+        false,
+        false
+      ]
+    }
+  },
+  "22368b379d8c9f89bced04814cc464acc31ce4499ed92b56c80ab11b034604b4": {
+    "query": "SELECT torrent_info.id, title, length, torrent_status.upload, torrent_status.download, torrent_info.free FROM torrent_status INNER JOIN torrent ON torrent_status.tid = torrent.id INNER JOIN torrent_info ON torrent.id = torrent_info.id WHERE status = 1 AND uid = $1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "length",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 3,
+          "name": "upload",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 4,
+          "name": "download",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 5,
+          "name": "free",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "227abd4e4d9baeb2e3e41336137a39b817ab20a0527a6ca258adcd77346a2ee4": {
+    "query": "WITH ret AS (UPDATE activation SET used = TRUE WHERE id = $1) UPDATE users SET activated = TRUE WHERE id = $1;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "2bc77f3a229ea2e42fa632b20a1e5678fa296b17f3a2e8f188eb6ae6a6df4d51": {
+    "query": "INSERT INTO torrent(id, name, length, comment, files, info, infohash) VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (id) DO UPDATE SET name = $2, length = $3, comment = $4, files = $5, info = $6, infohash = $7;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Varchar",
+          "Int8",
+          "Varchar",
+          "VarcharArray",
+          "Bytea",
+          "Varchar"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "31af7cbe54f12b7dd1e6a7f3a2e318387e4ab8b522715ac859c7600de3d718ed": {
+    "query": "UPDATE torrent_info SET stick = FALSE WHERE id = ANY($1);",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int8Array"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "3720c7b66e4154b3999f67e7feaa6db560919f2765787b3d15aa8d078ef52582": {
+    "query": "SELECT id, email, username, passkey, role FROM users WHERE id = $1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "email",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "username",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "passkey",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "role",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "39ea4c1b0d92fc49ec3ab7e9167128a1b12a37fa4f62c1ae76cef639549f58a0": {
+    "query": "UPDATE user_info SET money = CASE WHEN username = $1 THEN money - $3WHEN username = $2 THEN money + $3END WHERE username in ($1, $2)",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Float8"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "3e8d11d9b0591f565eb958ab0101607f911b5a3f59e7fb10a2b725476215fb12": {
+    "query": "UPDATE torrent_info SET free = FALSE WHERE id = ANY($1);",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int8Array"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "42d78adb0b34afb68fa209635248f434d45a0ab184bd130a244d80cf72352834": {
+    "query": "SELECT torrent_info.id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id WHERE visible = TRUE AND ($1::VARCHAR[] <@ tag) AND stick = FALSE ORDER BY CASE WHEN $3 = 'title' THEN 2 WHEN $3 = 'poster' THEN 3 WHEN $3 = 'lastedit' THEN 5 WHEN $3 = 'length' THEN 6 WHEN $3 = 'downloading' THEN 8 WHEN $3 = 'uploading' THEN 9 WHEN $3 = 'finished' THEN 10 END ASC LIMIT 20 OFFSET $2;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "poster",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "tag",
+          "type_info": "VarcharArray"
+        },
+        {
+          "ordinal": 4,
+          "name": "lastedit",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 5,
+          "name": "length",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 6,
+          "name": "free",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 7,
+          "name": "downloading",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 8,
+          "name": "uploading",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 9,
+          "name": "finished",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "VarcharArray",
+          "Int8",
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "445817b9bb879ea656b400cabfd1b15ac0ef22444e5edc5cd658e580fe350794": {
+    "query": "WITH rt AS (UPDATE user_info SET invitor = $1 WHERE id = $2) UPDATE invitations SET usage = TRUE WHERE code = $3;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Int8",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "46b1c3d7bc9568afbe08f47c12967fb519a35637e799d23c8964d133931b30cc": {
+    "query": "SELECT id, username, password, role, activated FROM users WHERE username = $1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "username",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "password",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "role",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 4,
+          "name": "activated",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "4b19e4270fbc5b086e8e58d8b65897d589bb637fc73fcbfaecd4f8bb62a259d8": {
+    "query": "SELECT rank.id, name, role, rank.upload, age, next FROM rank INNER JOIN user_info ON rank.name = user_info.rank WHERE user_info.username = $1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "role",
+          "type_info": "Int2Array"
+        },
+        {
+          "ordinal": 3,
+          "name": "upload",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 4,
+          "name": "age",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 5,
+          "name": "next",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
+      ]
+    }
+  },
+  "4b3761fd78658f738687441e4315e904ee052c90376fbb2b51ac252c6a647015": {
+    "query": "UPDATE torrent_info SET stick = TRUE WHERE id = ANY($1);",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int8Array"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "4e7e8856be46fc2e8ad758d21012f63efa950468d14a23fd41b6192167e94a14": {
+    "query": "SELECT * FROM torrent_status WHERE tid = $1 AND uid = $2;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "tid",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "uid",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 2,
+          "name": "status",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 3,
+          "name": "upload",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 4,
+          "name": "download",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 5,
+          "name": "finished",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "517a15fd516e892c221ed81ad996fdbcbdf6d91ac71e32640e725a3b54ce5f28": {
+    "query": "SELECT torrent_info.id, title, length, torrent_status.upload, torrent_status.download, torrent_info.free FROM torrent_status INNER JOIN torrent ON torrent_status.tid = torrent.id INNER JOIN torrent_info ON torrent.id = torrent_info.id WHERE torrent_status.finished = FALSE AND status = 2 AND uid = $1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "length",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 3,
+          "name": "upload",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 4,
+          "name": "download",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 5,
+          "name": "free",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "52e1a68533bf5dc82005967b33bc1dddf1f7cb492219b90b5609b2d234e71c93": {
+    "query": "INSERT INTO activation(id, code) VALUES($1, $2) ON CONFLICT (id) DO UPDATE SET code = $2;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Varchar"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "546ec2490296998428dd6ee3b1ea9ba8ec88bc107212e812dbb994c082c5a2de": {
+    "query": "INSERT INTO tag(name) VALUES($1) ON CONFLICT (name) DO UPDATE SET amount = tag.amount + 1;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Varchar"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "57aacededf6aa8fdb703614b44e63131ba8cffd0fe07f45e7b918f51575cb255": {
+    "query": "SELECT torrent_info.id, title, poster, description, tag, visible, createTime, lastEdit, free, downloading, uploading, finished, length, files, infohash FROM torrent_info LEFT JOIN torrent ON torrent_info.id = torrent.id WHERE torrent_info.id = $1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "poster",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "description",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 4,
+          "name": "tag",
+          "type_info": "VarcharArray"
+        },
+        {
+          "ordinal": 5,
+          "name": "visible",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 6,
+          "name": "createtime",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 7,
+          "name": "lastedit",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 8,
+          "name": "free",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 9,
+          "name": "downloading",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 10,
+          "name": "uploading",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 11,
+          "name": "finished",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 12,
+          "name": "length",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 13,
+          "name": "files",
+          "type_info": "VarcharArray"
+        },
+        {
+          "ordinal": 14,
+          "name": "infohash",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "5ca74f7f694b446bf0ad2425fc19c08491ca5a57f3f8ff29b5d95b20ae94757e": {
+    "query": "SELECT id, email, username, passkey, role FROM users WHERE email = $1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "email",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "username",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "passkey",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "role",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "674af5859c4e82fae485f79d637818745a6f0db64c00e22dd5f99acfb4ed1cdc": {
+    "query": "UPDATE torrent_status SET finished = TRUE WHERE tid = $1 AND uid = $2;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "6a452ba84452fc3b805baa4f349cfa7c688bc25bb6166f9ebe85130221688610": {
+    "query": "UPDATE user_info SET upload = upload + $1, download = download + $2 WHERE id = $3 RETURNING id, upload, download, registerTime;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "upload",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 2,
+          "name": "download",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 3,
+          "name": "registertime",
+          "type_info": "Timestamptz"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8",
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "6d62ad8a9daf95a14eca4744c3cb89997b91142a2ff5d0ea20636dada7fcf5bf": {
+    "query": "UPDATE users SET password = $1 WHERE username = $2;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "71232b387d2d2dea5bc57a58f891aa5f215fafbb77f27e3309fc7b931c5f9292": {
+    "query": "SELECT torrent_info.id, title, length, torrent_status.upload, torrent_status.download, torrent_info.free FROM torrent_status INNER JOIN torrent ON torrent_status.tid = torrent.id INNER JOIN torrent_info ON torrent.id = torrent_info.id WHERE status = 0 AND uid = $1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "length",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 3,
+          "name": "upload",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 4,
+          "name": "download",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 5,
+          "name": "free",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "7148b7cbfa168460aec841e24642eca77880f9a5526e985ddf843159217dc667": {
+    "query": "SELECT COUNT(*) FROM torrent_info WHERE visible = TRUE AND ($1::VARCHAR[] <@ tag) AND stick = FALSE;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "count",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "VarcharArray"
+        ]
+      },
+      "nullable": [
+        null
+      ]
+    }
+  },
+  "726a3a100df97a6873a90910b5cc9c202520c4cef11c50ced111137dae956a4e": {
+    "query": "INSERT INTO message(sender, receiver, title, body, sendTime) VALUES($1, $2, $3, $4, NOW());",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "75b24f3e23fd886115531e168801fcf9964dae6118dc29e3e87c9975e750c519": {
+    "query": "SELECT id, sender, receiver, title, body, read, sendTime FROM message WHERE sender = $1 AND visibleSender = TRUE;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "sender",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "receiver",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "title",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "body",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 5,
+          "name": "read",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 6,
+          "name": "sendtime",
+          "type_info": "Timestamptz"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false
+      ]
+    }
+  },
+  "75e02dd2d9d8bf2ecdb17da953b5e192df62dbaa2bc558c8d6b1a7aad6b90b03": {
+    "query": "UPDATE user_info SET other = $1 WHERE username = $2;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Json",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "7abf8e37ee82eb654d00b207c60aadbd01b352c773cad7f7d0c91bb64d9fda3d": {
+    "query": "SELECT torrent_info.id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id WHERE poster = $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "poster",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "tag",
+          "type_info": "VarcharArray"
+        },
+        {
+          "ordinal": 4,
+          "name": "lastedit",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 5,
+          "name": "length",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 6,
+          "name": "free",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 7,
+          "name": "downloading",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 8,
+          "name": "uploading",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 9,
+          "name": "finished",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "7bd990f18de7d1df380aa7b3f840fdb7293add83ac2a9332b6f03cee9dce5311": {
+    "query": "UPDATE user_info SET money = money + $1 WHERE id = ANY($2);",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Float8",
+          "Int8Array"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "8194b526b84a200ac38f195658877f82b5a2b79580e499712bb99d2ca43ffbd0": {
+    "query": "SELECT * FROM rank;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "role",
+          "type_info": "Int2Array"
+        },
+        {
+          "ordinal": 3,
+          "name": "upload",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 4,
+          "name": "age",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 5,
+          "name": "next",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
+      ]
+    }
+  },
+  "847f824138fed7549b9d7de550f5c4dfeafa72d1cb79eb911ad0baa60db5ee0c": {
+    "query": "SELECT id, title, poster, tag FROM torrent_info;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "poster",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "tag",
+          "type_info": "VarcharArray"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        true
+      ]
+    }
+  },
+  "848f336bb11b67020339f8d16fae22d242f9f8d614c2e48b373f3fa5e2e86dcb": {
+    "query": "INSERT INTO invitations(sender, code, address) VALUES ($1, $2, $3) RETURNING *;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "sender",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "code",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "address",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "usage",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Varchar"
+        ]
+      },
+      "nullable": [
+        true,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "86f00d355721f3991497bc0426dd21b283ac781a2340dee55641941e28282f75": {
+    "query": "UPDATE tag SET amount = amount - 1 WHERE name = $1;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "874a98e6801398f8ad348a6416d154aee88fbf86c7328c20584a03a2af82aa77": {
+    "query": "SELECT torrent_info.id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id WHERE visible = FALSE;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "poster",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "tag",
+          "type_info": "VarcharArray"
+        },
+        {
+          "ordinal": 4,
+          "name": "lastedit",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 5,
+          "name": "length",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 6,
+          "name": "free",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 7,
+          "name": "downloading",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 8,
+          "name": "uploading",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 9,
+          "name": "finished",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "8a82ebbcfe7f32838bc3b106e3401f25ca3ea95b07e705258469e76f1e28c1ce": {
+    "query": "UPDATE user_info SET money = money + $1 WHERE username = $2;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Float8",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "8cf70483430b90cb61d0147ea2b8b9b7c3df54b7f7573a22eb8ac065e5742fba": {
+    "query": "SELECT torrent_info.id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id WHERE visible = TRUE AND torrent_info.id = ANY($1) ORDER BY CASE WHEN $3 = 'title' THEN 2 WHEN $3 = 'poster' THEN 3 WHEN $3 = 'lastedit' THEN 5 WHEN $3 = 'length' THEN 6 WHEN $3 = 'downloading' THEN 8 WHEN $3 = 'uploading' THEN 9 WHEN $3 = 'finished' THEN 10 END DESC LIMIT 20 OFFSET $2;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "poster",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "tag",
+          "type_info": "VarcharArray"
+        },
+        {
+          "ordinal": 4,
+          "name": "lastedit",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 5,
+          "name": "length",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 6,
+          "name": "free",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 7,
+          "name": "downloading",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 8,
+          "name": "uploading",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 9,
+          "name": "finished",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8Array",
+          "Int8",
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "8d4f3aa079c6aa6ef6889c9d04b2914f32ac84cd8148a15e2f0655c3e3c73a7e": {
+    "query": "SELECT * FROM invitations WHERE sender = $1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "sender",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "code",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "address",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "usage",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        true,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "95ac66cb213638b4db3ffc14d27468da9a4078cc7089ea93b786c101131e7c82": {
+    "query": "SELECT * FROM rank WHERE id = $1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "role",
+          "type_info": "Int2Array"
+        },
+        {
+          "ordinal": 3,
+          "name": "upload",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 4,
+          "name": "age",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 5,
+          "name": "next",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int4"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
+      ]
+    }
+  },
+  "9c7dcb166a9f3ef41582e5e245591ee84158b7fd2f967cbcf8e1e897fb6dbf96": {
+    "query": "SELECT torrent_info.id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id WHERE visible = TRUE AND ($1::VARCHAR[] <@ tag) AND stick = FALSE ORDER BY CASE WHEN $3 = 'title' THEN 2 WHEN $3 = 'poster' THEN 3 WHEN $3 = 'lastedit' THEN 5 WHEN $3 = 'length' THEN 6 WHEN $3 = 'downloading' THEN 8 WHEN $3 = 'uploading' THEN 9 WHEN $3 = 'finished' THEN 10 END DESC LIMIT 20 OFFSET $2;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "poster",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "tag",
+          "type_info": "VarcharArray"
+        },
+        {
+          "ordinal": 4,
+          "name": "lastedit",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 5,
+          "name": "length",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 6,
+          "name": "free",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 7,
+          "name": "downloading",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 8,
+          "name": "uploading",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 9,
+          "name": "finished",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "VarcharArray",
+          "Int8",
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "9cff054a1d8aecfd79829a090803c4dc3cb78b1ad28d5fc0288ea1416715477e": {
+    "query": "UPDATE user_info SET avatar = $1 WHERE username = $2;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "9dd536ae609614c710cd1f6c76d0fe51805ae55591e31381cc71263faad26d31": {
+    "query": "SELECT * FROM activation WHERE id = $1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "code",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "used",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "ac15c66e3ff5e919d859f3d826934dd7579b1a0b3d5a904e0fd8fba606ab3602": {
+    "query": "UPDATE message SET read = TRUE WHERE id = ANY($1) AND receiver = $2;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int8Array",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "ac854e9db2cdfaf14b96c705cccfb49247d590e700e39088f241f9829e601897": {
+    "query": "UPDATE users SET role = role & ~(1::BIGINT << $1) WHERE id = $2;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int8"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "ace4ac9ada4c251c6e555420ec73c41dd41fbada1e5f5fb34c595bd6e0e31e9d": {
+    "query": "SELECT id, email, username, passkey, role FROM users WHERE username = $1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "email",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "username",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "passkey",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "role",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "ada6932dac73f69b17a5d253cdc2f765026f718eae6944fb107441c0aeaa9b89": {
+    "query": "SELECT id, email, username, passkey, role FROM users WHERE email = $1 OR upper(username) = upper($2);",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "email",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "username",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "passkey",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "role",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "b3d33c2cd104b818676ca7bbfd148416287733d5fd2611e0f75d8af4086975b3": {
+    "query": "UPDATE torrent_info SET visible = TRUE FROM torrent WHERE torrent_info.id = torrent.id AND torrent_info.id = ANY($1) RETURNING poster, visible, free, tag, length;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "poster",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "visible",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 2,
+          "name": "free",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 3,
+          "name": "tag",
+          "type_info": "VarcharArray"
+        },
+        {
+          "ordinal": 4,
+          "name": "length",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8Array"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false
+      ]
+    }
+  },
+  "b68b6aad6fa0bad47f815d1a4888f4b337b15a2392a05fd037bacc5e551e5668": {
+    "query": "SELECT users.id, users.username, registerTime, lastActivity, invitor, upload, download, user_info.money, rank, avatar, other, privacy, email, passkey FROM user_info INNER JOIN users ON user_info.id = users.id WHERE user_info.username = $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "username",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "registertime",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "lastactivity",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 4,
+          "name": "invitor",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "upload",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 6,
+          "name": "download",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 7,
+          "name": "money",
+          "type_info": "Float8"
+        },
+        {
+          "ordinal": 8,
+          "name": "rank",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 9,
+          "name": "avatar",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 10,
+          "name": "other",
+          "type_info": "Json"
+        },
+        {
+          "ordinal": 11,
+          "name": "privacy",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 12,
+          "name": "email",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 13,
+          "name": "passkey",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "b7a5116a3a5b4912524589754c239af77dc7a9da61defa8f62ffa9f3acfbc1c9": {
+    "query": "INSERT INTO rank(name, role, upload, age, next) VALUES($1, $2, $3, $4, $5) ON CONFLICT (name) DO UPDATE SET name = $1, role = $2, upload = $3, age = $4, next = $5;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Int2Array",
+          "Int8",
+          "Int8",
+          "Int4"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "ba05438cf4a46f251c61432443f10d977565a331f034f10e6aec8d26995e18dc": {
+    "query": "UPDATE message SET visibleReceiver = FALSE WHERE id = ANY($1) AND receiver = $2;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int8Array",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "be2480cab5addc65aba6381d975fad141d50116cb8b7123bec5224164f31be99": {
+    "query": "SELECT * FROM torrent WHERE id = $1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "length",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 3,
+          "name": "comment",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "files",
+          "type_info": "VarcharArray"
+        },
+        {
+          "ordinal": 5,
+          "name": "info",
+          "type_info": "Bytea"
+        },
+        {
+          "ordinal": 6,
+          "name": "infohash",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "c1a23df04e5b84200aa176e91aeca29ca933c1439b34b93443f50097517546f9": {
+    "query": "UPDATE user_info SET privacy = $1 WHERE username = $2;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "d13ad648962d0b3568f41fe4ccd430296ef0983c8101c32e20e9a3a9f59e5eda": {
+    "query": "UPDATE message SET visibleSender = FALSE WHERE id = ANY($1) AND sender = $2;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int8Array",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "d1e2db6f97fe743e872e661e15fa9e9a7ec6af3454327cd990afb648e91a64ef": {
+    "query": "UPDATE user_info SET lastActivity = now() WHERE username = $1;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "d502300253ada2e3bf02c93bc1e0d934a2c0e5753d8b6e60143aa6f20e206a4e": {
+    "query": "SELECT id, email, username, passkey, role FROM users WHERE (role & 1) = 0;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "email",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "username",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "passkey",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "role",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "d65741f336ee6968503cb02bd6c028502868eaf0773006ba8ae1a27cbbf24acf": {
+    "query": "UPDATE user_info SET rank = $1 WHERE username = $2;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Text"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "ddf72b3a59db29ca4a4d3c9994448e75c045ecaec50308d93a744985f3ee8fb6": {
+    "query": "SELECT * FROM invitations WHERE code = $1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "sender",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "code",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "address",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "usage",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        true,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "debb8d70382459f9f2099b678d9f598d7a83d7cdcb41af4583c058cfe4d66558": {
+    "query": "SELECT id, sender, receiver, title, body, read, sendTime FROM message WHERE receiver = $1 AND visibleReceiver = TRUE;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "sender",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "receiver",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "title",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "body",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 5,
+          "name": "read",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 6,
+          "name": "sendtime",
+          "type_info": "Timestamptz"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false
+      ]
+    }
+  },
+  "e05e98f480160c639324488db30d92daaa852dfb3762b258105bdb02c9e5a291": {
+    "query": "UPDATE torrent_info SET title = $1, description = $2, lastEdit = NOW(), tag = $3 WHERE id = $4 RETURNING id, visible;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "visible",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "VarcharArray",
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false
+      ]
+    }
+  },
+  "e28520a7bc425b2b04b315f4e7619b09ee6e32fd37bf01388ab399a5813d71f0": {
+    "query": "UPDATE users SET role = role | (1::BIGINT << $1) WHERE id = $2;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int8"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "ef61e890cf4bd716b4acaecdf96d272bd77af23c1a341eae162dca8aadb6c620": {
+    "query": "SELECT poster, visible, free, tag, length FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id WHERE torrent_info.id = $1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "poster",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 1,
+          "name": "visible",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 2,
+          "name": "free",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 3,
+          "name": "tag",
+          "type_info": "VarcharArray"
+        },
+        {
+          "ordinal": 4,
+          "name": "length",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        true,
+        false
+      ]
+    }
+  },
+  "f029f675b52da3bc39332ec1ba87c44a93cb58806e3e08c48a18c090cae51981": {
+    "query": "SELECT torrent_info.id, title, length, torrent_status.upload, torrent_status.download, torrent_info.free FROM torrent_status INNER JOIN torrent ON torrent_status.tid = torrent.id INNER JOIN torrent_info ON torrent.id = torrent_info.id WHERE torrent_status.finished = TRUE AND uid = $1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "title",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 2,
+          "name": "length",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 3,
+          "name": "upload",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 4,
+          "name": "download",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 5,
+          "name": "free",
+          "type_info": "Bool"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "f59a24c9c60d9d3a73353ada408ebcabdc112b800bee447131000a5c4b0a0b2d": {
+    "query": "UPDATE torrent_info SET downloading = downloading + $1, uploading = uploading + $2, finished = finished + $3 WHERE id = $4;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int4",
+          "Int8",
+          "Int8"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "fa280ebad16a66dd84469015e704c74e9ee2a6db3edb847c1365a7d986498ae0": {
+    "query": "UPDATE user_info SET money = money + $1 WHERE id = $2;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Float8",
+          "Int8"
+        ]
+      },
+      "nullable": []
+    }
+  }
+}
