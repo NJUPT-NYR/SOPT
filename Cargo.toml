@@ -25,7 +25,6 @@ actix-multipart = "0.3.0"
 actix-web = "3.3.2"
 csv = {version = "1.1", optional = true}
 rocksdb = {git = "https://github.com/rust-rocksdb/rust-rocksdb", optional = true}
-rust-s3 = "0.26.4"
 sled = {version = "0.34.6", optional = true}
 sqlx = {version = "0.4.1", features = ["postgres", "runtime-actix-native-tls", "chrono", "json", "offline"]}
 tokio = {version = "^0.2", features = ["macros", "time"]}

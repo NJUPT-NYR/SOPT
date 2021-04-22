@@ -10,7 +10,6 @@ use crate::config::CONFIG;
 use crate::error::Error;
 use lazy_static::lazy_static;
 use std::convert::TryInto;
-use std::path::Path;
 use std::sync::Arc;
 
 cfg_if::cfg_if! {
