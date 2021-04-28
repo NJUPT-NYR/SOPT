@@ -68,5 +68,4 @@ jobs:
       - run: sqlx migrate run
       - run: cargo build -v
       - run: cargo test -v
-      - run: cd backend
-      - run: cargo sqlx prepare --check -- --bin sopt
+      - run: cd backend && cargo sqlx prepare --check -- --bin sopt

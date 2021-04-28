@@ -3,14 +3,12 @@ name = "sopt_tracker"
 workspace = "../"
 version = "0.1.0"
 authors = [
-    "Brethland Yang <brethland@gmail.com>",
-    "CattChen",
     "Five Qin <qinwu.qw@alibaba-inc.com>",
 ]
 description = "Next generation private tracker framework"
 edition = "2018"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/njupt-nyr/sopt/"
+repository = "https://github.com/njupt-nyr/sopt/tracker/"
 
 [lib]
 crate-type = ["cdylib"]

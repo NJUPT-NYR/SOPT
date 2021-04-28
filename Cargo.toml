@@ -1,5 +1,5 @@
 [workspace]
-members = ["backend", "proxy", "tracker"]
+members = ["backend", "proxy", "tracker", "derive"]
 
 # Open this config if you are OS X user
  [profile.dev]

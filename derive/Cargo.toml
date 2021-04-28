@@ -1,0 +1,18 @@
+[package]
+name = "sopt_derive"
+workspace = "../"
+version = "0.1.0"
+authors = [
+    "Brethland Yang <brethland@gmail.com>",
+]
+edition = "2018"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/njupt-nyr/sopt/derive/"
+
+
+[lib]
+name = "sopt_derive"
+proc-macro = true
+
+[dependencies]
+syn = "*"

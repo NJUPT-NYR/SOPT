@@ -10,7 +10,7 @@ authors = [
 description = "Next generation private tracker framework"
 edition = "2018"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/njupt-nyr/sopt/"
+repository = "https://github.com/njupt-nyr/sopt/backend/"
 default-run = "sopt"
 
 [features]
@@ -23,7 +23,7 @@ message = []
 actix-multipart = "0.3.0"
 actix-web = "3.3.2"
 csv = {version = "1.1", optional = true}
-#rocksdb = {git = "https://github.com/rust-rocksdb/rust-rocksdb", optional = true}
+rocksdb = {version = "0.16.0", optional = true}
 sled = {version = "0.34.6", optional = true}
 sqlx = {version = "0.4.1", features = ["postgres", "runtime-actix-native-tls", "chrono", "json", "offline"]}
 tokio = {version = "^0.2", features = ["macros", "time"]}
@@ -50,7 +50,7 @@ pest = "*"
 pest_derive = "*"
 reqwest = {version = "0.10", features = ["json"]}
 sanitize-filename = "*"
-sopt-derive = {git = "https://github.com/NJUPT-NYR/SOPT-derive", branch = "master"}
+sopt_derive = {path = "../derive"}
 strsim = "*"
 
 # crypto related
