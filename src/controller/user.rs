@@ -50,6 +50,7 @@ async fn add_user(data: web::Json<SignUpRequest>, client: web::Data<sqlx::PgPool
     }
 
     let passkey = generate_passkey(&user.username)?;
+    update_passkey_filter(Some(passkey.clone()), None).await?;
     let new_user = user_model::add_user(
         &client,
         &user.email,
@@ -57,7 +58,12 @@ async fn add_user(data: web::Json<SignUpRequest>, client: web::Data<sqlx::PgPool
         &hash_password(&user.password)?,
         &passkey,
     )
-    .await?;
+    .await;
+    if new_user.is_err() {
+        update_passkey_filter(None, Some(passkey.clone())).await?;
+    }
+    let new_user = new_user?;
+
     if code.is_some() {
         let true_code = code.unwrap();
         user_info_model::add_invitor_by_name(
@@ -68,7 +74,6 @@ async fn add_user(data: web::Json<SignUpRequest>, client: web::Data<sqlx::PgPool
         )
         .await?;
     }
-    update_passkey_filter(Some(passkey), None).await?;
     Ok(HttpResponse::Ok().json(new_user.to_json()))
 }
 

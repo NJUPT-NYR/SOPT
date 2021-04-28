@@ -42,6 +42,7 @@ chrono = {version = "0.4.19", features = ["serde"]}
 config = "*"
 dotenv = "*"
 env_logger = "*"
+log4rs = "1"
 futures = "0.3.13"
 hex = "*"
 jsonwebtoken = "7"
@@ -63,3 +64,7 @@ sha2 = "0.9"
 
 [dev-dependencies]
 cargo-husky = {version = "1", default-features = false, features = ["precommit-hook", "run-cargo-fmt"]}
+
+# Open this config if you are OS X user
+# [profile.dev]
+# split-debuginfo = "unpacked"

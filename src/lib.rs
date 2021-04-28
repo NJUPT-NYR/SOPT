@@ -65,7 +65,7 @@ fn init_settings() {
 
 #[actix_web::main]
 pub async fn sopt_main() -> std::io::Result<()> {
-    std::env::set_var("RUST_LOG", "actix_web=debug");
+    std::env::set_var("RUST_LOG", "actix");
     env_logger::init();
     dotenv().ok();
     println!("==========Initializing configurations==========");
