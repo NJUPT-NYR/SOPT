@@ -15,4 +15,4 @@ name = "sopt_derive"
 proc-macro = true
 
 [dependencies]
-syn = "*"
+syn = "1"

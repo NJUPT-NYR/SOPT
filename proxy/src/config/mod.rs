@@ -1,5 +1,6 @@
-// mod client;
+pub mod client;
 
+use client::Client;
 use config::ConfigError;
 use lazy_static::lazy_static;
 use serde::Deserialize;
@@ -9,14 +10,19 @@ lazy_static! {
     pub(crate) static ref CONFIG: Arc<Config> = Arc::new(Config::from_env().unwrap());
 }
 
+lazy_static! {
+    pub static ref ALLOWED_CLIENT: Vec<Client> = vec![
+        Client::UTorrent,
+        Client::Vuze,
+        Client::Transmission,
+        Client::QBittorrent,
+        Client::Aria,
+    ];
+}
+
 pub fn default_num_want() -> u16 {
     50
 }
-
-// pub fn accept_client_list() -> Vec<client::Client> {
-//     vec![]
-// }
-//
 
 #[derive(Deserialize, Debug)]
 pub struct Config {

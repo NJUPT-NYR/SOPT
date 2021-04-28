@@ -26,3 +26,4 @@ dotenv = "*"
 serde_qs = "*"
 lazy_static = "*"
 reqwest = { version = "0.10", features = [ "json" ] }
+hex = "*"

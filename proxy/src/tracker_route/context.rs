@@ -1,4 +1,5 @@
-use crate::config::CONFIG;
+use crate::config::client::Client;
+use crate::config::{ALLOWED_CLIENT, CONFIG};
 use crate::error::ProxyError;
 use crate::filter::Filter;
 use deadpool::managed;
@@ -31,11 +32,11 @@ impl Context {
         &self,
         data: &super::data::AnnounceRequestData,
     ) -> Result<(), crate::error::ProxyError> {
-        if data.peer_id.len() != 20 {
-            return Err(ProxyError::RequestError(
-                "peer_id's length should be 20 bytes!",
-            ));
+        let client = Client::new(&data.peer_id)?;
+        if !ALLOWED_CLIENT.contains(&client) {
+            return Err(ProxyError::RequestError("Client not allowed!"));
         }
+
         if !self.filter.contains(&data.passkey).await {
             return Err(ProxyError::RequestError(
                 "Passkey not found! Check your torrent please.",
