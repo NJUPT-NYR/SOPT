@@ -1,6 +1,7 @@
 /target
+/kv
+/log
 .env
 /.idea
-/kv
 .cargo
 Cargo.lock

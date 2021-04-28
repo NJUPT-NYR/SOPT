@@ -48,7 +48,7 @@ OSS_PATH=http://127.0.0.1:9000
 # 你必须选择一个 K-V 的存储层，默认是 sled
 # 可选项有 sled, csv, redis 和 rocksdb
 default = ["email-restriction", "message", "sled"]
-# 使用邮箱注册白名单（无需邀请码）
+# 使用邮箱注册允许名单（无需邀请码）
 email-restriction = []
 # 私信功能
 message = []
@@ -63,11 +63,11 @@ message = []
 ```shell
 cargo install sqlx-cli
 sqlx migrate run
-psql -U <PG_USER_NAME> -d sopt -f ./rank.sql
+psql -U <PG_USER_NAME> -d sopt -f ./config/rank.sql
 cargo build --release
 ```
 
-将编译好的二进制包（路径为 `./target/release/sopt`) 与 `.env` 以及 `filtered-email`
+将编译好的二进制包（路径为 `./target/release/sopt`) 与 `.env` 以及 `./config/`
 一起复制到你喜欢的任何地方。
 
 ### Tracker
@@ -172,7 +172,7 @@ Edit `Cargo.toml` with selected features：
 # you must choose a kv storage backend
 # default is sled, options are sled, csv, redis and rocksdb
 default = ["email-restriction", "message", "sled"]
-# email whitlelist(so no invitation code is needed)
+# email allowlist(so no invitation code is needed)
 email-restriction = []
 # private message
 message = []
@@ -193,7 +193,7 @@ psql -U <PG_USER_NAME> -d sopt -f ./rank.sql
 cargo build --release
 ```
 
-Copy compiled binary(path `./target/release/sopt`) and `.env`, `filtered-email`
+Copy compiled binary(path `./target/release/sopt`) and `.env`, `./config/`
 to any path you like。
 
 ### Tracker

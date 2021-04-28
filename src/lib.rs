@@ -16,7 +16,7 @@ async fn load_email_whitelist() {
     use std::io::{BufRead, BufReader};
     use std::iter::FromIterator;
 
-    let file = File::open("filtered-email").expect("email whitelist not exist");
+    let file = File::open("./config/filtered-email").expect("email allowlist not exist");
     let lines: Vec<String> = BufReader::new(file).lines().map(|l| l.unwrap()).collect();
 
     let mut w = controller::ALLOWED_DOMAIN.write().await;
@@ -65,8 +65,7 @@ fn init_settings() {
 
 #[actix_web::main]
 pub async fn sopt_main() -> std::io::Result<()> {
-    std::env::set_var("RUST_LOG", "actix");
-    env_logger::init();
+    log4rs::init_file("config/log4rs.yaml", Default::default()).unwrap();
     dotenv().ok();
     println!("==========Initializing configurations==========");
     load_email_whitelist().await;
@@ -80,7 +79,7 @@ pub async fn sopt_main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .wrap(middleware::Logger::default())
+            .wrap(middleware::Logger::new("%a \"%r\" %s %T"))
             .data(pool.clone())
             .service(controller::api_service())
             .default_service(route().to(|| HttpResponse::NotFound().body("Not Found")))

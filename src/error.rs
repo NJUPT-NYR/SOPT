@@ -70,9 +70,8 @@ impl ResponseError for Error {
     /// Transform error messages to Http Response.
     fn error_response(&self) -> HttpResponse {
         match *self {
-            Error::NotFound => {
-                HttpResponse::Ok().json(GeneralResponse::from_err("DB record not found"))
-            }
+            Error::NotFound => HttpResponse::InternalServerError()
+                .json(GeneralResponse::from_err("DB record not found")),
             Error::DBError(ref err) => HttpResponse::InternalServerError().body(err.to_string()),
             Error::KVError(ref err) => {
                 HttpResponse::InternalServerError().json(GeneralResponse::from_err(err))

@@ -1,0 +1,31 @@
+refresh_rate: 30 seconds
+appenders:
+  stdout:
+    kind: console
+  requests:
+    kind: file
+    path: "log/requests.log"
+    encoder:
+      kind: pattern
+      pattern: "{d(%Y-%m-%d %H:%M:%S)} - {m}{n}"
+  errors:
+    kind: file
+    path: "log/errors.log"
+    encoder:
+      kind: pattern
+      pattern: "{d} - {l} - {M} - {m}{n}"
+root:
+  level: warn
+  appenders:
+    - stdout
+loggers:
+  actix_web:
+    level: info
+    appenders:
+      - requests
+    additive: false
+  actix_http:
+    level: error
+    appenders:
+      - errors
+    additive: true
