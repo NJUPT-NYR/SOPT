@@ -67,5 +67,6 @@ jobs:
       - run: cp .env.example .env
       - run: sqlx migrate run
       - run: cargo build -v
-      - run: cargo sqlx prepare --check -- --lib
       - run: cargo test -v
+      - run: cd backend
+      - run: cargo sqlx prepare --check -- --bin sopt

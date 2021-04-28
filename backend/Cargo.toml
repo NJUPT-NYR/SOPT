@@ -1,0 +1,64 @@
+[package]
+name = "sopt"
+workspace = "../"
+version = "0.1.0"
+authors = [
+    "Brethland Yang <brethland@gmail.com>",
+    "CattChen",
+    "Five Qin <qinwu.qw@alibaba-inc.com>",
+]
+description = "Next generation private tracker framework"
+edition = "2018"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/njupt-nyr/sopt/"
+default-run = "sopt"
+
+[features]
+default = ["email-restriction", "message", "sled"]
+email-restriction = []
+message = []
+
+[dependencies]
+# actix and sql stuff
+actix-multipart = "0.3.0"
+actix-web = "3.3.2"
+csv = {version = "1.1", optional = true}
+#rocksdb = {git = "https://github.com/rust-rocksdb/rust-rocksdb", optional = true}
+sled = {version = "0.34.6", optional = true}
+sqlx = {version = "0.4.1", features = ["postgres", "runtime-actix-native-tls", "chrono", "json", "offline"]}
+tokio = {version = "^0.2", features = ["macros", "time"]}
+
+#serde related
+serde = {version = "^1", features = ["derive"]}
+serde_bencode = "*"
+serde_bytes = "*"
+serde_json = "*"
+serde_qs = "*"
+
+# utils
+cfg-if = "1.0"
+chrono = {version = "0.4.19", features = ["serde"]}
+config = "*"
+dotenv = "*"
+log4rs = "1"
+futures = "0.3.13"
+hex = "*"
+jsonwebtoken = "7"
+lazy_static = "*"
+lettre = "0.10.0-alpha.4"
+pest = "*"
+pest_derive = "*"
+reqwest = {version = "0.10", features = ["json"]}
+sanitize-filename = "*"
+sopt-derive = {git = "https://github.com/NJUPT-NYR/SOPT-derive", branch = "master"}
+strsim = "*"
+
+# crypto related
+base64 = "0.13.0"
+rand = "0.8.3"
+rust-argon2 = "0.8"
+sha-1 = "0.9"
+sha2 = "0.9"
+
+[dev-dependencies]
+cargo-husky = {version = "1", default-features = false, features = ["precommit-hook", "run-cargo-fmt"]}

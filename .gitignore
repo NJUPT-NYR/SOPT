@@ -3,5 +3,4 @@
 /log
 .env
 /.idea
-.cargo
 Cargo.lock

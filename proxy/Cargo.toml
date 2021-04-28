@@ -1,0 +1,29 @@
+[package]
+name = "sopt_proxy"
+workspace = "../"
+version = "0.1.0"
+authors = [
+    "Brethland Yang <brethland@gmail.com>",
+    "CattChen",
+    "Five Qin <qinwu.qw@alibaba-inc.com>",
+]
+description = "Next generation private tracker framework"
+edition = "2018"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/njupt-nyr/sopt/"
+
+[dependencies]
+serde = {version = "^1", features = ["derive"]}
+actix-web = "3"
+sqlx = {version = "0.4.1", features = ["postgres", "runtime-actix-native-tls"]}
+env_logger = "*"
+deadpool = "0.5.2"
+deadpool-redis = "0.6.1"
+bendy = "*"
+bloom = "0.3.2"
+tokio = { version = "^0.2", features = ["sync"] }
+config = "*"
+dotenv = "*"
+serde_qs = "*"
+lazy_static = "*"
+reqwest = { version = "0.10", features = [ "json" ] }

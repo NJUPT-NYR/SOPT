@@ -4,7 +4,7 @@
 
 欢迎使用 SOPT。这是一个现代化的 Private Tracker 框架，包括了上传、浏览、下载、做种情况和管理员等各种基本功能。同时也可以加载许多可选插件。
 
-### 后端
+### 后端 & Tracker
 
 ```shell
 git clone https://github.com/njupt-nyr/sopt.git
@@ -15,12 +15,13 @@ cp .env.example .env
 在开始前，您需要安装以下依赖：
 
 1. PostgreSQL >= 9.5
-2. Rust >= 1.50
+2. Redis >= 6.0
+3. Rust >= 1.50
 
 修改 `.env` 文件如下示例：
 
 ```
-# 服务地址，一般请保持默认
+# 后端地址，一般请保持默认
 SERVER_ADDR=127.0.0.1:8000
 # Tracker 地址，一般请保持默认
 TRACKER_ADDR=127.0.0.1:8080
@@ -30,17 +31,13 @@ SECRET_KEY=secret
 DATABASE_URL=postgres://postgres:password@127.0.0.1:5432/sopt
 # Tracker 的对外地址
 ANNOUNCE_ADDR=https://tracker.sopt.rs/announce
-# SMTP 邮件服务器的配置信息
 SMTP.SERVER=smtp.gmail.com
 SMTP.USERNAME=brethland@gmail.com
 SMTP.PASSWORD=fake_pass
-# KV-Pair 的存储路径，一般保持默认
-KV_PATH=./kv
-# 对象存储的路径，支持一切s3协议的引擎
-OSS_PATH=http://127.0.0.1:9000
+REDIS_URI=redis://127.0.0.1:6379/
 ```
 
-编辑 `Cargo.toml` 以开关功能块：
+编辑 `./backend/Cargo.toml` 以开关功能块：
 
 ```toml
 [features]
@@ -54,9 +51,9 @@ email-restriction = []
 message = []
 ```
 
-编辑 `filtered-email`，加入邮箱白名单，一行一个，全小写，可以为空。
+编辑 `./config/filtered-email`，加入邮箱白名单，一行一个，全小写，可以为空。
 
-编辑 `rank.sql` 来添加你的自定义用户等级设置，你也可以稍后在管理端添加和修改。
+编辑 `./config/rank.sql` 来添加你的自定义用户等级设置，你也可以稍后在管理端添加和修改。
 
 然后在终端运行以下命令：
 
@@ -67,21 +64,9 @@ psql -U <PG_USER_NAME> -d sopt -f ./config/rank.sql
 cargo build --release
 ```
 
-将编译好的二进制包（路径为 `./target/release/sopt`) 与 `.env` 以及 `./config/`
-一起复制到你喜欢的任何地方。
-
-### Tracker
-在开始前，您需要安装以下依赖：
-1. Rust >= 1.48
-2. Redis >= 6.0
-
-``` shell
-git clone https://github.com/NJUPT-NYR/SOPT-Tracker
-cargo build --release
-```
-
-将编译好的二进制包（路径为 [`./target/release/ruapt_proxy`, `./target/release/libretracker.dylib`]）
-与`.env`以及`etc/redis.conf`一起复制到你喜欢的任何地方。
+将编译好的二进制包（路径为 `./target/release/sopt`,
+`./target/release/sopt_proxy`, `./target/release/libretracker.dylib`) 
+与 `.env` 以及 `./config/` 一起复制到你喜欢的任何地方。
 
 ### 前端
 
@@ -119,17 +104,13 @@ yarn build
 yarn start
 ```
 
-### 后续升级
-
-todo!
-
 ## English
 
 SOPT is a modern private tracker framework, it supports basic functions like
 uploading, find torrents, downloading, seeding status and admin panel. You can
 load many optional features too.
 
-### Backend
+### Backend & Tracker
 
 ```shell
 git clone https://github.com/njupt-nyr/sopt.git
@@ -140,7 +121,8 @@ cp .env.example .env
 You need to install following dependencies:
 
 1. PostgreSQL >= 9.5
-2. Rust >= 1.50
+2. Redis >= 6.0
+3. Rust >= 1.50
 
 Edit `.env`:
 
@@ -160,11 +142,10 @@ ANNOUNCE_ADDR=https://tracker.sopt.rs/announce
 SMTP.SERVER=smtp.gmail.com
 SMTP.USERNAME=brethland@gmail.com
 SMTP.PASSWORD=fake_pass
-# path for kv database, keep default if nothing wrong.
-KV_PATH=./kv
+REDIS_URI=redis://127.0.0.1:6379/
 ```
 
-Edit `Cargo.toml` with selected features：
+Edit `./backend/Cargo.toml` with selected features：
 
 ```toml
 [features]
@@ -178,10 +159,10 @@ email-restriction = []
 message = []
 ```
 
-Edit `filtered-email`，add your own whitelist. one for a line, with
+Edit `./config/filtered-email`，add your own whitelist. one for a line, with
 all lowercase(empty list is accepted too).
 
-Edit `rank.sql` to add your own rank settings. You can edit via control
+Edit `./config/rank.sql` to add your own rank settings. You can edit via control
 panel later as well.
 
 Run following commands in terminal：
@@ -193,12 +174,9 @@ psql -U <PG_USER_NAME> -d sopt -f ./rank.sql
 cargo build --release
 ```
 
-Copy compiled binary(path `./target/release/sopt`) and `.env`, `./config/`
-to any path you like。
-
-### Tracker
-
-todo!
+Copy compiled binary(path `./target/release/sopt`,
+`./target/release/sopt_proxy`, `./target/release/libretracker.dylib`) 
+and `.env`, `./config/` to any path you like。
 
 ### Frontend
 
@@ -235,7 +213,3 @@ yarn install
 yarn build
 yarn start
 ```
-
-### Updating
-
-todo!

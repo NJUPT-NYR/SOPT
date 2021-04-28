@@ -1,0 +1,25 @@
+[package]
+name = "sopt_tracker"
+workspace = "../"
+version = "0.1.0"
+authors = [
+    "Brethland Yang <brethland@gmail.com>",
+    "CattChen",
+    "Five Qin <qinwu.qw@alibaba-inc.com>",
+]
+description = "Next generation private tracker framework"
+edition = "2018"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/njupt-nyr/sopt/"
+
+[lib]
+crate-type = ["cdylib"]
+name = "retracker"
+
+[dependencies]
+redis-module = { git = "https://github.com/Hydrogen5/redismodule-rs", rev = "3665e9746c88fa488d2bd66797da23fe1139d079" }
+indexmap = "1.6.1"
+rand = "0.8.3"
+
+[dev-dependencies]
+redis-module = { git = "https://github.com/Hydrogen5/redismodule-rs", rev = "3665e9746c88fa488d2bd66797da23fe1139d079", features = ["test"] }

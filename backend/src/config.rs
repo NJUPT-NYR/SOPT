@@ -26,7 +26,6 @@ pub(crate) struct SMTPAccount {
 /// 5. smtp configuration
 /// 6. path for kv database, used to store
 /// site configs
-/// 7. path for s3/minio, used for object storage
 #[derive(Deserialize, Debug)]
 pub(crate) struct Config {
     pub server_addr: String,
@@ -35,8 +34,6 @@ pub(crate) struct Config {
     pub database_url: String,
     pub announce_addr: String,
     pub smtp: SMTPAccount,
-    pub kv_path: String,
-    pub oss_path: String,
 }
 
 impl Config {

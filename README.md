@@ -28,4 +28,4 @@ If you meet some problems, feel free to raise an issue on Github.
 
 ## License
 
-SOPT is dual-licensed under MIT or APACHE 2.0 at your option.
+SOPT is dual-licensed under MIT or Apache 2.0 at your option.

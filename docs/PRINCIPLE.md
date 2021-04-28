@@ -1,4 +1,4 @@
-# CODE OF CONDUCT
+# Design Principle
 
 ## Safe
 We do not like bugs, and most bugs can be prevented in production.

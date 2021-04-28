@@ -67,7 +67,7 @@ struct UpdateFilter {
 }
 
 async fn update_passkey_filter(set: Option<String>, delete: Option<String>) -> Result<(), Error> {
-    let addr = format!("{}/tracker/update_filter", CONFIG.tracker_addr);
+    let addr = format!("http://{}/tracker/update_filter", CONFIG.tracker_addr);
     let client = reqwest::Client::new();
     let query = UpdateFilter { set, delete };
 

@@ -64,18 +64,18 @@ fn init_settings() {
 }
 
 #[actix_web::main]
-pub async fn sopt_main() -> std::io::Result<()> {
+async fn main() -> std::io::Result<()> {
     log4rs::init_file("config/log4rs.yaml", Default::default()).unwrap();
     dotenv().ok();
-    println!("==========Initializing configurations==========");
+    println!("⭐⭐⭐⭐⭐⭐⭐⭐⭐Initializing configurations⭐⭐⭐⭐⭐⭐⭐⭐⭐");
     load_email_whitelist().await;
     init_settings();
-    println!("==========Initializing search engines==========");
+    println!("⭐⭐⭐⭐⭐⭐⭐⭐⭐Initializing search engines⭐⭐⭐⭐⭐⭐⭐⭐⭐");
     let pool = sqlx::PgPool::connect(&CONFIG.database_url)
         .await
         .expect("unable to connect to database");
     initializing_search(&pool).await;
-    println!("================SOPT is running================");
+    println!("⭐⭐⭐⭐⭐⭐⭐⭐⭐SOPT is running⭐⭐⭐⭐⭐⭐⭐⭐⭐");
 
     HttpServer::new(move || {
         App::new()
