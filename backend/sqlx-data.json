@@ -12,53 +12,6 @@
       "nullable": []
     }
   },
-  "0675ed65896b90158137536989c268709f55e563a8849ab3ca489c04638a38e0": {
-    "query": "WITH ret1 AS ( INSERT INTO users(email, username, password, passkey) VALUES ($1, $2, $3, $4) RETURNING id, email, username, passkey, role),ret2 AS ( INSERT INTO user_info(id, username, registerTime, lastActivity, rank) SELECT (SELECT id FROM ret1), $2, NOW(), NOW(), name FROM rank WHERE rank.id = 1) SELECT id, email, username, passkey, role FROM ret1;",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Int8"
-        },
-        {
-          "ordinal": 1,
-          "name": "email",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 2,
-          "name": "username",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 3,
-          "name": "passkey",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 4,
-          "name": "role",
-          "type_info": "Int8"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Varchar",
-          "Varchar",
-          "Varchar",
-          "Varchar"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false
-      ]
-    }
-  },
   "1020c537df8fab29df9baeb108e67748dc9228ff104b42f82619da5610589a3c": {
     "query": "INSERT INTO torrent_status(tid, uid, status, upload, download) VALUES($1, $2, $3, $4, $5) ON CONFLICT (tid, uid) DO UPDATE SET status = $3, upload = torrent_status.upload + $4, download = torrent_status.download + $5;",
     "describe": {
@@ -391,6 +344,56 @@
       "nullable": []
     }
   },
+  "29031a17f178f0231c46d8adbbd947f8f36c32e916f6f5e8ca7ecf68875446d9": {
+    "query": "SELECT rank.id, name, role, rank.upload, age, next FROM rank INNER JOIN user_info ON rank.id = user_info.rank WHERE user_info.username = $1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 1,
+          "name": "name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "role",
+          "type_info": "Int2Array"
+        },
+        {
+          "ordinal": 3,
+          "name": "upload",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 4,
+          "name": "age",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 5,
+          "name": "next",
+          "type_info": "Int4"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        true
+      ]
+    }
+  },
   "2bc77f3a229ea2e42fa632b20a1e5678fa296b17f3a2e8f188eb6ae6a6df4d51": {
     "query": "INSERT INTO torrent(id, name, length, comment, files, info, infohash) VALUES($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (id) DO UPDATE SET name = $2, length = $3, comment = $4, files = $5, info = $6, infohash = $7;",
     "describe": {
@@ -581,6 +584,53 @@
       "nullable": []
     }
   },
+  "446753d6b1f5236900fed95398726a18902ec288924551c28d570fcc55f7e3d7": {
+    "query": "WITH ret1 AS ( INSERT INTO users(email, username, password, passkey) VALUES ($1, $2, $3, $4) RETURNING id, email, username, passkey, role),ret2 AS ( INSERT INTO user_info(id, username, registerTime, lastActivity, rank) SELECT (SELECT id FROM ret1), $2, NOW(), NOW(), 1) SELECT id, email, username, passkey, role FROM ret1;",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "email",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "username",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "passkey",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 4,
+          "name": "role",
+          "type_info": "Int8"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Varchar"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
   "46b1c3d7bc9568afbe08f47c12967fb519a35637e799d23c8964d133931b30cc": {
     "query": "SELECT id, username, password, role, activated FROM users WHERE username = $1;",
     "describe": {
@@ -622,56 +672,6 @@
         false,
         false,
         false
-      ]
-    }
-  },
-  "4b19e4270fbc5b086e8e58d8b65897d589bb637fc73fcbfaecd4f8bb62a259d8": {
-    "query": "SELECT rank.id, name, role, rank.upload, age, next FROM rank INNER JOIN user_info ON rank.name = user_info.rank WHERE user_info.username = $1;",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Int4"
-        },
-        {
-          "ordinal": 1,
-          "name": "name",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 2,
-          "name": "role",
-          "type_info": "Int2Array"
-        },
-        {
-          "ordinal": 3,
-          "name": "upload",
-          "type_info": "Int8"
-        },
-        {
-          "ordinal": 4,
-          "name": "age",
-          "type_info": "Int8"
-        },
-        {
-          "ordinal": 5,
-          "name": "next",
-          "type_info": "Int4"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        true
       ]
     }
   },
@@ -1933,104 +1933,6 @@
       ]
     }
   },
-  "b68b6aad6fa0bad47f815d1a4888f4b337b15a2392a05fd037bacc5e551e5668": {
-    "query": "SELECT users.id, users.username, registerTime, lastActivity, invitor, upload, download, user_info.money, rank, avatar, other, privacy, email, passkey FROM user_info INNER JOIN users ON user_info.id = users.id WHERE user_info.username = $1",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "id",
-          "type_info": "Int8"
-        },
-        {
-          "ordinal": 1,
-          "name": "username",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 2,
-          "name": "registertime",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 3,
-          "name": "lastactivity",
-          "type_info": "Timestamptz"
-        },
-        {
-          "ordinal": 4,
-          "name": "invitor",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 5,
-          "name": "upload",
-          "type_info": "Int8"
-        },
-        {
-          "ordinal": 6,
-          "name": "download",
-          "type_info": "Int8"
-        },
-        {
-          "ordinal": 7,
-          "name": "money",
-          "type_info": "Float8"
-        },
-        {
-          "ordinal": 8,
-          "name": "rank",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 9,
-          "name": "avatar",
-          "type_info": "Text"
-        },
-        {
-          "ordinal": 10,
-          "name": "other",
-          "type_info": "Json"
-        },
-        {
-          "ordinal": 11,
-          "name": "privacy",
-          "type_info": "Int4"
-        },
-        {
-          "ordinal": 12,
-          "name": "email",
-          "type_info": "Varchar"
-        },
-        {
-          "ordinal": 13,
-          "name": "passkey",
-          "type_info": "Varchar"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      },
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        true,
-        false,
-        false,
-        false,
-        false,
-        true,
-        true,
-        false,
-        false,
-        false
-      ]
-    }
-  },
   "b7a5116a3a5b4912524589754c239af77dc7a9da61defa8f62ffa9f3acfbc1c9": {
     "query": "INSERT INTO rank(name, role, upload, age, next) VALUES($1, $2, $3, $4, $5) ON CONFLICT (name) DO UPDATE SET name = $1, role = $2, upload = $3, age = $4, next = $5;",
     "describe": {
@@ -2202,7 +2104,7 @@
       "columns": [],
       "parameters": {
         "Left": [
-          "Varchar",
+          "Int4",
           "Text"
         ]
       },
@@ -2298,6 +2200,104 @@
         false,
         false,
         true,
+        false,
+        false
+      ]
+    }
+  },
+  "df5ab283f9295a25a472b1ca9e6dad43d1ed45466daede0bd5781f610558d794": {
+    "query": "WITH ret AS (SELECT user_info.id, rank.name FROM rank INNER JOIN user_info ON rank.id = user_info.rank\n            WHERE user_info.username = $1\n        ) SELECT users.id, users.username, registerTime, lastActivity, invitor, upload, download, user_info.money, ret.name as rank, avatar, other, privacy, email, passkey FROM user_info INNER JOIN users ON user_info.id = users.id INNER JOIN ret ON user_info.id = ret.id WHERE user_info.username = $1",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 1,
+          "name": "username",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 2,
+          "name": "registertime",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 3,
+          "name": "lastactivity",
+          "type_info": "Timestamptz"
+        },
+        {
+          "ordinal": 4,
+          "name": "invitor",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 5,
+          "name": "upload",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 6,
+          "name": "download",
+          "type_info": "Int8"
+        },
+        {
+          "ordinal": 7,
+          "name": "money",
+          "type_info": "Float8"
+        },
+        {
+          "ordinal": 8,
+          "name": "rank",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 9,
+          "name": "avatar",
+          "type_info": "Text"
+        },
+        {
+          "ordinal": 10,
+          "name": "other",
+          "type_info": "Json"
+        },
+        {
+          "ordinal": 11,
+          "name": "privacy",
+          "type_info": "Int4"
+        },
+        {
+          "ordinal": 12,
+          "name": "email",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 13,
+          "name": "passkey",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        false,
         false,
         false
       ]

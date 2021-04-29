@@ -15,7 +15,7 @@ pub async fn add_user(
         RETURNING id, email, username, passkey, role),\
         ret2 AS ( \
         INSERT INTO user_info(id, username, registerTime, lastActivity, rank) \
-        SELECT (SELECT id FROM ret1), $2, NOW(), NOW(), name FROM rank WHERE rank.id = 1) \
+        SELECT (SELECT id FROM ret1), $2, NOW(), NOW(), 1) \
         SELECT id, email, username, passkey, role FROM ret1;",
         email,
         username,

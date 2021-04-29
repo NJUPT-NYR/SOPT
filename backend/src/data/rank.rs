@@ -21,7 +21,7 @@ pub async fn find_rank_by_username(client: &sqlx::PgPool, username: &str) -> Ran
     sqlx::query_as!(
         Rank,
         "SELECT rank.id, name, role, rank.upload, age, next FROM rank \
-        INNER JOIN user_info ON rank.name = user_info.rank \
+        INNER JOIN user_info ON rank.id = user_info.rank \
         WHERE user_info.username = $1;",
         username
     )

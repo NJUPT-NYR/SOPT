@@ -111,7 +111,7 @@ async fn login(data: web::Json<LoginRequest>, client: web::Data<sqlx::PgPool>) -
             for role in roles {
                 user_model::add_role_by_id(&client, val.id, (role % 32) as i32).await?;
             }
-            user_info_model::update_rank_by_name(&client, &data.username, &next_rank.name).await?;
+            user_info_model::update_rank_by_name(&client, &data.username, next_rank.id).await?;
             val = user_model::find_validation_by_name(&client, &data.username)
                 .await?
                 .pop()

@@ -59,9 +59,12 @@ pub async fn update_io_by_id(
 pub async fn find_user_info_by_name(client: &sqlx::PgPool, username: &str) -> UserRet {
     sqlx::query_as!(
         User,
-        "SELECT users.id, users.username, registerTime, lastActivity, invitor, upload, download, user_info.money, \
-        rank, avatar, other, privacy, email, passkey FROM user_info INNER JOIN users ON user_info.id = users.id \
-        WHERE user_info.username = $1",
+        "WITH ret AS (\
+            SELECT user_info.id, rank.name FROM rank INNER JOIN user_info ON rank.id = user_info.rank
+            WHERE user_info.username = $1
+        ) SELECT users.id, users.username, registerTime, lastActivity, invitor, upload, download, user_info.money, \
+        ret.name as rank, avatar, other, privacy, email, passkey FROM user_info INNER JOIN users ON user_info.id = users.id \
+        INNER JOIN ret ON user_info.id = ret.id WHERE user_info.username = $1",
         username
         )
         .fetch_all(client)
@@ -225,7 +228,7 @@ pub async fn update_privacy_by_name(
 pub async fn update_rank_by_name(
     client: &sqlx::PgPool,
     username: &str,
-    rank: &str,
+    rank: i32,
 ) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE user_info SET rank = $1 \
