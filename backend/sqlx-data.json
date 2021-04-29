@@ -424,6 +424,19 @@
       "nullable": []
     }
   },
+  "35511afeb1899a54c3d9ab7e35f946de4477579fd007a4c28413fc7e0fc48668": {
+    "query": "UPDATE user_info SET rank = $1 WHERE id = $2;",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int4",
+          "Int8"
+        ]
+      },
+      "nullable": []
+    }
+  },
   "3720c7b66e4154b3999f67e7feaa6db560919f2765787b3d15aa8d078ef52582": {
     "query": "SELECT id, email, username, passkey, role FROM users WHERE id = $1;",
     "describe": {
