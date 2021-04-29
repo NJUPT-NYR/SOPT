@@ -1,6 +1,5 @@
 #[cfg(feature = "csv")]
 mod csv_storage;
-mod redis;
 #[cfg(feature = "rocksdb")]
 mod rocks;
 #[cfg(feature = "sled")]

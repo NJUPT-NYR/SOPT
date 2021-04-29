@@ -125,6 +125,11 @@ pub struct GroupAwardRequest {
     pub amount: f64,
 }
 #[derive(Deserialize, Debug)]
+pub struct RankAwardRequest {
+    pub uid: i64,
+    pub rid: i32,
+}
+#[derive(Deserialize, Debug)]
 pub struct EmailListRequest {
     pub add: Vec<String>,
     pub delete: Vec<String>,

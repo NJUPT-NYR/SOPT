@@ -43,7 +43,7 @@ REDIS_URI=redis://127.0.0.1:6379/
 [features]
 # 将需要的功能填入该数组，以半角分号分隔
 # 你必须选择一个 K-V 的存储层，默认是 sled
-# 可选项有 sled, csv, redis 和 rocksdb
+# 可选项有 sled, csv 和 rocksdb
 default = ["email-restriction", "message", "sled"]
 # 使用邮箱注册允许名单（无需邀请码）
 email-restriction = []
@@ -151,7 +151,7 @@ Edit `./backend/Cargo.toml` with selected features：
 [features]
 # load features seperated by ','
 # you must choose a kv storage backend
-# default is sled, options are sled, csv, redis and rocksdb
+# default is sled, options are sled, csv and rocksdb
 default = ["email-restriction", "message", "sled"]
 # email allowlist(so no invitation code is needed)
 email-restriction = []

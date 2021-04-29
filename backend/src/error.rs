@@ -11,7 +11,7 @@ use std::fmt::{Display, Formatter};
 /// 4. NotFound of database
 /// 5. No permission in this account
 /// 6. Request Error
-/// 7. RocksDBError, wrapper for rocksdb `Error`
+/// 7. KVError, wrapper for persistent KV
 ///
 /// All errors will be transformed to Http Response so no panic will happen.
 #[derive(Debug)]

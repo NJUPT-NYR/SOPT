@@ -15,6 +15,7 @@
   * [/user/list_banned_user](#apiadminuserlist_banned_user)
   * [/user/group_awards](#apiadminusergroup_awards)
   * [/user/change_permission](#apiadminuserchange_permission)
+  * [/user/award_rank](#apiadminuseraward_rank) 
   * [/site/get_email_whitelist](#apiadminsiteget_email_whitelist)
   * [/site/update_email_whitelist](#apiadminsiteupdate_email_whitelist)
   * [/site/get_rank](#apiadminsiteget_rank)
@@ -343,6 +344,33 @@ Give(and take away) someone definite permissions. See
 `role design` at this page for more information.
 
 Only super user can access.
+
+### /api/admin/user/award_rank
+**Type**: GET
+
+**Request**
+
+    - uid: i64
+    - rid: i32
+
+**Example**
+
+```
+http://localhost:8000/api/admin/award_rank?uid=114&rid=7
+```
+
+**Response**
+1. Error: `GeneralResponse` with `errMsg`
+2. Success: Empty `GeneralResponse`
+
+**Comment**
+
+Give a special rank for a user.
+
+Only user with user admin role can access.
+
+Actually you must know the exact rid for some ranks, so it's
+better that you have the site admin role too.
 
 ### /api/admin/site/get_email_whitelist
 **Type**: GET

@@ -18,14 +18,13 @@ pub(crate) struct SMTPAccount {
 
 /// Configs read from `.env` file
 /// 1. server_addr: actix-web bind server
-/// 2. secret_key
-/// 3. database_url: postgres url, see
+/// 2. tracker_addr: actix-web binded for proxy(tracker)
+/// 3. secret_key
+/// 4. database_url: postgres url, see
 /// [Postgres Docs](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING)
 /// for more information
-/// 4. tracker announce addr
-/// 5. smtp configuration
-/// 6. path for kv database, used to store
-/// site configs
+/// 5. tracker announce addr
+/// 6. smtp configuration
 #[derive(Deserialize, Debug)]
 pub(crate) struct Config {
     pub server_addr: String,

@@ -166,6 +166,24 @@ async fn change_permission(
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
 
+#[get("/award_rank")]
+async fn award_rank(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResult {
+    let claim = get_info_in_token(&req)?;
+    if is_no_permission_to_users(claim.role) {
+        return Err(Error::NoPermission);
+    }
+
+    let data = deserialize_from_req!(req, RankAwardRequest);
+    let rank = rank_model::find_rank_by_id(&client, data.rid).await?;
+    let roles = rank.role;
+    for role in roles {
+        user_model::add_role_by_id(&client, data.uid, (role % 32) as i32).await?;
+    }
+    user_info_model::update_rank_by_id(&client, data.uid, rank.id).await?;
+
+    Ok(HttpResponse::Ok().json(GeneralResponse::default()))
+}
+
 #[get("/get_email_whitelist")]
 async fn get_email_whitelist(req: HttpRequest) -> HttpResult {
     let claim = get_info_in_token(&req)?;
@@ -320,7 +338,8 @@ pub(crate) fn admin_service() -> Scope {
                 .service(unban_user)
                 .service(list_banned_user)
                 .service(group_awards)
-                .service(change_permission),
+                .service(change_permission)
+                .service(award_rank),
         )
         .service(
             web::scope("/site")

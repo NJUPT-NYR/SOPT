@@ -241,3 +241,16 @@ pub async fn update_rank_by_name(
 
     Ok(())
 }
+
+pub async fn update_rank_by_id(client: &sqlx::PgPool, id: i64, rank: i32) -> Result<(), Error> {
+    sqlx::query!(
+        "UPDATE user_info SET rank = $1 \
+        WHERE id = $2;",
+        rank,
+        id
+    )
+    .execute(client)
+    .await?;
+
+    Ok(())
+}

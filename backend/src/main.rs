@@ -23,6 +23,7 @@ async fn load_email_whitelist() {
     *w = HashSet::from_iter(lines);
 }
 
+/// initializing searching engine from database
 async fn initializing_search(client: &sqlx::PgPool) {
     let rets = sqlx::query!("SELECT id, title, poster, tag FROM torrent_info;")
         .fetch_all(client)
@@ -36,6 +37,8 @@ async fn initializing_search(client: &sqlx::PgPool) {
     }
 }
 
+/// insert settings into persistent KV storage
+/// may overwrite past settings if restart
 fn init_settings() {
     use crate::data::kv::KVDB;
 
