@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## Unreleased
+fix: Possible inconsistent in passkey filter update.
+
 ## 0.2.0
 new: Split k-v storage and usage via `KVStorage` trait(default kv is `sled`).
 

@@ -99,8 +99,8 @@ async fn ban_user(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpResu
     }
     let data = deserialize_from_req!(req, IdWrapper);
     let old_key = user_model::find_user_by_id(&client, data.id).await?.passkey;
-    user_model::delete_role_by_id(&client, data.id, 0).await?;
     update_passkey_filter(None, Some(old_key)).await?;
+    user_model::delete_role_by_id(&client, data.id, 0).await?;
 
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
@@ -113,8 +113,8 @@ async fn unban_user(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpRe
     }
     let data = deserialize_from_req!(req, IdWrapper);
     let old_key = user_model::find_user_by_id(&client, data.id).await?.passkey;
-    user_model::add_role_by_id(&client, data.id, 0).await?;
     update_passkey_filter(None, Some(old_key)).await?;
+    user_model::add_role_by_id(&client, data.id, 0).await?;
 
     Ok(HttpResponse::Ok().json(GeneralResponse::default()))
 }
