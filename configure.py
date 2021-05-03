@@ -3,6 +3,8 @@ import subprocess
 import getopt
 import sys
 import os
+import platform
+import shutil
 
 
 def usage():
@@ -67,17 +69,25 @@ def main(argumentList):
     else:
         run(f"{cargo_path} build -q --release")
     
+    target_path = os.path.join("./bin/")
+    # print(target_path)
     os.makedirs("bin", exist_ok=True)
-    
-    bins = ['sopt', 'sopt_proxy']
-    if is_debug:
-        target_path = os.path.join("~/target", "debug")
-    else:
-        target_path = os.path.join("~/target", "release")
-    for binary in bins:
-        pass
-        # todo!
 
+    if platform.system() == "Linux":
+        tracker_lib = "libretracker.so"
+    elif platform.system() == "Darwin":
+        tracker_lib = "libretracker.dylib"
+    else:
+        print("Error: not support windows or other system!")
+        return
+    
+    bins = ['sopt', 'sopt_proxy', tracker_lib]
+    if is_debug:
+        source_path = os.path.join("./target", "debug")
+    else:
+        source_path = os.path.join("./target", "release")
+    for binary in bins:
+        os.symlink(os.path.join(source_path, binary), os.path.join(target_path, binary))
 
 argumentList = sys.argv[1:]
 main(argumentList)

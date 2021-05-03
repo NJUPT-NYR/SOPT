@@ -53,8 +53,6 @@ message = []
 
 编辑 `./config/filtered-email`，加入邮箱白名单，一行一个，全小写，可以为空。
 
-编辑 `./config/rank.sql` 来添加你的自定义用户等级设置，你也可以稍后在管理端添加和修改。
-
 然后在终端运行以下命令：
 
 ```shell
@@ -161,9 +159,6 @@ message = []
 
 Edit `./config/filtered-email`，add your own whitelist. one for a line, with
 all lowercase(empty list is accepted too).
-
-Edit `./config/rank.sql` to add your own rank settings. You can edit via control
-panel later as well.
 
 Run following commands in terminal：
 

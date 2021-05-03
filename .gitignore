@@ -1,6 +1,7 @@
 /target
 /kv
 /log
+/bin
 .env
 /.idea
 Cargo.lock
