@@ -3,6 +3,8 @@
 ## Unreleased
 refine: No more need for initial rank configuration.
 
+refine: Add logger for tracker.
+
 fix: Possible inconsistent in passkey filter update.
 
 ## 0.2.0
