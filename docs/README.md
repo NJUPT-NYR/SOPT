@@ -58,7 +58,6 @@ message = []
 ```shell
 cargo install sqlx-cli
 sqlx migrate run
-psql -U <PG_USER_NAME> -d sopt -f ./config/rank.sql
 cargo build --release
 ```
 
@@ -165,7 +164,6 @@ Run following commands in terminal：
 ```shell
 cargo install sqlx-cli
 sqlx migrate run
-psql -U <PG_USER_NAME> -d sopt -f ./rank.sql
 cargo build --release
 ```
 

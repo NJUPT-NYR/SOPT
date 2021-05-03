@@ -5,6 +5,7 @@ import sys
 import os
 import platform
 import shutil
+import pathlib
 
 
 def usage():
@@ -19,6 +20,15 @@ def run(s):
     if os.system(s) != 0:
         print("Exec " + s + 'failed.')
         exit(2)
+
+def copytree(src, dst, symlinks=False, ignore=None):
+    for item in os.listdir(src):
+        s = os.path.join(src, item)
+        d = os.path.join(dst, item)
+        if os.path.isdir(s):
+            shutil.copytree(s, d, symlinks, ignore)
+        else:
+            shutil.copy2(s, d)
 
 def main(argumentList):
     is_debug = False
@@ -87,7 +97,12 @@ def main(argumentList):
     else:
         source_path = os.path.join("./target", "release")
     for binary in bins:
-        os.symlink(os.path.join(source_path, binary), os.path.join(target_path, binary))
+        shutil.copy(os.path.join(source_path, binary), target_path)
+
+    config_path = os.path.join(target_path, "config/")
+    pathlib.Path(config_path).mkdir(exist_ok=True)
+    copytree(os.path.join("./config/"), config_path)
+    shutil.copy(".env", target_path)
 
 argumentList = sys.argv[1:]
 main(argumentList)
