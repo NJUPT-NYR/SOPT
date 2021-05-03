@@ -56,14 +56,8 @@ message = []
 然后在终端运行以下命令：
 
 ```shell
-cargo install sqlx-cli
-sqlx migrate run
-cargo build --release
+./configure.py
 ```
-
-将编译好的二进制包（路径为 `./target/release/sopt`,
-`./target/release/sopt_proxy`, `./target/release/libretracker.dylib`) 
-与 `.env` 以及 `./config/` 一起复制到你喜欢的任何地方。
 
 ### 前端
 
@@ -162,14 +156,8 @@ all lowercase(empty list is accepted too).
 Run following commands in terminal：
 
 ```shell
-cargo install sqlx-cli
-sqlx migrate run
-cargo build --release
+./configure.py
 ```
-
-Copy compiled binary(path `./target/release/sopt`,
-`./target/release/sopt_proxy`, `./target/release/libretracker.dylib`) 
-and `.env`, `./config/` to any path you like。
 
 ### Frontend
 

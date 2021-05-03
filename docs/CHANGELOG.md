@@ -1,6 +1,8 @@
 # CHANGELOG
 
 ## Unreleased
+new: auto configuration script `configure.py`
+
 refine: No more need for initial rank configuration.
 
 refine: Add logger for tracker.
