@@ -1,13 +1,15 @@
 # CHANGELOG
 
 ## Unreleased
-new: auto configuration script `configure.py`
+new: auto configuration script `configure.py`.
 
 refine: No more need for initial rank configuration.
 
 refine: Add logger for tracker.
 
 fix: Possible inconsistent in passkey filter update.
+
+fix: possible CRLF attack in old `lettere` version.
 
 ## 0.2.0
 new: Split k-v storage and usage via `KVStorage` trait(default kv is `sled`).
