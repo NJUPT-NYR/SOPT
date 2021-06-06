@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## Unreleased
+## 0.2.1
 new: auto configuration script `configure.py`.
 
 refine: No more need for initial rank configuration.

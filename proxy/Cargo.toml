@@ -1,7 +1,7 @@
 [package]
 name = "sopt_proxy"
 workspace = "../"
-version = "0.2.0"
+version = "0.2.1"
 authors = [
     "Brethland Yang <brethland@gmail.com>",
     "Five Qin <qinwu.qw@alibaba-inc.com>",
