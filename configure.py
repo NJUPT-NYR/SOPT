@@ -11,14 +11,24 @@ def usage():
     print("USAGE: ./configure.py [-d | --debug]")
     print("                      [-h | --help]")
 
+
 def eval(s):
-    return subprocess.run(s.split(' '),stdout=subprocess.PIPE, text=True).stdout.strip()
+    return subprocess.run(s.split(' '), stdout=subprocess.PIPE, text=True, shell=True).stdout.strip()
+
+
+def find(s):
+    if platform.system().lower() == 'windows':
+        return eval('where ' + s)
+    else:
+        return eval('which ' + s)
+
 
 def run(s):
     print("Run " + s)
     if os.system(s) != 0:
         print("Exec " + s + 'failed.')
         exit(2)
+
 
 def copyTree(src, dst, symlinks=False, ignore=None):
     for item in os.listdir(src):
@@ -29,6 +39,7 @@ def copyTree(src, dst, symlinks=False, ignore=None):
         else:
             shutil.copy2(s, d)
 
+
 def main():
     argumentList = sys.argv[1:]
     is_debug = False
@@ -36,38 +47,37 @@ def main():
         options = "dh"
         long_options = ["debug", "help"]
         arguments, values = getopt.getopt(argumentList, options, long_options)
-        
+
         for currentArgument, currentValue in arguments:
             if currentArgument in ("-h", "--help"):
                 usage()
                 return
             elif currentArgument in ("-d", "--debug"):
-                is_debug = True             
+                is_debug = True
     except getopt.error:
-        usage()   
+        usage()
 
     try:
-        cargo_path = eval('which cargo')
-        sqlx_path = eval('which sqlx')
-        redis_path = eval("which redis-server")
-    except e:
+        cargo_path = find('cargo')
+        sqlx_path = find('sqlx')
+        redis_path = find('redis-server')
+    except Exception as e:
         print(e)
 
-    if cargo_path:
+    if 'cargo_path' in locals():
         print(f"CARGO PATH: {cargo_path}")
     else:
-        print("Error: cargo NOT FOUND")
-        return
-    if sqlx_path:
+        raise Exception("Error: cargo NOT FOUND")
+    if 'sqlx_path' in locals():
         print(f"SQLX PATH: {sqlx_path}")
     else:
         run(f"{cargo_path} install sqlx-cli")
-        sqlx_path = eval("which sqlx")
-    if redis_path:
+        if platform.system().lower() == 'windows':
+            sqlx_path = find('sqlx')
+    if 'redis_path' in locals():
         print(f"REDIS PATH: {redis_path}")
     else:
-        print("Error: redis-server NOT FOUND")
-        return
+        raise Exception("Error: redis-server NOT FOUND")
     print(f"DEBUG: {is_debug}\n")
 
     run(f"{sqlx_path} migrate run")
@@ -75,7 +85,7 @@ def main():
     if is_debug:
         run(f"{cargo_path} build -q")
     else:
-        run(f"{cargo_path} build -q --release")   
+        run(f"{cargo_path} build -q --release")
     target_path = os.path.join("./bin/")
     os.makedirs("bin", exist_ok=True)
 
@@ -89,9 +99,8 @@ def main():
     elif platform.system() == "Darwin":
         tracker_lib = "libretracker.dylib"
     else:
-        print("Error: not support windows or other system!")
-        return
-    
+        raise Exception("Error: not support windows or other system!")
+
     bins = ['sopt', 'sopt_proxy', tracker_lib]
     for binary in bins:
         shutil.copy(os.path.join(source_path, binary), target_path)
@@ -104,6 +113,7 @@ def main():
     run("redis-server ./config/redis.conf &")
     run("./sopt &")
     run("./sopt_proxy &")
+
 
 if __name__ == "__main__":
     main()
