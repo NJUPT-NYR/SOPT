@@ -13,8 +13,10 @@ def usage():
 
 
 def eval(s):
-    return subprocess.run(s.split(' '), stdout=subprocess.PIPE, text=True, shell=True).stdout.strip()
-
+    if platform.system().lower() == 'windows':
+        return subprocess.run(s.split(' '), stdout=subprocess.PIPE, text=True, shell=True).stdout.strip()
+    else:
+        return subprocess.run(s.split(' '), stdout=subprocess.PIPT, text=True).stdout.strip()
 
 def find(s):
     if platform.system().lower() == 'windows':
@@ -59,6 +61,8 @@ def main():
 
     try:
         cargo_path = find('cargo')
+        # if cargo_path == '':
+        #    exit(-1)
         sqlx_path = find('sqlx')
         redis_path = find('redis-server')
     except Exception as e:
