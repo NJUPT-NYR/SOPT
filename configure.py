@@ -76,8 +76,7 @@ def main():
         print(f"SQLX PATH: {sqlx_path}")
     else:
         run(f"{cargo_path} install sqlx-cli")
-        if platform.system().lower() == 'windows':
-            sqlx_path = find('sqlx')
+        sqlx_path = find('sqlx')
     if 'redis_path' in locals():
         print(f"REDIS PATH: {redis_path}")
     else:
