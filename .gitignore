@@ -1,7 +1,16 @@
+# build
 /target
-/kv
-/log
 /bin
-.env
-/.idea
 Cargo.lock
+
+# env
+/kv
+.env
+/.cargo
+
+# log
+/log
+
+# editor
+/.idea
+/.vscode
