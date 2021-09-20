@@ -12,17 +12,18 @@ def usage():
     print("                      [-h | --help]")
 
 
-def eval(s):
+def run_command(s):
     if platform.system().lower() == 'windows':
         return subprocess.run(s.split(' '), stdout=subprocess.PIPE, text=True, shell=True).stdout.strip()
     else:
-        return subprocess.run(s.split(' '), stdout=subprocess.PIPT, text=True).stdout.strip()
+        return subprocess.run(s.split(' '), stdout=subprocess.PIPE, text=True).stdout.strip()
+
 
 def find(s):
     if platform.system().lower() == 'windows':
-        return eval('where ' + s)
+        return run_command('where ' + s)
     else:
-        return eval('which ' + s)
+        return run_command('which ' + s)
 
 
 def run(s):
@@ -61,23 +62,21 @@ def main():
 
     try:
         cargo_path = find('cargo')
-        # if cargo_path == '':
-        #    exit(-1)
         sqlx_path = find('sqlx')
         redis_path = find('redis-server')
     except Exception as e:
         print(e)
 
-    if 'cargo_path' in locals():
+    if 'cargo_path' in locals() and cargo_path:
         print(f"CARGO PATH: {cargo_path}")
     else:
         raise Exception("Error: cargo NOT FOUND")
-    if 'sqlx_path' in locals():
+    if 'sqlx_path' in locals() and sqlx_path:
         print(f"SQLX PATH: {sqlx_path}")
     else:
-        run(f"{cargo_path} install sqlx-cli")
+        run(f"{sqlx_path} install sqlx-cli")
         sqlx_path = find('sqlx')
-    if 'redis_path' in locals():
+    if 'redis_path' in locals() and redis_path:
         print(f"REDIS PATH: {redis_path}")
     else:
         raise Exception("Error: redis-server NOT FOUND")
