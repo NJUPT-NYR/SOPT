@@ -74,7 +74,7 @@ def main():
     if 'sqlx_path' in locals() and sqlx_path:
         print(f"SQLX PATH: {sqlx_path}")
     else:
-        run(f"{sqlx_path} install sqlx-cli")
+        run(f"{cargo_path} install sqlx-cli")
         sqlx_path = find('sqlx')
     if 'redis_path' in locals() and redis_path:
         print(f"REDIS PATH: {redis_path}")
