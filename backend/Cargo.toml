@@ -38,7 +38,7 @@ serde_qs = "*"
 # utils
 cfg-if = "1.0"
 chrono = {version = "0.4.19", features = ["serde"]}
-config = "*"
+config = "<0.12.0"
 dotenv = "*"
 log4rs = "1"
 futures = "0.3.13"
