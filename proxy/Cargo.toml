@@ -20,7 +20,7 @@ deadpool-redis = "0.6.1"
 bendy = "*"
 bloom = "0.3.2"
 tokio = { version = "^0.2", features = ["sync"] }
-config = "*"
+config = "<0.12.0"
 dotenv = "*"
 serde_qs = "*"
 lazy_static = "*"
