@@ -189,9 +189,7 @@ async fn upload_torrent(
     let mut hash_map = HashMap::new();
 
     while let Ok(Some(mut file)) = payload.try_next().await {
-        let content_type = file
-            .content_disposition()
-            .ok_or_else(|| Error::OtherError("incomplete file".to_string()))?;
+        let content_type = file.content_disposition().clone();
         let name = content_type
             .get_name()
             .ok_or_else(|| "incomplete file".to_string())?;
@@ -271,12 +269,12 @@ async fn get_torrent(req: HttpRequest, client: web::Data<sqlx::PgPool>) -> HttpR
     );
 
     Ok(HttpResponse::Ok()
-        .header(
+        .append_header((
             http::header::CONTENT_DISPOSITION,
             format!("attachment; filename=\"{}.torrent\"", torrent.name),
-        )
+        ))
         .content_type("application/octet-stream")
-        .body(body::Body::from_slice(&generated_torrent)))
+        .body(generated_torrent))
 }
 
 pub(crate) fn torrent_service() -> Scope {

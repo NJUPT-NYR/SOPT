@@ -160,9 +160,7 @@ async fn upload_avatar(
     let username = get_name_in_token(&req)?;
 
     if let Ok(Some(mut file)) = payload.try_next().await {
-        let content_type = file
-            .content_disposition()
-            .ok_or_else(|| Error::OtherError("incomplete file".to_string()))?;
+        let content_type = file.content_disposition();
         let filename = content_type
             .get_filename()
             .ok_or_else(|| "incomplete file".to_string())?;

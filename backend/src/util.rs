@@ -39,7 +39,6 @@ pub fn parse_email(input: &str) -> Option<EmailAddress> {
 /// The format: {username}{timestamp}{random u64}
 pub fn generate_passkey(username: &str) -> Result<String, Error> {
     use sha2::{Digest, Sha256};
-    use std::convert::TryInto;
 
     let mut hasher = Sha256::new();
     let random: u64 = rand::thread_rng().gen();
@@ -171,7 +170,6 @@ use crate::data::torrent::{Torrent, TorrentTable};
 pub fn parse_torrent_file(buf: &[u8]) -> Result<TorrentTable, Error> {
     use serde_bencode::{from_bytes, to_bytes};
     use sha1::{Digest, Sha1};
-    use std::convert::TryInto;
 
     let mut ret = from_bytes::<Torrent>(buf).map_err(error_string)?;
     ret.info.private = Some(1);

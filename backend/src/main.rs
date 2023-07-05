@@ -14,7 +14,6 @@ async fn load_email_whitelist() {
     use std::collections::HashSet;
     use std::fs::File;
     use std::io::{BufRead, BufReader};
-    use std::iter::FromIterator;
 
     let file = File::open("./config/filtered-email").expect("email allowlist not exist");
     let lines: Vec<String> = BufReader::new(file).lines().map(|l| l.unwrap()).collect();
@@ -83,9 +82,9 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .wrap(middleware::Logger::new("%a \"%r\" %s %T"))
-            .data(pool.clone())
+            .app_data(pool.clone())
             .service(controller::api_service())
-            .default_service(route().to(|| HttpResponse::NotFound().body("Not Found")))
+            .default_service(route().to(|| async { HttpResponse::NotFound().body("Not Found") }))
     })
     .workers(4)
     .bind(&CONFIG.server_addr)?

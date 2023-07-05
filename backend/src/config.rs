@@ -37,8 +37,10 @@ pub(crate) struct Config {
 
 impl Config {
     fn from_env() -> Result<Self, ConfigError> {
-        let mut cfg = config::Config::new();
-        cfg.merge(config::Environment::new())?;
-        cfg.try_into()
+        config::Config::builder()
+            .add_source(config::Environment::default())
+            .build()
+            .unwrap()
+            .try_deserialize()
     }
 }
