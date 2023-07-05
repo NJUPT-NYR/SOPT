@@ -1,10 +1,8 @@
 {
   "[rust]": {
-    "editor.defaultFormatter": "matklad.rust-analyzer"
+    "editor.defaultFormatter": "rust-lang.rust-analyzer"
   },
   "rust-analyzer.completion.autoimport.enable": true,
-  "rust-analyzer.checkOnSave.enable": true,
-  "rust-analyzer.assist.importMergeBehavior": "full",
   "[toml]": {
     "editor.defaultFormatter": "be5invis.toml"
   }
