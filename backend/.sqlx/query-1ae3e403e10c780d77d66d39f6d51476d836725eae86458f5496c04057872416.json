@@ -1,0 +1,74 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT torrent_info.id, title, poster, tag, lastEdit, length,free, downloading, uploading, finished FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id WHERE visible = TRUE AND stick = TRUE ORDER BY lastEdit DESC;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "poster",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "tag",
+        "type_info": "VarcharArray"
+      },
+      {
+        "ordinal": 4,
+        "name": "lastedit",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "length",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 6,
+        "name": "free",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 7,
+        "name": "downloading",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 8,
+        "name": "uploading",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 9,
+        "name": "finished",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "1ae3e403e10c780d77d66d39f6d51476d836725eae86458f5496c04057872416"
+}

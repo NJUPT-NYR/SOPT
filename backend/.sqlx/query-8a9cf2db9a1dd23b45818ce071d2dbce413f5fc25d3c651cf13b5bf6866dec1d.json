@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE user_info SET money = CASE WHEN username = $1 THEN money - $3 WHEN username = $2 THEN money + $3 END WHERE username in ($1, $2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Float8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "8a9cf2db9a1dd23b45818ce071d2dbce413f5fc25d3c651cf13b5bf6866dec1d"
+}

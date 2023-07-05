@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "WITH ret AS (UPDATE activation SET used = TRUE WHERE id = $1) UPDATE users SET activated = TRUE WHERE id = $1;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "227abd4e4d9baeb2e3e41336137a39b817ab20a0527a6ca258adcd77346a2ee4"
+}

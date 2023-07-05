@@ -1,0 +1,100 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "WITH ret AS (SELECT user_info.id, rank.name FROM rank INNER JOIN user_info ON rank.id = user_info.rank\n            WHERE user_info.username = $1\n        ) SELECT users.id, users.username, registerTime, lastActivity, invitor, upload, download, user_info.money, ret.name as rank, avatar, other, privacy, email, passkey FROM user_info INNER JOIN users ON user_info.id = users.id INNER JOIN ret ON user_info.id = ret.id WHERE user_info.username = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "username",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "registertime",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 3,
+        "name": "lastactivity",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "invitor",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "upload",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 6,
+        "name": "download",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 7,
+        "name": "money",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 8,
+        "name": "rank",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 9,
+        "name": "avatar",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "other",
+        "type_info": "Json"
+      },
+      {
+        "ordinal": 11,
+        "name": "privacy",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 12,
+        "name": "email",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 13,
+        "name": "passkey",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "df5ab283f9295a25a472b1ca9e6dad43d1ed45466daede0bd5781f610558d794"
+}

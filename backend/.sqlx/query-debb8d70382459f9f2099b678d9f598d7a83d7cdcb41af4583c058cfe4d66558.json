@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, sender, receiver, title, body, read, sendTime FROM message WHERE receiver = $1 AND visibleReceiver = TRUE;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "sender",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "receiver",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "title",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "body",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "read",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 6,
+        "name": "sendtime",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "debb8d70382459f9f2099b678d9f598d7a83d7cdcb41af4583c058cfe4d66558"
+}

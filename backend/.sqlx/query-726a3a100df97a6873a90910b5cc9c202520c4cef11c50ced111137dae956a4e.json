@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO message(sender, receiver, title, body, sendTime) VALUES($1, $2, $3, $4, NOW());",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "726a3a100df97a6873a90910b5cc9c202520c4cef11c50ced111137dae956a4e"
+}

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE message SET read = TRUE WHERE id = ANY($1) AND receiver = $2;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8Array",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ac15c66e3ff5e919d859f3d826934dd7579b1a0b3d5a904e0fd8fba606ab3602"
+}

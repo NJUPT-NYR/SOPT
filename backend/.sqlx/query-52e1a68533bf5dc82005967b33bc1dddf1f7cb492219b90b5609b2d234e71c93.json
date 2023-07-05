@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO activation(id, code) VALUES($1, $2) ON CONFLICT (id) DO UPDATE SET code = $2;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Varchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "52e1a68533bf5dc82005967b33bc1dddf1f7cb492219b90b5609b2d234e71c93"
+}

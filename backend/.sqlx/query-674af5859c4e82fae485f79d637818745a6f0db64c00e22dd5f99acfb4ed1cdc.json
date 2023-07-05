@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE torrent_status SET finished = TRUE WHERE tid = $1 AND uid = $2;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "674af5859c4e82fae485f79d637818745a6f0db64c00e22dd5f99acfb4ed1cdc"
+}

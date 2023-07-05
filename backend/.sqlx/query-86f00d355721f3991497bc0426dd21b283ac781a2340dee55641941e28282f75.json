@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE tag SET amount = amount - 1 WHERE name = $1;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "86f00d355721f3991497bc0426dd21b283ac781a2340dee55641941e28282f75"
+}

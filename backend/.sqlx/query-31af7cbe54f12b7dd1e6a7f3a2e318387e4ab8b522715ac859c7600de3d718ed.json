@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE torrent_info SET stick = FALSE WHERE id = ANY($1);",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "31af7cbe54f12b7dd1e6a7f3a2e318387e4ab8b522715ac859c7600de3d718ed"
+}

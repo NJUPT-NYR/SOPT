@@ -1,0 +1,78 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT torrent_info.id, title, poster, tag, lastEdit, length, free, downloading, uploading, finished FROM torrent_info INNER JOIN torrent ON torrent_info.id = torrent.id WHERE visible = TRUE AND torrent_info.id = ANY($1) ORDER BY CASE WHEN $3 = 'title' THEN 2 WHEN $3 = 'poster' THEN 3 WHEN $3 = 'lastedit' THEN 5 WHEN $3 = 'length' THEN 6 WHEN $3 = 'downloading' THEN 8 WHEN $3 = 'uploading' THEN 9 WHEN $3 = 'finished' THEN 10 END ASC LIMIT 20 OFFSET $2;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "poster",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "tag",
+        "type_info": "VarcharArray"
+      },
+      {
+        "ordinal": 4,
+        "name": "lastedit",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "length",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 6,
+        "name": "free",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 7,
+        "name": "downloading",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 8,
+        "name": "uploading",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 9,
+        "name": "finished",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8Array",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "10cc74d99cbeb3d976de9cdf3073582f8ea8fc6d22f5c3fde2440ae123e811a9"
+}
