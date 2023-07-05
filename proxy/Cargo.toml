@@ -7,23 +7,23 @@ authors = [
     "Five Qin <qinwu.qw@alibaba-inc.com>",
 ]
 description = "Next generation private tracker framework"
-edition = "2018"
+edition = "2021"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/njupt-nyr/sopt/proxy/"
 
 [dependencies]
 serde = {version = "^1", features = ["derive"]}
-actix-web = "3"
-sqlx = {version = "0.4.1", features = ["postgres", "runtime-actix-native-tls"]}
-deadpool = "0.5.2"
-deadpool-redis = "0.6.1"
+actix-web = "4"
+sqlx = {version = "0.7.0", features = ["postgres", "runtime-tokio"]}
+deadpool = "^0.9"
+deadpool-redis = "0.12.0"
 bendy = "*"
 bloom = "0.3.2"
-tokio = { version = "^0.2", features = ["sync"] }
-config = "<0.12.0"
+tokio = { version = "^1.29", features = ["sync","rt"] }
+config = "0.13.3"
 dotenv = "*"
 serde_qs = "*"
 lazy_static = "*"
-reqwest = { version = "0.10", features = [ "json" ] }
+reqwest = { version = "0.11", features = [ "json" ] }
 hex = "*"
 log4rs = "1"
