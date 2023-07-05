@@ -155,6 +155,7 @@ async fn upload_avatar(
     req: HttpRequest,
     client: web::Data<sqlx::PgPool>,
 ) -> HttpResult {
+    use base64::Engine as _;
     use futures::{StreamExt, TryStreamExt};
 
     let username = get_name_in_token(&req)?;
@@ -184,7 +185,7 @@ async fn upload_avatar(
             let data = chunk.map_err(error_string)?;
             buf.append(&mut data.to_vec());
         }
-        let encoded_avatar = base64::encode(buf);
+        let encoded_avatar = base64::engine::general_purpose::STANDARD.encode(buf);
         user_info_model::update_avatar_by_name(&client, &username, &encoded_avatar).await?;
     }
 
