@@ -25,13 +25,22 @@ jobs:
     services:
       postgres:
         image: postgres:12
+        ports:
+          - 5432:5432
         env:
           POSTGRES_DB: sopt
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
-        ports:
-          - 5432:5432
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+      minio:
+        image: minio/minio
+        ports:
+          - 9000:9000
+        env:
+          MINIO_ACCESS_KEY: minioadmin
+          MINIO_SECRET_KEY: minioadmin123
+        options: --name=minio --health-cmd "curl -f http://localhost:9000/minio/health/live" --health-interval 10s --health-timeout 5s --health-retries 5
 
     env:
       VCPKGRS_DYNAMIC: 1
@@ -57,7 +66,7 @@ jobs:
           command: generate-lockfile
 
       - name: Cache Dependencies
-        uses: Swatinem/rust-cache@v1.2.0
+        uses: Swatinem/rust-cache@v2.5.1
 
       - name: Install sqlx-cli
         uses: actions-rs/cargo@v1

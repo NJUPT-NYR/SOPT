@@ -1,5 +1,6 @@
 use crate::data::GeneralResponse;
 use actix_web::{HttpResponse, ResponseError};
+use aws_sdk_s3::error::SdkError;
 use sqlx::Error as DBError;
 use std::fmt::{Display, Formatter};
 
@@ -12,6 +13,7 @@ use std::fmt::{Display, Formatter};
 /// 5. No permission in this account
 /// 6. Request Error
 /// 7. KVError, wrapper for persistent KV
+/// 8. OSSError, wrapper for OSS error
 ///
 /// All errors will be transformed to Http Response so no panic will happen.
 #[derive(Debug)]
@@ -21,6 +23,7 @@ pub enum Error {
     DBError(DBError),
     KVError(String),
     NotFound,
+    OSSError(Box<dyn std::error::Error + Send + Sync>),
     NoPermission,
     RequestError(String),
 }
@@ -58,6 +61,12 @@ impl From<csv::Error> for Error {
     }
 }
 
+impl<E: std::error::Error + Send + Sync + 'static> From<SdkError<E>> for Error {
+    fn from(err: aws_sdk_s3::error::SdkError<E>) -> Self {
+        Error::OSSError(Box::new(err))
+    }
+}
+
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self)
@@ -76,6 +85,7 @@ impl ResponseError for Error {
             Error::KVError(ref err) => {
                 HttpResponse::InternalServerError().json(GeneralResponse::from_err(err))
             }
+            Error::OSSError(ref err) => HttpResponse::InternalServerError().body(err.to_string()),
             Error::AuthError => {
                 HttpResponse::Unauthorized().json(GeneralResponse::from_err("Not login yet"))
             }

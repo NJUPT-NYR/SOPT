@@ -3,6 +3,7 @@ pub mod invitation;
 pub mod kv;
 #[cfg(feature = "message")]
 pub mod message;
+pub mod oss;
 pub mod rank;
 mod response;
 pub mod tag;
