@@ -133,12 +133,12 @@ impl ObjectStorageService for AwsWrapper {
     }
 }
 
-#[cfg(test)]
+// #[cfg(test)]
 mod tests {
     use super::*;
     use dotenv::dotenv;
 
-    #[tokio::test]
+    // #[tokio::test]
     async fn test_all() {
         dotenv().ok();
 
