@@ -8,7 +8,7 @@ authors = [
     "Five Qin <qinwu.qw@alibaba-inc.com>",
 ]
 description = "Next generation private tracker framework"
-edition = "2018"
+edition = "2021"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/njupt-nyr/sopt/backend/"
 default-run = "sopt"
@@ -20,13 +20,13 @@ message = []
 
 [dependencies]
 # actix and sql stuff
-actix-multipart = "0.3.0"
-actix-web = "3.3.2"
-csv = {version = "1.1", optional = true}
-rocksdb = {version = "0.16.0", optional = true}
-sled = {version = "0.34.6", optional = true}
-sqlx = {version = "0.4.1", features = ["postgres", "runtime-actix-native-tls", "chrono", "json", "offline"]}
-tokio = {version = "^0.2", features = ["macros", "time"]}
+actix-multipart = "0.6.0"
+actix-web = "4.3.1"
+csv = {version = "1.2.2", optional = true}
+rocksdb = {version = "0.21.0", optional = true}
+sled = {version = "0.34.7", optional = true}
+sqlx = {version = "0.7.0", features = ["postgres", "runtime-tokio", "chrono", "json"]}
+tokio = {version = "^1.29", features = ["macros", "time"]}
 
 #serde related
 serde = {version = "^1", features = ["derive"]}
@@ -35,30 +35,35 @@ serde_bytes = "*"
 serde_json = "*"
 serde_qs = "*"
 
+# oss related
+aws-config = "0.55.3"
+aws-sdk-s3 = "0.28.0"
+aws-smithy-http = "0.55.3"
+
 # utils
 cfg-if = "1.0"
-chrono = {version = "0.4.19", features = ["serde"]}
-config = "<0.12.0"
+chrono = {version = "0.4.26", features = ["serde"]}
+config = "0.13.3"
 dotenv = "*"
 log4rs = "1"
-futures = "0.3.13"
+futures = "0.3.28"
 hex = "*"
-jsonwebtoken = "7"
+jsonwebtoken = "8"
 lazy_static = "*"
-lettre = ">=0.10.0-rc.3"
+lettre = "0.10.4"
 pest = "*"
 pest_derive = "*"
-reqwest = {version = "0.10", features = ["json"]}
+reqwest = {version = "0.11", features = ["json"]}
 sanitize-filename = "*"
 sopt_derive = {path = "../derive"}
 strsim = "*"
 
 # crypto related
-base64 = "0.13.0"
-rand = "0.8.3"
-rust-argon2 = "0.8"
-sha-1 = "0.9"
-sha2 = "0.9"
+base64 = "0.21.2"
+rand = "0.8.5"
+rust-argon2 = "1.0"
+sha-1 = "0.10"
+sha2 = "0.10"
 
 [dev-dependencies]
 cargo-husky = {version = "1", default-features = false, features = ["precommit-hook", "run-cargo-fmt"]}

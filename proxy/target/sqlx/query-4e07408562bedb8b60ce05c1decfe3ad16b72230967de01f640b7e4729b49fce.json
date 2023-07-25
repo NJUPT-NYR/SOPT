@@ -1,0 +1,19 @@
+{
+  "query": "SELECT passkey FROM users WHERE role & (1::BIGINT) = 1;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "passkey",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "40b3d3253ad044ac6206f2e55825d81fe7b7c5bb1ae0a587d7a0e89217a26532"
+}

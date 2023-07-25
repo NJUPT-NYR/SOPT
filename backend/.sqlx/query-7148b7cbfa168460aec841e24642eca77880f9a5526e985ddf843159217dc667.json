@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT COUNT(*) FROM torrent_info WHERE visible = TRUE AND ($1::VARCHAR[] <@ tag) AND stick = FALSE;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "count",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "VarcharArray"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "7148b7cbfa168460aec841e24642eca77880f9a5526e985ddf843159217dc667"
+}

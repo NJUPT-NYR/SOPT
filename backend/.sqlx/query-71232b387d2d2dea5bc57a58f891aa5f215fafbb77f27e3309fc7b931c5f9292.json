@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT torrent_info.id, title, length, torrent_status.upload, torrent_status.download, torrent_info.free FROM torrent_status INNER JOIN torrent ON torrent_status.tid = torrent.id INNER JOIN torrent_info ON torrent.id = torrent_info.id WHERE status = 0 AND uid = $1;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "length",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "upload",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "download",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
+        "name": "free",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "71232b387d2d2dea5bc57a58f891aa5f215fafbb77f27e3309fc7b931c5f9292"
+}

@@ -16,6 +16,15 @@ pub(crate) struct SMTPAccount {
     pub password: String,
 }
 
+/// OSS configuration
+#[derive(Deserialize, Debug)]
+pub(crate) struct OSSConfig {
+    pub region: String,
+    pub endpoint: String,
+    pub access_key: String,
+    pub secret_key: String,
+}
+
 /// Configs read from `.env` file
 /// 1. server_addr: actix-web bind server
 /// 2. tracker_addr: actix-web binded for proxy(tracker)
@@ -33,12 +42,15 @@ pub(crate) struct Config {
     pub database_url: String,
     pub announce_addr: String,
     pub smtp: SMTPAccount,
+    pub oss: OSSConfig,
 }
 
 impl Config {
     fn from_env() -> Result<Self, ConfigError> {
-        let mut cfg = config::Config::new();
-        cfg.merge(config::Environment::new())?;
-        cfg.try_into()
+        config::Config::builder()
+            .add_source(config::Environment::default())
+            .build()
+            .unwrap()
+            .try_deserialize()
     }
 }

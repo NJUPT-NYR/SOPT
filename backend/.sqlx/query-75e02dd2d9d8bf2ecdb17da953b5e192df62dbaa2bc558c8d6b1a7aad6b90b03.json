@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE user_info SET other = $1 WHERE username = $2;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Json",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "75e02dd2d9d8bf2ecdb17da953b5e192df62dbaa2bc558c8d6b1a7aad6b90b03"
+}

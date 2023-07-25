@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO tag(name) VALUES($1) ON CONFLICT (name) DO UPDATE SET amount = tag.amount + 1;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "546ec2490296998428dd6ee3b1ea9ba8ec88bc107212e812dbb994c082c5a2de"
+}

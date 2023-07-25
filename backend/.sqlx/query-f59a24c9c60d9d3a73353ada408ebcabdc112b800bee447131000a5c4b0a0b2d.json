@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE torrent_info SET downloading = downloading + $1, uploading = uploading + $2, finished = finished + $3 WHERE id = $4;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int4",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f59a24c9c60d9d3a73353ada408ebcabdc112b800bee447131000a5c4b0a0b2d"
+}

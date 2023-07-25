@@ -1,0 +1,31 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO torrent_info(title, poster, description, createTime, lastEdit, tag) VALUES ($1, $2, $3, NOW(), NOW(), $4) RETURNING id, visible;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "visible",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Varchar",
+        "Text",
+        "VarcharArray"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "1f0abc9836e6eca63e580be12f5d73a7329fe6f585ca1f5dfc82166d01f9660d"
+}

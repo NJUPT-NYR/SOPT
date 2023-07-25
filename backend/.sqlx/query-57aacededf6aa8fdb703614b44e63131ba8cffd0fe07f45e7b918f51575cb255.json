@@ -1,0 +1,106 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT torrent_info.id, title, poster, description, tag, visible, createTime, lastEdit, free, downloading, uploading, finished, length, files, infohash FROM torrent_info LEFT JOIN torrent ON torrent_info.id = torrent.id WHERE torrent_info.id = $1;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "poster",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "tag",
+        "type_info": "VarcharArray"
+      },
+      {
+        "ordinal": 5,
+        "name": "visible",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 6,
+        "name": "createtime",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 7,
+        "name": "lastedit",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 8,
+        "name": "free",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 9,
+        "name": "downloading",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 10,
+        "name": "uploading",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 11,
+        "name": "finished",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 12,
+        "name": "length",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 13,
+        "name": "files",
+        "type_info": "VarcharArray"
+      },
+      {
+        "ordinal": 14,
+        "name": "infohash",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "57aacededf6aa8fdb703614b44e63131ba8cffd0fe07f45e7b918f51575cb255"
+}

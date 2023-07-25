@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE users SET role = role & ~(1::BIGINT << $1) WHERE id = $2;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ac854e9db2cdfaf14b96c705cccfb49247d590e700e39088f241f9829e601897"
+}

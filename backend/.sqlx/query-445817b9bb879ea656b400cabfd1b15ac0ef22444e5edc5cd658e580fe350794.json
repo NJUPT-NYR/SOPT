@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "WITH rt AS (UPDATE user_info SET invitor = $1 WHERE id = $2) UPDATE invitations SET usage = TRUE WHERE code = $3;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "445817b9bb879ea656b400cabfd1b15ac0ef22444e5edc5cd658e580fe350794"
+}

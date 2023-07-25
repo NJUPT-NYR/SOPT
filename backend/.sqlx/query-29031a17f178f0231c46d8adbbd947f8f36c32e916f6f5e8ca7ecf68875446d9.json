@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT rank.id, name, role, rank.upload, age, next FROM rank INNER JOIN user_info ON rank.id = user_info.rank WHERE user_info.username = $1;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "role",
+        "type_info": "Int2Array"
+      },
+      {
+        "ordinal": 3,
+        "name": "upload",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "age",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
+        "name": "next",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "29031a17f178f0231c46d8adbbd947f8f36c32e916f6f5e8ca7ecf68875446d9"
+}

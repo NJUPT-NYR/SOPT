@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT id, upload, download, registerTime FROM user_info WHERE username = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "upload",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "download",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "registertime",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "1a0ad49e551d48bc122ae4c8f73d95106e9b0a28ad634018098b163d07cd8bd7"
+}

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE user_info SET money = money + $1 WHERE id = ANY($2);",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Float8",
+        "Int8Array"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7bd990f18de7d1df380aa7b3f840fdb7293add83ac2a9332b6f03cee9dce5311"
+}

@@ -112,8 +112,8 @@ pub async fn transfer_money_by_name(
 ) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE user_info SET money = CASE \
-            WHEN username = $1 THEN money - $3\
-            WHEN username = $2 THEN money + $3\
+            WHEN username = $1 THEN money - $3 \
+            WHEN username = $2 THEN money + $3 \
         END \
         WHERE username in ($1, $2)",
         from,

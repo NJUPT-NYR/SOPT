@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO rank(name, role, upload, age, next) VALUES($1, $2, $3, $4, $5) ON CONFLICT (name) DO UPDATE SET name = $1, role = $2, upload = $3, age = $4, next = $5;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Int2Array",
+        "Int8",
+        "Int8",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b7a5116a3a5b4912524589754c239af77dc7a9da61defa8f62ffa9f3acfbc1c9"
+}

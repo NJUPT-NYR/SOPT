@@ -1,7 +1,7 @@
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 
 use bendy::encoding;
-use deadpool_redis::{cmd, redis::Value, Cmd};
+use deadpool_redis::redis::{cmd, Cmd, Value};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Debug)]

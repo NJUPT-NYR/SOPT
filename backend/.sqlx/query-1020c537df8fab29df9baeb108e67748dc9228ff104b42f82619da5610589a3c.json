@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO torrent_status(tid, uid, status, upload, download) VALUES($1, $2, $3, $4, $5) ON CONFLICT (tid, uid) DO UPDATE SET status = $3, upload = torrent_status.upload + $4, download = torrent_status.download + $5;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int4",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1020c537df8fab29df9baeb108e67748dc9228ff104b42f82619da5610589a3c"
+}

@@ -19,7 +19,9 @@ pub async fn start_server() -> std::io::Result<()> {
         App::new()
             .wrap(middleware::Logger::new("%a \"%r\" %s %T"))
             .service(tracker_service())
-            .default_service(web::route().to(|| HttpResponse::NotFound().body("Not Found")))
+            .default_service(
+                web::route().to(|| async { HttpResponse::NotFound().body("Not Found") }),
+            )
     })
     .bind(&CONFIG.tracker_addr)?
     .run()

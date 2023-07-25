@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE user_info SET lastActivity = now() WHERE username = $1;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d1e2db6f97fe743e872e661e15fa9e9a7ec6af3454327cd990afb648e91a64ef"
+}

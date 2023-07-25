@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE message SET visibleReceiver = FALSE WHERE id = ANY($1) AND receiver = $2;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8Array",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ba05438cf4a46f251c61432443f10d977565a331f034f10e6aec8d26995e18dc"
+}

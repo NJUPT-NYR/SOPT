@@ -6,6 +6,8 @@ import os
 import platform
 import shutil
 
+system = platform.system()
+
 
 def usage():
     print("USAGE: ./configure.py [-d | --debug]")
@@ -13,14 +15,14 @@ def usage():
 
 
 def run_command(s):
-    if platform.system().lower() == 'windows':
+    if system == 'Windows':
         return subprocess.run(s.split(' '), stdout=subprocess.PIPE, text=True, shell=True).stdout.strip()
     else:
         return subprocess.run(s.split(' '), stdout=subprocess.PIPE, text=True).stdout.strip()
 
 
 def find(s):
-    if platform.system().lower() == 'windows':
+    if system == 'Windows':
         return run_command('where ' + s)
     else:
         return run_command('which ' + s)
@@ -80,6 +82,15 @@ def main():
         print(f"REDIS PATH: {redis_path}")
     else:
         raise Exception("Error: redis-server NOT FOUND")
+    if system == "Windows":
+        if 'minio.exe' not in run_command("dir minio").split():
+            run("Invoke-WebRequest -Uri \"https://dl.min.io/server/minio/release/windows-amd64/minio.exe\" -OutFile minio.exe")
+            run("setx MINIO_ROOT_USER admin")
+            run("setx MINIO_ROOT_PASSWORD password")
+    else:
+        if 'minio' not in run_command("ls minio").split():
+            run("wget https://dl.min.io/server/minio/release/linux-amd64/minio")
+            run("chmod +x minio")
     print(f"DEBUG: {is_debug}\n")
 
     run(f"{sqlx_path} migrate run")
@@ -96,9 +107,9 @@ def main():
     else:
         source_path = os.path.join("./target", "release")
 
-    if platform.system() == "Linux":
+    if system == "Linux":
         tracker_lib = "libretracker.so"
-    elif platform.system() == "Darwin":
+    elif system == "Darwin":
         tracker_lib = "libretracker.dylib"
     else:
         raise Exception("Error: not support windows or other system!")
@@ -112,9 +123,16 @@ def main():
     shutil.copy(".env", target_path)
 
     os.chdir(target_path)
-    run("redis-server ./config/redis.conf &")
-    run("./sopt &")
-    run("./sopt_proxy &")
+    if system == "Windows":
+        run("./minio server D:\minio_data --console-address \":9001\"")
+    else:
+        run("MINIO_ROOT_USER=admin MINIO_ROOT_PASSWORD=password ./minio server /mnt/data --console-address ':9001'")
+    try:
+        run("redis-server ./config/redis.conf &")
+        run("./sopt &")
+        run("./sopt_proxy &")
+    except KeyboardInterrupt:
+        os.kill("kill $(pgrep sopt)")
 
 
 if __name__ == "__main__":

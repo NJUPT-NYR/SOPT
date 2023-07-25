@@ -1,0 +1,42 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE user_info SET upload = upload + $1, download = download + $2 WHERE id = $3 RETURNING id, upload, download, registerTime;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "upload",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "download",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "registertime",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "6a452ba84452fc3b805baa4f349cfa7c688bc25bb6166f9ebe85130221688610"
+}

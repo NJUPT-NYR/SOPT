@@ -1,0 +1,53 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * FROM torrent_status WHERE tid = $1 AND uid = $2;",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "tid",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "uid",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "status",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "upload",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "download",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
+        "name": "finished",
+        "type_info": "Bool"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "4e7e8856be46fc2e8ad758d21012f63efa950468d14a23fd41b6192167e94a14"
+}
