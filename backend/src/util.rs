@@ -192,7 +192,7 @@ pub fn parse_torrent_file(buf: &[u8]) -> Result<TorrentTable, Error> {
         .map(|file| {
             file.path
                 .iter()
-                .fold("".to_string(), |acc, x| acc + "/" + x)
+                .fold("".to_string(), |acc, x| format!("{}{}{}", acc, "/", x)) // smartstring breaks String add
         })
         .collect();
 

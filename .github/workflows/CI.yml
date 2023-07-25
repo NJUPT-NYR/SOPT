@@ -34,13 +34,14 @@ jobs:
         options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
       minio:
-        image: minio/minio
+        image: minio/minio:edge-cicd
         ports:
           - 9000:9000
         env:
+          MINIO_REGION_NAME: my_region
           MINIO_ACCESS_KEY: minioadmin
           MINIO_SECRET_KEY: minioadmin123
-
+        options: --name=minio --health-cmd "curl http://localhost:9000/minio/health/live"
     env:
       VCPKGRS_DYNAMIC: 1
 

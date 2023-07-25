@@ -134,7 +134,7 @@ impl ObjectStorageService for AwsWrapper {
 }
 
 #[cfg(test)]
-mod cfg {
+mod tests {
     use super::*;
     use dotenv::dotenv;
 
