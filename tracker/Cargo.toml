@@ -16,7 +16,7 @@ name = "retracker"
 
 [dependencies]
 redis-module = { git = "https://github.com/Hydrogen5/redismodule-rs", rev = "3665e9746c88fa488d2bd66797da23fe1139d079" }
-indexmap = "1.6.1"
+indexmap = "^2"
 rand = "0.8.3"
 
 [dev-dependencies]
