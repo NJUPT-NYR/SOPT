@@ -2,7 +2,7 @@
 <h1>SOPT</h1>
 
 [![CI](https://github.com/NJUPT-NYR/SOPT/actions/workflows/CI.yml/badge.svg)](https://github.com/NJUPT-NYR/SOPT/actions/workflows/CI.yml)
-[![TOKEI](https://tokei.rs/b1/github//NJUPT-NYR/SOPT?category=code)](https://github.com/NJUPT-NYR/SOPT)
+[![TOKEI](https://tokei.rs/b1/github/NJUPT-NYR/SOPT?category=code)](https://github.com/NJUPT-NYR/SOPT)
 [![dependency status](https://deps.rs/repo/github/njupt-nyr/sopt/status.svg)](https://deps.rs/repo/github/njupt-nyr/sopt)
 ![GitHub repo size](https://img.shields.io/github/repo-size/njupt-nyr/sopt)
 [![Version](https://img.shields.io/badge/Rust-1.50+-ab6000.svg)](https://blog.rust-lang.org/2021/02/11/Rust-1.50.0.html)
